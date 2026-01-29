@@ -123,6 +123,20 @@ create table if not exists public.ms_worker_attendance (
 create index if not exists ms_worker_attendance_token_fecha_idx
   on public.ms_worker_attendance (token, fecha desc);
 
+-- Notificaciones tipo “push” (para Portal de Trabajador)
+create table if not exists public.ms_worker_notifications (
+  id         uuid primary key default gen_random_uuid(),
+  token      text not null references public.ms_worker_contracts(token) on delete cascade,
+  title      text not null default 'Alerta',
+  body       text not null,
+  data       jsonb,
+  read_at    timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists ms_worker_notifications_token_created_at_idx
+  on public.ms_worker_notifications (token, created_at desc);
+
 -- Mantener updated_at
 create or replace function public.ms_worker_set_updated_at()
 returns trigger as $$
@@ -140,6 +154,7 @@ for each row execute function public.ms_worker_set_updated_at();
 -- RLS
 alter table public.ms_worker_contracts enable row level security;
 alter table public.ms_worker_attendance enable row level security;
+alter table public.ms_worker_notifications enable row level security;
 
 -- Helper: lee el token del header. PostgREST lo expone como current_setting('request.headers.<header>', true)
 -- Nota: Postgres usa minúsculas en el nombre del header.
@@ -175,5 +190,30 @@ on public.ms_worker_attendance
 for select
 to anon
 using (token = current_setting('request.headers.x-worker-token', true));
+
+-- Notificaciones: el trabajador puede leer las suyas.
+-- El administrador puede INSERT si conoce el token (enviando X-Worker-Token: TOKEN).
+
+drop policy if exists ms_worker_notifications_select_token on public.ms_worker_notifications;
+create policy ms_worker_notifications_select_token
+on public.ms_worker_notifications
+for select
+to anon
+using (token = current_setting('request.headers.x-worker-token', true));
+
+drop policy if exists ms_worker_notifications_insert_token on public.ms_worker_notifications;
+create policy ms_worker_notifications_insert_token
+on public.ms_worker_notifications
+for insert
+to anon
+with check (token = current_setting('request.headers.x-worker-token', true));
+
+drop policy if exists ms_worker_notifications_update_token on public.ms_worker_notifications;
+create policy ms_worker_notifications_update_token
+on public.ms_worker_notifications
+for update
+to anon
+using (token = current_setting('request.headers.x-worker-token', true))
+with check (token = current_setting('request.headers.x-worker-token', true));
 
 commit;

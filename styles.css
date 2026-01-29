@@ -387,6 +387,20 @@ textarea.form-control {
     transition: all 0.3s;
 }
 
+.materials-summary-wrap {
+    margin-bottom: 14px;
+    display: none;
+}
+
+.renglon-metrics-wrap {
+    margin-bottom: 14px;
+    display: none;
+}
+
+.renglon-metrics-wrap.is-visible {
+    display: block;
+}
+
 .card:hover {
     border-color: var(--accent-gold);
     box-shadow: var(--shadow-lg);
@@ -575,6 +589,56 @@ textarea.form-control {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+/* ===== SELECTOR DE CONTACTOS (RRHH) ===== */
+.contact-picker-search {
+    margin-bottom: 12px;
+}
+
+.contact-picker-list {
+    display: grid;
+    gap: 10px;
+}
+
+.contact-picker-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.contact-picker-item:hover {
+    border-color: rgba(212, 175, 55, 0.55);
+}
+
+.contact-picker-name {
+    font-weight: 700;
+    color: var(--accent-gold);
+}
+
+.contact-picker-meta {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.contact-picker-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.contact-picker-empty {
+    padding: 12px;
+    border-radius: var(--border-radius);
+    border: 1px dashed rgba(212, 175, 55, 0.35);
+    background: rgba(255, 255, 255, 0.04);
+    opacity: 0.95;
 }
 
 /* ===== UTILIDADES ===== */

@@ -275,14 +275,15 @@ class SyncManager {
         localStorage.setItem('sync_queue', JSON.stringify(this.syncQueue));
         
         // Iniciar sincronización si no está en proceso
+        // (modo silencioso para evitar notificaciones de éxito repetitivas en auto-sync)
         if (!this.isSyncing && this.config.syncOnConnection && navigator.onLine) {
-            this.processQueue();
+            this.processQueue({ silent: true });
         }
         
         return queueItem.id;
     }
 
-    async processQueue() {
+    async processQueue(options = {}) {
         if (this.isSyncing || this.syncQueue.length === 0) return;
         
         this.isSyncing = true;
@@ -315,7 +316,7 @@ class SyncManager {
             this.lastSync = new Date().toISOString();
             localStorage.setItem('last_sync', this.lastSync);
             this.setLastSyncMeta({ state: 'success', message: 'Cola sincronizada', at: this.lastSync });
-            this.showNotification('Sincronización completada', 'success');
+            // No mostrar toast de éxito (evitar mensaje verde repetitivo).
         } catch (error) {
             console.error('Error en proceso de sincronización:', error);
             this.setLastSyncMeta({ state: 'error', message: error?.message || 'Error procesando cola' });
@@ -652,13 +653,17 @@ class SyncManager {
     }
 
     // ===== SINCRONIZACIÓN MANUAL =====
-    async syncNow(force = false) {
+    async syncNow(force = false, options = {}) {
         if (this.isSyncing && !force) {
             this.showNotification('Sincronización ya en progreso', 'warning');
             return;
         }
-        
-        this.showNotification('Iniciando sincronización...', 'info');
+
+        const silent = !!options?.silent;
+
+        if (!silent) {
+            this.showNotification('Iniciando sincronización...', 'info');
+        }
         this.setLastSyncMeta({ state: 'syncing', message: 'Sincronización manual' });
         
         try {
@@ -666,9 +671,9 @@ class SyncManager {
             await this.syncAllCollections();
             
             // Procesar cola pendiente
-            await this.processQueue();
+            await this.processQueue({ silent });
             
-            this.showNotification('Sincronización completada exitosamente', 'success');
+            // No mostrar toast de éxito (evitar mensaje verde repetitivo).
             this.setLastSyncMeta({ state: 'success', message: 'Sincronización completada', at: this.lastSync || new Date().toISOString() });
             
         } catch (error) {
@@ -721,7 +726,7 @@ class SyncManager {
         
         this.syncInterval = setInterval(() => {
             if (navigator.onLine && !this.isSyncing) {
-                this.syncNow();
+                this.syncNow(false, { silent: true, source: 'auto' });
             }
         }, this.config.syncInterval);
         
@@ -739,10 +744,10 @@ class SyncManager {
     // ===== MANEJO DE CONEXIÓN =====
     onConnectionRestored() {
         console.log('Conexión restablecida');
-        this.showNotification('Conexión restablecida. Sincronizando...', 'success');
+        // Evitar mensaje repetitivo al reconectar (la barra de estado ya indica el estado).
         
         if (this.config.syncOnConnection) {
-            this.syncNow();
+            this.syncNow(false, { silent: true, source: 'connection' });
         }
     }
 
@@ -792,6 +797,20 @@ class SyncManager {
 
     // ===== UTILIDADES =====
     showNotification(message, type = 'info') {
+        // Ocultar mensajes repetitivos de "actualización/sincronización exitosa".
+        // Mantener errores/advertencias para no ocultar problemas reales.
+        try {
+            const msg = String(message || '').toLowerCase();
+            const t = String(type || '').toLowerCase();
+            const isSuccess = t === 'success';
+            const shouldHide =
+                isSuccess &&
+                (msg.includes('sincroniz') || msg.includes('actualiz') || msg.includes('conexión restablecida'));
+            if (shouldHide) return;
+        } catch {
+            // ignore
+        }
+
         // Usar la función de notificación de la app principal si está disponible
         if (window.Utils && window.Utils.showNotification) {
             window.Utils.showNotification(message, type);
@@ -969,6 +988,8 @@ class SyncUI {
     createSyncControls() {
         const controls = document.createElement('div');
         controls.id = 'sync-controls';
+        controls.setAttribute('role', 'region');
+        controls.setAttribute('aria-label', 'Controles de sincronización');
         controls.innerHTML = `
             <div class="sync-status-bar">
                 <div class="sync-info">
@@ -976,6 +997,9 @@ class SyncUI {
                     <span class="sync-text">Sincronización: <span id="sync-status-text">Listo</span></span>
                 </div>
                 <div class="sync-actions">
+                    <button id="sync-min-btn" type="button" class="btn btn-sm btn-secondary" style="cursor:pointer;" aria-label="Minimizar">
+                        ▾
+                    </button>
                     <button id="sync-now-btn" type="button" class="btn btn-sm btn-primary" style="cursor:pointer;">
                         <span class="sync-btn-icon">↻</span> Sincronizar
                     </button>
@@ -988,23 +1012,154 @@ class SyncUI {
         
         document.body.appendChild(controls);
         
-        // Estilos
+        // Estilos (más pequeño, más transparente y en la parte superior)
         controls.style.cssText = `
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 31, 63, 0.95);
-            border: 1px solid #D4AF37;
-            border-radius: 8px;
-            padding: 10px 15px;
+            top: 70px;
+            right: 12px;
+            bottom: auto;
+            left: auto;
+            background: rgba(0, 31, 63, 0.72);
+            border: 1px solid rgba(212, 175, 55, 0.92);
+            border-radius: 10px;
+            padding: 6px 8px;
             z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            min-width: 210px;
+            max-width: 340px;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
         `;
+
+        // CSS interno para compactar (sin tocar styles.css global)
+        if (!document.getElementById('sync-controls-style')) {
+            const style = document.createElement('style');
+            style.id = 'sync-controls-style';
+            style.textContent = `
+                #sync-controls .sync-status-bar{display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12px; line-height:1.2;}
+                #sync-controls .sync-info{display:flex; align-items:center; gap:6px; user-select:none; cursor:grab;}
+                #sync-controls.dragging .sync-info{cursor:grabbing;}
+                #sync-controls .sync-text{white-space:nowrap;}
+                #sync-controls .sync-actions{display:flex; align-items:center; gap:6px;}
+                #sync-controls .btn.btn-sm{padding:4px 8px; font-size:12px; line-height:1.1;}
+                #sync-controls .sync-btn-icon{margin-right:4px;}
+                #sync-controls #sync-min-btn{padding:4px 6px; min-width:28px; text-align:center;}
+                #sync-controls.is-collapsed{min-width:auto; max-width:none;}
+                #sync-controls.is-collapsed .sync-text{display:none;}
+                #sync-controls.is-collapsed #sync-now-btn{display:none;}
+                #sync-controls.is-collapsed #sync-settings-btn{display:none;}
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Restaurar estado minimizado
+        const COLLAPSE_KEY = 'ms_sync_controls_collapsed_v1';
+        const minBtn = controls.querySelector('#sync-min-btn');
+        const applyCollapsedState = (collapsed) => {
+            controls.classList.toggle('is-collapsed', !!collapsed);
+            if (minBtn) {
+                minBtn.textContent = collapsed ? '▸' : '▾';
+                minBtn.setAttribute('aria-label', collapsed ? 'Expandir' : 'Minimizar');
+                minBtn.title = collapsed ? 'Expandir' : 'Minimizar';
+            }
+        };
+        try {
+            applyCollapsedState(localStorage.getItem(COLLAPSE_KEY) === '1');
+        } catch {
+            // ignore
+        }
+
+        minBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const next = !controls.classList.contains('is-collapsed');
+            applyCollapsedState(next);
+            try {
+                localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0');
+            } catch {
+                // ignore
+            }
+        });
+
+        // Restaurar posición si el usuario ya lo movió
+        const POS_KEY = 'ms_sync_controls_pos_v1';
+        try {
+            const saved = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
+            if (saved && typeof saved.top === 'number' && typeof saved.left === 'number') {
+                controls.style.top = `${Math.max(0, saved.top)}px`;
+                controls.style.left = `${Math.max(0, saved.left)}px`;
+                controls.style.right = 'auto';
+            }
+        } catch {
+            // ignore
+        }
+
+        // Hacer el widget movible con mouse/touch (arrastrar desde el área de estado)
+        const bar = controls.querySelector('.sync-status-bar');
+        const info = controls.querySelector('.sync-info');
+        const isInteractiveTarget = (el) => !!el?.closest?.('button,a,input,select,textarea,label');
+
+        let drag = null;
+        const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+        const onPointerMove = (e) => {
+            if (!drag) return;
+            const dx = e.clientX - drag.startX;
+            const dy = e.clientY - drag.startY;
+
+            const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+            const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+            const rect = controls.getBoundingClientRect();
+            const nextLeft = clamp(drag.startLeft + dx, 0, Math.max(0, vw - rect.width));
+            const nextTop = clamp(drag.startTop + dy, 0, Math.max(0, vh - rect.height));
+
+            controls.style.left = `${nextLeft}px`;
+            controls.style.top = `${nextTop}px`;
+            controls.style.right = 'auto';
+        };
+
+        const onPointerUp = () => {
+            if (!drag) return;
+            controls.classList.remove('dragging');
+            try {
+                const rect = controls.getBoundingClientRect();
+                localStorage.setItem(POS_KEY, JSON.stringify({ top: Math.round(rect.top), left: Math.round(rect.left) }));
+            } catch {
+                // ignore
+            }
+            drag = null;
+            window.removeEventListener('pointermove', onPointerMove, { capture: true });
+        };
+
+        const onPointerDown = (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            if (isInteractiveTarget(e.target)) return;
+
+            const rect = controls.getBoundingClientRect();
+            drag = {
+                startX: e.clientX,
+                startY: e.clientY,
+                startLeft: rect.left,
+                startTop: rect.top
+            };
+            controls.classList.add('dragging');
+            try {
+                bar?.setPointerCapture?.(e.pointerId);
+            } catch {
+                // ignore
+            }
+
+            window.addEventListener('pointermove', onPointerMove, { capture: true });
+            window.addEventListener('pointerup', onPointerUp, { capture: true, once: true });
+            e.preventDefault();
+        };
+
+        info?.addEventListener('pointerdown', onPointerDown);
+        bar?.addEventListener('pointerdown', onPointerDown);
         
         // Event listeners
         document.getElementById('sync-now-btn').addEventListener('click', () => {
-            this.syncService.syncNow();
+            this.syncService.syncNow(false, { silent: false, source: 'manual' });
         });
         
         document.getElementById('sync-settings-btn').addEventListener('click', () => {

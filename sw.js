@@ -3,7 +3,7 @@
   Note: CDN assets will be available offline after the first successful load.
 */
 
-const CACHE_NAME = 'ms-constructora-shell-v2';
+const CACHE_NAME = 'ms-constructora-shell-v3';
 const RUNTIME_CACHE = 'ms-constructora-runtime-v1';
 
 const CDN_HOSTS = new Set([
@@ -22,14 +22,22 @@ const SHELL_ASSETS = [
   './seguimiento.html',
   './rrhh.html',
   './rendimiento.html',
+  './admin-invites.html',
+  './limpiar-datos.html',
+  './theme-preview.html',
+  './worker.html',
   './manifest.json',
   './styles.css',
-  './rrhh.css',
+  './executive-theme.css',
   './app.js',
   './pwa.js',
   './database.js',
   './sync.js',
   './renglones-presupuestos.js',
+  './supabase.public.js',
+  './worker.js',
+  './jsPDF.min.js',
+  './jspdf.plugin.autotable.min.js',
   './sw.js',
   './favicon.ico',
   './logo.png',
@@ -94,5 +102,30 @@ self.addEventListener('fetch', (event) => {
 
       return cached || fetchPromise;
     })
+  );
+});
+
+// Notificaciones (click → enfocar tab o abrir portal)
+self.addEventListener('notificationclick', (event) => {
+  const data = event.notification?.data || {};
+  const url = (data && typeof data.url === 'string' && data.url) ? data.url : './worker.html';
+  event.notification?.close();
+
+  event.waitUntil(
+    (async () => {
+      const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of allClients) {
+        try {
+          const clientUrl = new URL(client.url);
+          if (clientUrl.pathname.endsWith('/worker.html') || clientUrl.pathname.endsWith('/rrhh.html')) {
+            await client.focus();
+            return;
+          }
+        } catch {
+          // ignore
+        }
+      }
+      await self.clients.openWindow(url);
+    })()
   );
 });

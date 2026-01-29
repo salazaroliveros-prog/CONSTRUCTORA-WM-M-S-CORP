@@ -19,7 +19,10 @@
     <script src="database.js"></script>
     <script src="sync.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="jsPDF.min.js"></script>
+    <script src="jspdf.plugin.autotable.min.js"></script>
     <script src="renglones-presupuestos.js"></script>
+    <link rel="stylesheet" href="executive-theme.css">
     <style>
         .app-container {
             min-height: 100vh;
@@ -573,7 +576,7 @@
         }
     </style>
 </head>
-<body>
+<body class="exec-app">
     <div class="app-container">
         <!-- Encabezado de la aplicación -->
         <header class="app-header">
@@ -685,6 +688,15 @@
                 </div>
 
                 <div class="control-card">
+                    <h3 class="control-title"><i class="fas fa-map-marker-alt"></i> DEPARTAMENTO</h3>
+                    <label for="departamentoSelect" class="sr-only">Departamento</label>
+                    <select class="form-control" id="departamentoSelect" onchange="actualizarDepartamentoSeleccionado()" aria-label="Departamento" title="Departamento">
+                        <option value="">-- Automático (del proyecto) --</option>
+                        <!-- Opciones se cargan dinámicamente -->
+                    </select>
+                </div>
+
+                <div class="control-card">
                     <h3 class="control-title"><i class="fas fa-download"></i> IMPORTAR/EXPORTAR</h3>
                     <div class="import-export-controls">
                         <input type="file" id="importFile" accept=".csv" class="hidden-file-input" 
@@ -784,6 +796,45 @@
                         </button>
                     </div>
                     <div class="budget-content">
+                        <div class="table-responsive renglon-metrics-wrap" id="renglonMetricsWrap">
+                            <table class="materials-table" id="renglonMetricsTable">
+                                <thead>
+                                    <tr>
+                                        <th colspan="6">RESUMEN DEL RENGLÓN (COSTOS + TIEMPO)</th>
+                                    </tr>
+                                    <tr>
+                                        <th>RENGLÓN</th>
+                                        <th>MATERIALES</th>
+                                        <th>MANO DE OBRA</th>
+                                        <th>TIEMPO EST. (DÍAS)</th>
+                                        <th>UTILIDAD</th>
+                                        <th>COSTO TOTAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="renglonMetricsBody">
+                                    <tr><td colspan="6" class="text-center p-3">Seleccione un renglón para ver el detalle</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-responsive materials-summary-wrap" id="materialsSummaryWrap">
+                            <table class="materials-table" id="materialsSummaryTable">
+                                <thead>
+                                    <tr>
+                                        <th colspan="5">RESUMEN CONSOLIDADO (TODOS LOS RENGLONES)</th>
+                                    </tr>
+                                    <tr>
+                                        <th>MATERIAL</th>
+                                        <th>UNIDAD</th>
+                                        <th>CANTIDAD TOTAL</th>
+                                        <th>PRECIO UNITARIO (PROM.)</th>
+                                        <th>SUBTOTAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="materialsSummaryTableBody">
+                                    <!-- Se carga dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
                         <div class="table-responsive">
                             <table class="materials-table" id="materialsTable">
                                 <thead>
@@ -826,6 +877,18 @@
                         <div class="summary-title">IMPUESTOS</div>
                         <div class="summary-value" id="impuestos">GTQ 0.00</div>
                         <div class="summary-detail">IVA 12% + Otros</div>
+                    </div>
+
+                    <div class="summary-card">
+                        <div class="summary-title">MATERIALES</div>
+                        <div class="summary-value" id="costoMateriales">GTQ 0.00</div>
+                        <div class="summary-detail" id="porcentajeMateriales">0% del directo</div>
+                    </div>
+
+                    <div class="summary-card">
+                        <div class="summary-title">MANO DE OBRA</div>
+                        <div class="summary-value" id="costoManoObra">GTQ 0.00</div>
+                        <div class="summary-detail" id="porcentajeManoObra">0% del directo</div>
                     </div>
                     
                     <div class="summary-card">
@@ -1039,6 +1102,32 @@
         let factoresConstructivos = {};
         let tabActual = 'tab-renglones';
         let charts = {};
+        let departamentoActual = '';
+
+        const DEPARTAMENTOS_GT = [
+            { key: 'guatemala', label: 'Guatemala' },
+            { key: 'el_progreso', label: 'El Progreso' },
+            { key: 'sacatepequez', label: 'Sacatepéquez' },
+            { key: 'chimaltenango', label: 'Chimaltenango' },
+            { key: 'escuintla', label: 'Escuintla' },
+            { key: 'santa_rosa', label: 'Santa Rosa' },
+            { key: 'solola', label: 'Sololá' },
+            { key: 'suchitepequez', label: 'Suchitepéquez' },
+            { key: 'retalhuleu', label: 'Retalhuleu' },
+            { key: 'san_marcos', label: 'San Marcos' },
+            { key: 'quetzaltenango', label: 'Quetzaltenango' },
+            { key: 'totonicapan', label: 'Totonicapán' },
+            { key: 'huehuetenango', label: 'Huehuetenango' },
+            { key: 'quiche', label: 'Quiché' },
+            { key: 'baja_verapaz', label: 'Baja Verapaz' },
+            { key: 'alta_verapaz', label: 'Alta Verapaz' },
+            { key: 'izabal', label: 'Izabal' },
+            { key: 'zacapa', label: 'Zacapa' },
+            { key: 'chiquimula', label: 'Chiquimula' },
+            { key: 'jalapa', label: 'Jalapa' },
+            { key: 'jutiapa', label: 'Jutiapa' },
+            { key: 'peten', label: 'Petén' }
+        ];
 
         // Tasas/impuestos (mantener coherencia en toda la vista)
         const IVA_RATE = 0.12;
@@ -1053,6 +1142,163 @@
         function roundMoney(value) {
             const n = toNumber(value, 0);
             return Math.round((n + Number.EPSILON) * 100) / 100;
+        }
+
+        function normalizarClaveDepartamentoLocal(value) {
+            return (value || '')
+                .toString()
+                .toLowerCase()
+                .trim()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/[\s-]+/g, '_');
+        }
+
+        function inicializarSelectorDepartamento() {
+            const select = document.getElementById('departamentoSelect');
+            if (!select) return;
+            select.querySelectorAll('option[data-gt="1"]').forEach(o => o.remove());
+            const html = DEPARTAMENTOS_GT.map(d => `<option data-gt="1" value="${d.key}">${d.label}</option>`).join('');
+            select.insertAdjacentHTML('beforeend', html);
+        }
+
+        function inferirDepartamentoDesdeTexto(texto) {
+            const t = normalizarClaveDepartamentoLocal(texto);
+            if (!t) return 'guatemala';
+            const found = DEPARTAMENTOS_GT.find(d => t.includes(d.key));
+            return found ? found.key : 'guatemala';
+        }
+
+        function obtenerDepartamentoProyecto(proyecto) {
+            if (proyecto && proyecto.departamento) {
+                return normalizarClaveDepartamentoLocal(proyecto.departamento) || 'guatemala';
+            }
+            const ubicacion = (proyecto && proyecto.ubicacion) ? String(proyecto.ubicacion) : '';
+            return inferirDepartamentoDesdeTexto(ubicacion);
+        }
+
+        function obtenerDepartamentoActual(proyecto) {
+            const select = document.getElementById('departamentoSelect');
+            const seleccionado = select ? String(select.value || '').trim() : '';
+            if (seleccionado) return seleccionado;
+            return obtenerDepartamentoProyecto(proyecto);
+        }
+
+        function actualizarDepartamentoSeleccionado() {
+            const proyectoId = document.getElementById('projectSelect').value;
+            const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
+            departamentoActual = obtenerDepartamentoActual(proyecto);
+            recalcularTodosLosRenglones({ notify: true });
+        }
+
+        function calcularMetricasRenglon(renglon) {
+            if (!renglon || typeof renglon !== 'object') return;
+            const factorIndirectos = toNumber(factoresConstructivos.factorIndirectos, 0.18);
+            const factorUtilidad = toNumber(factoresConstructivos.factorUtilidad, 0.15);
+            const desglose = renglon.desglose || null;
+
+            const materiales = desglose && Array.isArray(desglose.materiales) ? desglose.materiales : [];
+            const manoObra = desglose && Array.isArray(desglose.mano_obra) ? desglose.mano_obra : [];
+
+            const costoMateriales = roundMoney(materiales.reduce((sum, m) => sum + toNumber(m.subtotal, 0), 0));
+            const costoManoObra = roundMoney(manoObra.reduce((sum, mo) => sum + toNumber(mo.subtotal, 0), 0));
+            const costoEquipos = roundMoney(toNumber(desglose && desglose.equipos, 0));
+
+            const costoDirecto = roundMoney(
+                toNumber(desglose && desglose.costoDirecto, 0) || (costoMateriales + costoManoObra + costoEquipos) || toNumber(renglon.subtotal, 0)
+            );
+            const costosIndirectos = roundMoney(costoDirecto * factorIndirectos);
+            const baseImponible = roundMoney(costoDirecto + costosIndirectos);
+            const impuestos = roundMoney(baseImponible * IMPUESTO_TOTAL_RATE);
+            const costoTotalSinUtilidad = roundMoney(baseImponible + impuestos);
+            const utilidad = roundMoney(costoTotalSinUtilidad * factorUtilidad);
+            const costoTotal = roundMoney(costoTotalSinUtilidad + utilidad);
+
+            const jornalesMax = manoObra.length > 0 ? Math.max(...manoObra.map(mo => toNumber(mo.jornales, 0))) : 0;
+            const jornalesSum = manoObra.reduce((sum, mo) => sum + toNumber(mo.jornales, 0), 0);
+
+            renglon.metricas = {
+                costoMateriales,
+                costoManoObra,
+                costoEquipos,
+                costoDirecto,
+                costosIndirectos,
+                impuestos,
+                utilidad,
+                costoTotal,
+                diasEstimados: roundMoney(Math.max(0, jornalesMax)),
+                jornalesTotal: roundMoney(jornalesSum)
+            };
+        }
+
+        function recalcularRenglon(index, opts = {}) {
+            const renglon = renglones[index];
+            if (!renglon) return;
+
+            const proyectoId = document.getElementById('projectSelect').value;
+            const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
+            const departamento = obtenerDepartamentoActual(proyecto);
+            const cubierta = document.getElementById('cubiertaSelect').value || cubiertaActual;
+
+            if (typeof calcularCostoUnitario === 'function') {
+                const res = calcularCostoUnitario(
+                    renglon.descripcion,
+                    departamento,
+                    toNumber(renglon.cantidad, 0) || 0,
+                    renglon.unidad,
+                    { tipoCubierta: cubierta }
+                );
+                if (res && typeof res === 'object') {
+                    if (typeof res.unitario === 'number') renglon.precioUnitario = roundMoney(res.unitario);
+                    if (res.desglose) renglon.desglose = res.desglose;
+                }
+            }
+
+            renglon.cantidad = roundMoney(toNumber(renglon.cantidad, 0));
+            renglon.precioUnitario = roundMoney(toNumber(renglon.precioUnitario, 0));
+            renglon.subtotal = roundMoney(renglon.cantidad * renglon.precioUnitario);
+            calcularMetricasRenglon(renglon);
+
+            if (!opts.silent) {
+                mostrarRenglones();
+                calcularTotales();
+            }
+        }
+
+        function recalcularTodosLosRenglones(opts = {}) {
+            const proyectoId = document.getElementById('projectSelect').value;
+            const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
+            const departamento = obtenerDepartamentoActual(proyecto);
+            const cubierta = document.getElementById('cubiertaSelect').value || cubiertaActual;
+
+            renglones.forEach((renglon) => {
+                if (!renglon) return;
+                if (typeof calcularCostoUnitario === 'function') {
+                    const res = calcularCostoUnitario(
+                        renglon.descripcion,
+                        departamento,
+                        toNumber(renglon.cantidad, 0) || 0,
+                        renglon.unidad,
+                        { tipoCubierta: cubierta }
+                    );
+                    if (res && typeof res === 'object') {
+                        if (typeof res.unitario === 'number') renglon.precioUnitario = roundMoney(res.unitario);
+                        if (res.desglose) renglon.desglose = res.desglose;
+                    }
+                }
+                renglon.cantidad = roundMoney(toNumber(renglon.cantidad, 0));
+                renglon.precioUnitario = roundMoney(toNumber(renglon.precioUnitario, 0));
+                renglon.subtotal = roundMoney(renglon.cantidad * renglon.precioUnitario);
+                calcularMetricasRenglon(renglon);
+            });
+
+            mostrarRenglones();
+            calcularTotales();
+
+            if (opts.notify) {
+                Utils.showNotification('Cálculos actualizados por ubicación', 'success');
+            }
         }
 
         function normalizarRenglon(renglon) {
@@ -1143,6 +1389,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             inicializarAplicacion();
             inicializarGraficos();
+            inicializarSelectorDepartamento();
         });
 
         // Función principal de inicialización
@@ -1317,9 +1564,10 @@
                 if (tipologiaActual) document.getElementById('tipologiaSelect').value = tipologiaActual;
                 if (cubiertaActual) document.getElementById('cubiertaSelect').value = cubiertaActual;
 
+                factoresConstructivos = factoresTipologia[tipologiaActual] || {};
+
                 renglones = normalizarRenglones(AdvancedDB.find('presupuestos_items', { proyectoId: proyectoId, presupuestoId: presupuesto.id }) || []);
-                mostrarRenglones();
-                calcularTotales();
+                recalcularTodosLosRenglones();
             } else {
                 // Si no hay presupuesto, intentar por tipología del proyecto
                 renglones = [];
@@ -1347,7 +1595,7 @@
             // Si no hay proyecto seleccionado, igual permitimos cargar renglones
             const proyectoId = document.getElementById('projectSelect').value;
             const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
-            const departamento = obtenerDepartamentoProyecto(proyecto);
+            const departamento = obtenerDepartamentoActual(proyecto);
             cubiertaActual = document.getElementById('cubiertaSelect').value || cubiertaActual || 'losa_solida';
             
             // Obtener renglones predefinidos para la tipología (nuevo formato en renglones-presupuestos.js)
@@ -1357,8 +1605,9 @@
             
             // Convertir a formato interno
             renglones = renglonesBase.map((base, index) => {
+                // Usar el nombre del renglón y el departamento para el cálculo real
                 const calculo = typeof calcularCostoUnitario === 'function'
-                    ? calcularCostoUnitario(base.id, tipologiaActual, cubiertaActual, departamento, 1)
+                    ? calcularCostoUnitario(base.nombre, departamento, 1, base.unidad)
                     : null;
 
                 const precioUnitario = (calculo && typeof calculo === 'object') ? (calculo.unitario || 0) : 0;
@@ -1381,12 +1630,12 @@
             });
 
             renglones = normalizarRenglones(renglones);
-            
-            mostrarRenglones();
-            calcularTotales();
-            
-            // Actualizar factores constructivos
+
+            // Actualizar factores constructivos antes de calcular métricas
             factoresConstructivos = factoresTipologia[tipologiaActual] || {};
+
+            // Recalcular 100% (unitarios + desglose + métricas)
+            recalcularTodosLosRenglones();
         }
 
         function generarCodigoRenglon(base) {
@@ -1394,14 +1643,6 @@
             const idNum = Number(base && base.id);
             if (Number.isFinite(idNum)) return `RG-${String(idNum).padStart(3, '0')}`;
             return `RG-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-        }
-
-        function obtenerDepartamentoProyecto(proyecto) {
-            const ubicacion = (proyecto && proyecto.ubicacion) ? String(proyecto.ubicacion).toLowerCase() : '';
-            if (ubicacion.includes('quetzal')) return 'quetzaltenango';
-            if (ubicacion.includes('peten')) return 'peten';
-            if (ubicacion.includes('izabal')) return 'izabal';
-            return 'guatemala';
         }
 
         // Obtener categoría por código de renglón
@@ -1446,26 +1687,8 @@
         function actualizarFactoresCubierta() {
             cubiertaActual = document.getElementById('cubiertaSelect').value;
             if (!cubiertaActual) return;
-            
-            const proyectoId = document.getElementById('projectSelect').value;
-            const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
-            const departamento = obtenerDepartamentoProyecto(proyecto);
-            
-            // Recalcular costo unitario por renglón según cubierta/departamento
-            renglones.forEach(renglon => {
-                if (typeof calcularCostoUnitario === 'function' && renglon.baseRenglonId) {
-                    const calculo = calcularCostoUnitario(renglon.baseRenglonId, tipologiaActual, cubiertaActual, departamento, renglon.cantidad || 1);
-                    if (calculo && typeof calculo === 'object') {
-                        renglon.precioUnitario = Number(calculo.unitario || 0);
-                        renglon.desglose = calculo.desglose || null;
-                        renglon.tipoCubierta = cubiertaActual;
-                    }
-                }
-                renglon.subtotal = (Number(renglon.cantidad) || 0) * (Number(renglon.precioUnitario) || 0);
-            });
-            
-            mostrarRenglones();
-            calcularTotales();
+
+            recalcularTodosLosRenglones();
         }
 
         // Mostrar renglones en la tabla
@@ -1542,9 +1765,7 @@
             if (nuevaCantidad < 0) return;
             
             renglon.cantidad = roundMoney(nuevaCantidad);
-            renglon.precioUnitario = roundMoney(toNumber(renglon.precioUnitario, 0));
-            renglon.subtotal = roundMoney(renglon.cantidad * renglon.precioUnitario);
-            
+            recalcularRenglon(index, { silent: true });
             mostrarRenglones();
             calcularTotales();
         }
@@ -1556,9 +1777,7 @@
             
             const renglon = renglones[index];
             renglon.cantidad = roundMoney(cantidad);
-            renglon.precioUnitario = roundMoney(toNumber(renglon.precioUnitario, 0));
-            renglon.subtotal = roundMoney(renglon.cantidad * renglon.precioUnitario);
-            
+            recalcularRenglon(index, { silent: true });
             mostrarRenglones();
             calcularTotales();
         }
@@ -1566,19 +1785,34 @@
         // Actualizar precio unitario
         function actualizarPrecioUnitario(index) {
             const renglon = renglones[index];
-            
-            // Simular actualización de precio según mercado
-            const variacion = (Math.random() * 0.1) - 0.05; // +/- 5%
-            const nuevoPrecio = toNumber(renglon.precioUnitario, 0) * (1 + variacion);
-            
-            renglon.precioUnitario = roundMoney(nuevoPrecio);
+
+            const proyectoId = document.getElementById('projectSelect').value;
+            const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
+            const departamento = obtenerDepartamentoActual(proyecto);
+            const cubierta = document.getElementById('cubiertaSelect').value || cubiertaActual;
+
+            if (typeof calcularCostoUnitario === 'function') {
+                const calculo = calcularCostoUnitario(
+                    renglon.descripcion,
+                    departamento,
+                    renglon.cantidad || 1,
+                    renglon.unidad,
+                    { tipoCubierta: cubierta }
+                );
+                if (calculo && typeof calculo === 'object') {
+                    renglon.precioUnitario = roundMoney(Number(calculo.unitario || 0));
+                    renglon.desglose = calculo.desglose || null;
+                }
+            }
+
             renglon.cantidad = roundMoney(toNumber(renglon.cantidad, 0));
             renglon.subtotal = roundMoney(renglon.cantidad * renglon.precioUnitario);
+            calcularMetricasRenglon(renglon);
             
             mostrarRenglones();
             calcularTotales();
-            
-            Utils.showNotification(`Precio actualizado: ${variacion > 0 ? '+' : ''}${(variacion * 100).toFixed(1)}%`, 'info');
+
+            Utils.showNotification('Precio recalculado con desglose real', 'success');
         }
 
         // Calcular totales del presupuesto
@@ -1588,6 +1822,11 @@
                 actualizarResumenFinanciero(0, 0, 0, 0, 0);
                 return;
             }
+
+            // Garantiza que existan métricas por renglón para resumen/tiempo
+            renglones.forEach(r => {
+                if (r && !r.metricas) calcularMetricasRenglon(r);
+            });
 
             const totales = calcularTotalesNumericos();
             
@@ -1646,14 +1885,29 @@
                 if (costoPorM2El) costoPorM2El.textContent = Utils.formatCurrency(0);
             }
             
-            // Calcular duración total
-            if (factoresConstructivos.duracionFactor && renglones.length > 0) {
-                const duracionBase = renglones.length * 2; // 2 días por renglón como base
-                const duracionTotal = duracionBase * factoresConstructivos.duracionFactor;
-                document.getElementById('duracionTotal').textContent = `${Math.ceil(duracionTotal)} días`;
+            // Calcular materiales/mano de obra/duración total basados en desglose real
+            const totalMateriales = roundMoney(renglones.reduce((sum, r) => sum + toNumber(r.metricas && r.metricas.costoMateriales, 0), 0));
+            const totalManoObra = roundMoney(renglones.reduce((sum, r) => sum + toNumber(r.metricas && r.metricas.costoManoObra, 0), 0));
+            const duracionFactor = toNumber(factoresConstructivos.duracionFactor, 1);
+            const diasBase = renglones.reduce((sum, r) => sum + toNumber(r.metricas && r.metricas.diasEstimados, 0), 0);
+            const diasEstimados = roundMoney(diasBase * duracionFactor);
+
+            const elMat = document.getElementById('costoMateriales');
+            if (elMat) elMat.textContent = Utils.formatCurrency(totalMateriales);
+            const elMO = document.getElementById('costoManoObra');
+            if (elMO) elMO.textContent = Utils.formatCurrency(totalManoObra);
+
+            const elPctMat = document.getElementById('porcentajeMateriales');
+            const elPctMO = document.getElementById('porcentajeManoObra');
+            if (costoDirecto > 0) {
+                if (elPctMat) elPctMat.textContent = `${((totalMateriales / costoDirecto) * 100).toFixed(1)}% del directo`;
+                if (elPctMO) elPctMO.textContent = `${((totalManoObra / costoDirecto) * 100).toFixed(1)}% del directo`;
             } else {
-                document.getElementById('duracionTotal').textContent = '0 días';
+                if (elPctMat) elPctMat.textContent = '0% del directo';
+                if (elPctMO) elPctMO.textContent = '0% del directo';
             }
+
+            document.getElementById('duracionTotal').textContent = `${Math.ceil(diasEstimados)} días`;
             
             // Actualizar tabla APU
             actualizarTablaAPU(costoDirecto, costosIndirectos, impuestos, utilidad, presupuestoTotal);
@@ -2166,13 +2420,68 @@
         // Ver desglose de materiales de un renglón
         function verDesgloseMateriales(index) {
             const renglon = renglones[index];
-            
-            // En una implementación real, aquí se cargarían los materiales específicos del renglón
-            // Por ahora, mostramos un mensaje
-            Utils.showNotification(`Mostrando materiales para: ${renglon.descripcion}`, 'info');
-            
-            // Cambiar a tab de materiales
+            // Mostrar desglose real de materiales y mano de obra
             cambiarTab('tab-materiales');
+
+            // Resumen del renglón
+            const wrap = document.getElementById('renglonMetricsWrap');
+            const body = document.getElementById('renglonMetricsBody');
+            if (wrap && body) {
+                calcularMetricasRenglon(renglon);
+                const m = renglon.metricas || {};
+                wrap.classList.add('is-visible');
+                body.innerHTML = `
+                    <tr>
+                        <td><strong>${renglon.codigo || ''}</strong> - ${renglon.descripcion || ''}</td>
+                        <td>${Utils.formatCurrency(toNumber(m.costoMateriales, 0))}</td>
+                        <td>${Utils.formatCurrency(toNumber(m.costoManoObra, 0))}</td>
+                        <td>${toNumber(m.diasEstimados, 0).toFixed(2)}</td>
+                        <td>${Utils.formatCurrency(toNumber(m.utilidad, 0))}</td>
+                        <td><strong>${Utils.formatCurrency(toNumber(m.costoTotal, 0))}</strong></td>
+                    </tr>
+                `;
+            }
+            const tbody = document.getElementById('materialsTableBody');
+            let html = '';
+            if (renglon.desglose && Array.isArray(renglon.desglose.materiales)) {
+                renglon.desglose.materiales.forEach(mat => {
+                    const qtyUnit = mat.cantidad != null ? toNumber(mat.cantidad, 0) : 0;
+                    const qtyTotal = mat.total != null ? toNumber(mat.total, 0) : (qtyUnit * toNumber(renglon.cantidad, 0));
+                    const qtyLabel = `${qtyUnit.toFixed(3)} / ${qtyTotal.toFixed(3)}`;
+                    html += `
+                        <tr>
+                            <td><small>${renglon.descripcion.substring(0, 30)}...</small></td>
+                            <td>${mat.nombre || mat.material || '-'}</td>
+                            <td>${mat.unidad || '-'}</td>
+                            <td>${qtyLabel}</td>
+                            <td>${Utils.formatCurrency(mat.precio_unitario || mat.precioUnitario || 0)}</td>
+                            <td><strong>${Utils.formatCurrency(mat.subtotal || 0)}</strong></td>
+                            <td>-</td>
+                            <td><span class="price-indicator price-down">Disponible</span></td>
+                        </tr>
+                    `;
+                });
+            }
+            if (renglon.desglose && Array.isArray(renglon.desglose.mano_obra)) {
+                renglon.desglose.mano_obra.forEach(mo => {
+                    html += `
+                        <tr>
+                            <td><small>${renglon.descripcion.substring(0, 30)}...</small></td>
+                            <td>Mano de obra: ${mo.oficio || '-'}</td>
+                            <td>${mo.unidad || '-'}</td>
+                            <td>${mo.jornales != null ? mo.jornales.toFixed(2) : '-'} jornales</td>
+                            <td>${Utils.formatCurrency(mo.precio_unitario || mo.precioUnitario || 0)}</td>
+                            <td><strong>${Utils.formatCurrency(mo.subtotal || 0)}</strong></td>
+                            <td>-</td>
+                            <td><span class="price-indicator price-down">Disponible</span></td>
+                        </tr>
+                    `;
+                });
+            }
+            if (!html) {
+                html = `<tr><td colspan="8" class="text-center p-4">No hay desglose disponible</td></tr>`;
+            }
+            tbody.innerHTML = html;
         }
 
         function normalizarUnidad(unidad) {
@@ -2241,6 +2550,8 @@
         // Generar desglose de materiales
         function generarDesgloseMateriales() {
             const tbody = document.getElementById('materialsTableBody');
+            const tbodyResumen = document.getElementById('materialsSummaryTableBody');
+            const wrapResumen = document.getElementById('materialsSummaryWrap');
             
             if (renglones.length === 0) {
                 tbody.innerHTML = `
@@ -2251,6 +2562,14 @@
                         </td>
                     </tr>
                 `;
+                if (tbodyResumen) {
+                    tbodyResumen.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center p-3">No hay datos para consolidar</td>
+                        </tr>
+                    `;
+                }
+                if (wrapResumen) wrapResumen.style.display = 'none';
                 return;
             }
 
@@ -2258,7 +2577,7 @@
 
             const proyectoId = document.getElementById('projectSelect').value;
             const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
-            const departamento = obtenerDepartamentoProyecto(proyecto);
+            const departamento = obtenerDepartamentoActual(proyecto);
             const cubierta = document.getElementById('cubiertaSelect').value || cubiertaActual;
             const factores = (typeof factoresCubierta !== 'undefined' && cubierta) ? (factoresCubierta[cubierta] || null) : null;
 
@@ -2284,6 +2603,29 @@
                             subtotal,
                             proveedor,
                             disponibilidad
+                        });
+                    });
+                    return;
+                }
+
+                // Caso 0.5: el renglón ya trae desglose real calculado (nuevo motor)
+                if (renglon.desglose && Array.isArray(renglon.desglose.materiales) && renglon.desglose.materiales.length > 0) {
+                    renglon.desglose.materiales.forEach(m => {
+                        const nombre = m.nombre || m.material || 'Material';
+                        const unidad = m.unidad || 'unidad';
+                        const cantidadReq = (m.total != null) ? Number(m.total) : (Number(m.cantidad) || 0);
+                        const precio = Number(m.precio_unitario != null ? m.precio_unitario : m.precioUnitario) || 0;
+                        const subtotal = Number(m.subtotal) || (cantidadReq * precio);
+
+                        materialesDesglose.push({
+                            renglon: renglon.descripcion,
+                            material: nombre,
+                            unidad,
+                            cantidad: Number((cantidadReq || 0).toFixed(2)),
+                            precioUnitario: precio,
+                            subtotal,
+                            proveedor: 'N/D',
+                            disponibilidad: 'Disponible'
                         });
                     });
                     return;
@@ -2318,7 +2660,12 @@
 
                 // Caso 2 (fallback): usar el componente “materiales” del desglose de costos
                 // y repartirlo de forma determinística entre materiales base disponibles.
-                const presupuestoMateriales = Number((renglon.desglose && renglon.desglose.materiales) ? renglon.desglose.materiales : 0);
+                let presupuestoMateriales = 0;
+                if (renglon.desglose && Array.isArray(renglon.desglose.materiales)) {
+                    presupuestoMateriales = renglon.desglose.materiales.reduce((sum, it) => sum + (Number(it && it.subtotal) || 0), 0);
+                } else if (renglon.desglose && renglon.desglose.materiales != null) {
+                    presupuestoMateriales = Number(renglon.desglose.materiales) || 0;
+                }
                 const totalRenglon = (Number(renglon.cantidad) || 0) * (Number(renglon.precioUnitario) || 0);
                 const bolsaMateriales = presupuestoMateriales > 0 ? presupuestoMateriales : (totalRenglon * 0.55);
 
@@ -2390,6 +2737,49 @@
             });
             
             tbody.innerHTML = html;
+
+            // Resumen consolidado: agrupar por material + unidad
+            if (tbodyResumen) {
+                const resumenMap = new Map();
+                materialesDesglose.forEach(mat => {
+                    const material = (mat.material || 'Material').toString();
+                    const unidad = (mat.unidad || 'unidad').toString();
+                    const key = `${material}||${unidad}`;
+                    const qty = Number(mat.cantidad) || 0;
+                    const sub = Number(mat.subtotal) || 0;
+                    const prev = resumenMap.get(key) || { material, unidad, cantidad: 0, subtotal: 0 };
+                    prev.cantidad += qty;
+                    prev.subtotal += sub;
+                    resumenMap.set(key, prev);
+                });
+
+                const resumen = Array.from(resumenMap.values())
+                    .map(x => ({
+                        ...x,
+                        precioUnitario: x.cantidad > 0 ? (x.subtotal / x.cantidad) : 0
+                    }))
+                    .sort((a, b) => (b.subtotal || 0) - (a.subtotal || 0));
+
+                if (resumen.length === 0) {
+                    tbodyResumen.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center p-3">No hay datos para consolidar</td>
+                        </tr>
+                    `;
+                    if (wrapResumen) wrapResumen.style.display = 'none';
+                } else {
+                    tbodyResumen.innerHTML = resumen.map(r => `
+                        <tr>
+                            <td>${r.material}</td>
+                            <td>${r.unidad}</td>
+                            <td>${Number((r.cantidad || 0).toFixed(2))}</td>
+                            <td>${Utils.formatCurrency(r.precioUnitario || 0)}</td>
+                            <td><strong>${Utils.formatCurrency(r.subtotal || 0)}</strong></td>
+                        </tr>
+                    `).join('');
+                    if (wrapResumen) wrapResumen.style.display = '';
+                }
+            }
         }
 
         function obtenerPrecioBaseMaterial(key, departamento) {
@@ -2549,6 +2939,15 @@
                     Utils.showNotification('Seleccione un proyecto primero', 'warning');
                     return;
                 }
+
+                // Asegurar que el informe incluya métricas por renglón (materiales/MO/utilidad/tiempo/total)
+                try {
+                    renglones.forEach(r => {
+                        if (r) calcularMetricasRenglon(r);
+                    });
+                } catch (e) {
+                    // no-op: el PDF puede generarse aunque alguna métrica falle
+                }
                 
                 const datosInforme = {
                     proyecto: proyecto,
@@ -2581,18 +2980,44 @@
         function actualizarPrecios() {
             Utils.showLoading('Actualizando precios del mercado...');
             
-            // Simular actualización de precios
+            // Recalcular precios en base al motor (departamento/cubierta)
             setTimeout(() => {
+                const proyectoId = document.getElementById('projectSelect').value;
+                const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
+                const departamento = obtenerDepartamentoActual(proyecto);
+                const cubierta = document.getElementById('cubiertaSelect').value || cubiertaActual;
+
+                if (typeof calcularCostoUnitario !== 'function') {
+                    Utils.hideLoading();
+                    Utils.showNotification('Motor de cálculo no disponible', 'error');
+                    return;
+                }
+
                 renglones.forEach(renglon => {
-                    const variacion = (Math.random() * 0.08) - 0.04; // +/- 4%
-                    renglon.precioUnitario = renglon.precioUnitario * (1 + variacion);
-                    renglon.subtotal = renglon.cantidad * renglon.precioUnitario;
+                    try {
+                        const cantidad = Number(renglon.cantidad) || 0;
+                        const res = calcularCostoUnitario(
+                            renglon.descripcion,
+                            departamento,
+                            cantidad,
+                            renglon.unidad,
+                            { tipoCubierta: cubierta }
+                        );
+                        if (res && typeof res.unitario === 'number') {
+                            renglon.precioUnitario = res.unitario;
+                            renglon.subtotal = cantidad * renglon.precioUnitario;
+                            if (res.desglose) renglon.desglose = res.desglose;
+                            calcularMetricasRenglon(renglon);
+                        }
+                    } catch (e) {
+                        // no-op: mantener el valor si falla el recálculo
+                    }
                 });
                 
                 mostrarRenglones();
                 calcularTotales();
                 Utils.hideLoading();
-                Utils.showNotification('Precios actualizados según el mercado', 'success');
+                Utils.showNotification('Precios recalculados (departamento/cubierta)', 'success');
             }, 1500);
         }
 
@@ -2660,6 +3085,7 @@
             }
             
             try {
+                renglones.forEach(r => calcularMetricasRenglon(r));
                 const datosExportar = renglones.map(renglon => ({
                     'Código': renglon.codigo,
                     'Descripción': renglon.descripcion,
@@ -2667,6 +3093,16 @@
                     'Cantidad': renglon.cantidad,
                     'Precio Unitario (GTQ)': renglon.precioUnitario,
                     'Subtotal (GTQ)': renglon.subtotal,
+                    'Costo Materiales (GTQ)': toNumber(renglon.metricas && renglon.metricas.costoMateriales, 0),
+                    'Costo Mano de Obra (GTQ)': toNumber(renglon.metricas && renglon.metricas.costoManoObra, 0),
+                    'Indirectos (GTQ)': toNumber(renglon.metricas && renglon.metricas.costosIndirectos, 0),
+                    'Impuestos (GTQ)': toNumber(renglon.metricas && renglon.metricas.impuestos, 0),
+                    'Utilidad (GTQ)': toNumber(renglon.metricas && renglon.metricas.utilidad, 0),
+                    'Costo Total (GTQ)': toNumber(renglon.metricas && renglon.metricas.costoTotal, 0),
+                    'Tiempo Est. (días)': toNumber(renglon.metricas && renglon.metricas.diasEstimados, 0),
+                    'Materiales Unitarios': (renglon.desglose && Array.isArray(renglon.desglose.materiales))
+                        ? renglon.desglose.materiales.map(m => `${(m.nombre || m.material || '').toString()}|${(m.unidad || '').toString()}|${toNumber(m.cantidad, 0)}`).join('; ')
+                        : '',
                     'Categoría': renglon.categoria || ''
                 }));
                 

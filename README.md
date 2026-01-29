@@ -36,7 +36,7 @@ Si la aplicación tiene datos de prueba residuales en su navegador:
 
 Archivos principales:
 - `index.html`, `inicio.html`, `dashboard.html`, `proyectos.html`, `presupuestos.html`, `compras.html`, `seguimiento.html`, `rrhh.html`, `rendimiento.html`
-- `styles.css`, `rrhh.css`
+- `styles.css`
 - `app.js` (utilidades, navegación, helpers compartidos)
 - `database.js` (**AdvancedDB**: capa de almacenamiento compartida - **SIN DATOS DE PRUEBA**)
 - `sync.js` (sincronización con Supabase/Google Sheets/Firestore)

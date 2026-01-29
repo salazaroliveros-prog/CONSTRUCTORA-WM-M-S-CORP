@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Portal de Trabajador - M&S</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="executive-theme.css">
   <style>
     body{background:#0b1f33;color:#fff}
     .container{max-width:980px;margin:24px auto;padding:0 16px}
@@ -30,7 +32,7 @@
     .contract{background:#fff;color:#111;border-radius:12px;padding:14px;max-height:420px;overflow:auto}
   </style>
 </head>
-<body>
+<body class="exec-app">
   <div class="container">
     <h2>Portal del Trabajador</h2>
     <p class="muted">Este link es personal. Si no ves tu contrato, avisa al administrador.</p>
@@ -85,10 +87,27 @@
         </div>
 
         <div class="card">
+          <h3>Notificaciones</h3>
+          <p class="muted">Activa permisos para recibir alertas tipo “push” mientras este portal esté abierto.</p>
+          <div class="flex">
+            <button id="btn-notif" class="btn btn-primary" type="button">Activar notificaciones</button>
+          </div>
+          <div class="field">
+            <label>Estado</label>
+            <div id="notif-status" class="muted">—</div>
+          </div>
+          <div class="field">
+            <label>Última alerta</label>
+            <div id="notif-last" class="muted">—</div>
+          </div>
+        </div>
+
+        <div class="card">
           <h3>Ayuda</h3>
           <ul class="muted" style="margin-left:18px;line-height:1.7">
             <li>Abre este portal desde WhatsApp.</li>
             <li>Si te pide permisos de ubicación, acepta para registrar GPS.</li>
+            <li>Para alertas tipo “push”, activa Notificaciones.</li>
             <li>Si el contrato no aparece, pide que te reenvíen el link.</li>
           </ul>
         </div>

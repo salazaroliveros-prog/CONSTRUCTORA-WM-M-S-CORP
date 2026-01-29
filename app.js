@@ -247,7 +247,8 @@ class CloudSync {
             const syncFunction = this.providers[provider];
             if (syncFunction) {
                 await syncFunction();
-                this.showNotification('Sincronización completada', 'success');
+                // Evitar mensaje repetitivo de éxito en sincronización automática.
+                // Mantener solo notificaciones de error para no molestar en los formularios.
             }
         } catch (error) {
             console.error('Error en sincronización:', error);
@@ -505,10 +506,226 @@ class Utils {
     }
 
     static generatePDF(data, filename) {
-        // Implementación básica de generación de PDF
-        console.log('Generando PDF:', filename, data);
-        // En una implementación real, se usaría una librería como jsPDF
-        alert(`PDF ${filename} generado. En implementación real se descargaría el archivo.`);
+        // Generación real de PDF usando jsPDF y autoTable
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            alert('jsPDF no está cargado. Descarga https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+            return;
+        }
+        const jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+        const doc = new jsPDF({ orientation: 'landscape' });
+
+        const toNumber = (v, fallback = 0) => {
+            const n = Number(v);
+            return Number.isFinite(n) ? n : fallback;
+        };
+
+        const ensureMetricas = (r) => {
+            if (!r || typeof r !== 'object') return null;
+            if (r.metricas && typeof r.metricas === 'object') return r.metricas;
+            if (typeof window.calcularMetricasRenglon === 'function') {
+                try {
+                    window.calcularMetricasRenglon(r);
+                } catch (e) {
+                    // no-op
+                }
+            }
+            return (r.metricas && typeof r.metricas === 'object') ? r.metricas : null;
+        };
+
+        doc.setFontSize(14);
+        doc.text(`Presupuesto: ${data.proyecto.nombre || data.proyecto.codigo || ''}`, 10, 15);
+        doc.setFontSize(10);
+        doc.text(`Fecha: ${data.fechaGeneracion}  Hora: ${data.horaGeneracion}`, 10, 22);
+
+        // Tabla de renglones (incluye métricas por renglón)
+        const rows = (data.presupuesto.renglones || []).map((r, i) => {
+            const m = ensureMetricas(r) || {};
+            return [
+                i + 1,
+                r.codigo,
+                r.descripcion,
+                r.unidad,
+                r.cantidad,
+                r.precioUnitario,
+                r.subtotal,
+                toNumber(m.costoMateriales, ''),
+                toNumber(m.costoManoObra, ''),
+                toNumber(m.utilidad, ''),
+                (m.diasEstimados != null ? toNumber(m.diasEstimados, 0).toFixed(2) : ''),
+                toNumber(m.costoTotal, '')
+            ];
+        });
+        doc.autoTable({
+            head: [["#", "Código", "Descripción", "Unidad", "Cantidad", "P.Unitario", "Subtotal", "Materiales", "Mano de obra", "Utilidad", "Tiempo (d)", "Total"]],
+            body: rows,
+            startY: 28,
+            theme: 'grid',
+            styles: { fontSize: 7 }
+        });
+
+        // Resumen consolidado global (materiales + mano de obra)
+        const renglones = (data.presupuesto.renglones || []);
+        const resumenMaterialesMap = new Map();
+        const resumenMOMap = new Map();
+
+        renglones.forEach(r => {
+            if (r && r.desglose && Array.isArray(r.desglose.materiales)) {
+                r.desglose.materiales.forEach(m => {
+                    const nombre = (m.nombre || m.material || 'Material').toString();
+                    const unidad = (m.unidad || 'unidad').toString();
+                    const qty = (m.total != null) ? Number(m.total) : (Number(m.cantidad) || 0);
+                    const subtotal = Number(m.subtotal) || (qty * (Number(m.precio_unitario != null ? m.precio_unitario : m.precioUnitario) || 0));
+                    const key = `${nombre}||${unidad}`;
+                    const prev = resumenMaterialesMap.get(key) || { nombre, unidad, cantidad: 0, subtotal: 0 };
+                    prev.cantidad += (Number(qty) || 0);
+                    prev.subtotal += (Number(subtotal) || 0);
+                    resumenMaterialesMap.set(key, prev);
+                });
+            }
+            if (r && r.desglose && Array.isArray(r.desglose.mano_obra)) {
+                r.desglose.mano_obra.forEach(mo => {
+                    const oficio = (mo.oficio || 'Oficio').toString();
+                    const unidad = (mo.unidad || 'jornal').toString();
+                    const jornales = Number(mo.jornales) || 0;
+                    const subtotal = Number(mo.subtotal) || (jornales * (Number(mo.precio_unitario != null ? mo.precio_unitario : mo.precioUnitario) || 0));
+                    const key = `${oficio}||${unidad}`;
+                    const prev = resumenMOMap.get(key) || { oficio, unidad, jornales: 0, subtotal: 0 };
+                    prev.jornales += jornales;
+                    prev.subtotal += subtotal;
+                    resumenMOMap.set(key, prev);
+                });
+            }
+        });
+
+        const resumenMateriales = Array.from(resumenMaterialesMap.values())
+            .map(x => ({
+                ...x,
+                precioUnitario: x.cantidad > 0 ? (x.subtotal / x.cantidad) : 0
+            }))
+            .sort((a, b) => (b.subtotal || 0) - (a.subtotal || 0));
+
+        const resumenMO = Array.from(resumenMOMap.values())
+            .map(x => ({
+                ...x,
+                precioUnitario: x.jornales > 0 ? (x.subtotal / x.jornales) : 0
+            }))
+            .sort((a, b) => (b.subtotal || 0) - (a.subtotal || 0));
+
+        // Insertar tablas de resumen (si existen)
+        let y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 40;
+        if (resumenMateriales.length > 0) {
+            doc.setFontSize(11);
+            doc.text('Resumen consolidado - Materiales', 10, y);
+            y += 4;
+            doc.autoTable({
+                head: [["Material", "Unidad", "Cantidad", "P.Unitario (prom.)", "Subtotal"]],
+                body: resumenMateriales.map(m => [
+                    m.nombre,
+                    m.unidad,
+                    (m.cantidad || 0).toFixed(2),
+                    (m.precioUnitario || 0).toFixed(2),
+                    (m.subtotal || 0).toFixed(2)
+                ]),
+                startY: y,
+                theme: 'grid',
+                styles: { fontSize: 8 }
+            });
+            y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 8;
+        }
+
+        if (resumenMO.length > 0) {
+            doc.setFontSize(11);
+            doc.text('Resumen consolidado - Mano de obra', 10, y);
+            y += 4;
+            doc.autoTable({
+                head: [["Oficio", "Unidad", "Jornales", "P.Unitario (prom.)", "Subtotal"]],
+                body: resumenMO.map(mo => [
+                    mo.oficio,
+                    mo.unidad,
+                    (mo.jornales || 0).toFixed(2),
+                    (mo.precioUnitario || 0).toFixed(2),
+                    (mo.subtotal || 0).toFixed(2)
+                ]),
+                startY: y,
+                theme: 'grid',
+                styles: { fontSize: 8 }
+            });
+            y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 8;
+        }
+
+        // Desglose de materiales y mano de obra por renglón
+        renglones.forEach((r, idx) => {
+            if (r.desglose && (Array.isArray(r.desglose.materiales) || Array.isArray(r.desglose.mano_obra))) {
+                doc.setFontSize(10);
+                doc.text(`Renglón ${idx + 1}: ${r.descripcion}`, 10, y);
+                y += 5;
+
+                const m = ensureMetricas(r) || {};
+                const dias = (m.diasEstimados != null) ? toNumber(m.diasEstimados, 0).toFixed(2) : '';
+                const utilidad = (m.utilidad != null) ? toNumber(m.utilidad, 0).toFixed(2) : '';
+                const total = (m.costoTotal != null) ? toNumber(m.costoTotal, 0).toFixed(2) : '';
+                if (dias || utilidad || total) {
+                    doc.setFontSize(8);
+                    doc.text(`Tiempo: ${dias || '-'} días   Utilidad: ${utilidad || '-'}   Total: ${total || '-'}`, 12, y);
+                    y += 4;
+                }
+
+                if (Array.isArray(r.desglose.materiales) && r.desglose.materiales.length > 0) {
+                    doc.setFontSize(9);
+                    doc.text('Materiales:', 12, y);
+                    y += 4;
+                    const matRows = r.desglose.materiales.map(m => [
+                        m.nombre || m.material || '-',
+                        m.unidad || '-',
+                        m.total != null ? m.total : (m.cantidad != null ? m.cantidad : '-'),
+                        m.precio_unitario || m.precioUnitario || 0,
+                        m.subtotal || 0
+                    ]);
+                    doc.autoTable({
+                        head: [["Material", "Unidad", "Cantidad", "P.Unitario", "Subtotal"]],
+                        body: matRows,
+                        startY: y,
+                        theme: 'plain',
+                        styles: { fontSize: 8 },
+                        margin: { left: 12 }
+                    });
+                    y = doc.lastAutoTable.finalY + 2;
+                }
+                if (Array.isArray(r.desglose.mano_obra) && r.desglose.mano_obra.length > 0) {
+                    doc.setFontSize(9);
+                    doc.text('Mano de obra:', 12, y);
+                    y += 4;
+                    const moRows = r.desglose.mano_obra.map(mo => [
+                        mo.oficio || '-',
+                        mo.unidad || '-',
+                        mo.jornales != null ? mo.jornales.toFixed(2) : '-',
+                        mo.precio_unitario || mo.precioUnitario || 0,
+                        mo.subtotal || 0
+                    ]);
+                    doc.autoTable({
+                        head: [["Oficio", "Unidad", "Jornales", "P.Unitario", "Subtotal"]],
+                        body: moRows,
+                        startY: y,
+                        theme: 'plain',
+                        styles: { fontSize: 8 },
+                        margin: { left: 12 }
+                    });
+                    y = doc.lastAutoTable.finalY + 2;
+                }
+                y += 2;
+            }
+        });
+
+        // Totales
+        y += 6;
+        doc.setFontSize(11);
+        doc.text(`Total presupuesto: ${data.presupuesto.total || ''}`, 10, y);
+        y += 5;
+        doc.text(`Costo por m2: ${data.presupuesto.costoPorM2 || ''}`, 10, y);
+        y += 5;
+        doc.text(`Duración estimada: ${data.presupuesto.duracion || ''}`, 10, y);
+
+        doc.save(`${filename}.pdf`);
     }
 
     static exportToCSV(data, filename) {
@@ -755,7 +972,7 @@ class App {
         // Eventos de sincronización
         window.addEventListener('online', () => {
             this.sync.syncAll();
-            Utils.showNotification('Conexión restablecida. Sincronizando...', 'success');
+            // Evitar mensaje repetitivo al reconectar.
         });
 
         window.addEventListener('offline', () => {

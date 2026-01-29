@@ -16,6 +16,10 @@
   const signedNameEl = document.getElementById('signed-name');
   const noteEl = document.getElementById('att-note');
 
+  const btnNotif = document.getElementById('btn-notif');
+  const notifStatusEl = document.getElementById('notif-status');
+  const notifLastEl = document.getElementById('notif-last');
+
   const sb = window.SUPABASE_PUBLIC || {};
   const baseUrl = String(sb.url || '').replace(/\/$/, '');
   const ANON_KEY_STORAGE_KEY = 'ms_supabase_anon_key_v1';
@@ -58,6 +62,14 @@
     if (level) statusEl.classList.add(level);
   }
 
+  function setNotifStatus(msg) {
+    if (notifStatusEl) notifStatusEl.textContent = msg;
+  }
+
+  function setNotifLast(msg) {
+    if (notifLastEl) notifLastEl.textContent = msg;
+  }
+
   function assertReady() {
     if (!token) {
       setStatus('Falta el token del trabajador. Abre el link que te envió el administrador (ej: worker.html?t=...).', 'err');
@@ -91,6 +103,121 @@
       throw new Error(`Supabase error ${res.status}: ${text || res.statusText}`);
     }
     return text ? JSON.parse(text) : null;
+  }
+
+  async function ensureServiceWorker() {
+    if (!('serviceWorker' in navigator)) return null;
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) return reg;
+    } catch {
+      // ignore
+    }
+    try {
+      return await navigator.serviceWorker.register('./sw.js');
+    } catch {
+      return null;
+    }
+  }
+
+  async function ensureNotificationPermission() {
+    if (!('Notification' in window)) {
+      setNotifStatus('Este navegador no soporta notificaciones.');
+      return false;
+    }
+
+    if (Notification.permission === 'granted') {
+      setNotifStatus('Notificaciones activadas.');
+      return true;
+    }
+    if (Notification.permission === 'denied') {
+      setNotifStatus('Permiso denegado. Habilítalo en configuración del navegador.');
+      return false;
+    }
+
+    const permission = await Notification.requestPermission();
+    const ok = permission === 'granted';
+    setNotifStatus(ok ? 'Notificaciones activadas.' : 'No se otorgó permiso.');
+    return ok;
+  }
+
+  async function showPushLikeNotification(title, body) {
+    const t = String(title || 'Alerta');
+    const b = String(body || '').trim();
+    setNotifLast(`${t} — ${b || '(sin mensaje)'} (${new Date().toLocaleString('es-GT')})`);
+
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const reg = await ensureServiceWorker();
+    if (reg && typeof reg.showNotification === 'function') {
+      await reg.showNotification(t, {
+        body: b,
+        icon: './icon-192.png',
+        badge: './icon-192.png',
+        data: { url: `./worker.html?t=${encodeURIComponent(token)}` }
+      });
+      return;
+    }
+
+    // fallback (menos confiable, pero sirve)
+    try {
+      new Notification(t, { body: b });
+    } catch {
+      // ignore
+    }
+  }
+
+  const LAST_SEEN_KEY = `ms_worker_notif_last_seen_v1:${token}`;
+  function getLastSeenIso() {
+    try {
+      return String(localStorage.getItem(LAST_SEEN_KEY) || '').trim();
+    } catch {
+      return '';
+    }
+  }
+
+  function setLastSeenIso(iso) {
+    try {
+      localStorage.setItem(LAST_SEEN_KEY, String(iso || ''));
+    } catch {
+      // ignore
+    }
+  }
+
+  async function pollWorkerNotifications() {
+    // Requiere que exista la tabla en Supabase (ver supabase_schema.sql)
+    const lastSeen = getLastSeenIso();
+
+    const rows = await sbRequest(
+      `/rest/v1/ms_worker_notifications?select=id,title,body,created_at&token=eq.${encodeURIComponent(token)}&order=created_at.desc&limit=20`
+    );
+
+    const list = Array.isArray(rows) ? rows : [];
+    if (!list.length) return;
+
+    const sortedAsc = [...list].sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
+    const fresh = lastSeen ? sortedAsc.filter(r => String(r.created_at || '') > lastSeen) : sortedAsc.slice(-1);
+
+    for (const n of fresh) {
+      await showPushLikeNotification(n.title || 'Alerta', n.body || '');
+    }
+
+    const newestIso = String(list[0]?.created_at || '').trim();
+    if (newestIso) setLastSeenIso(newestIso);
+  }
+
+  function startNotificationsLoop() {
+    // polling simple (push real requeriría Web Push + backend)
+    const tick = async () => {
+      try {
+        await pollWorkerNotifications();
+      } catch (e) {
+        const msg = String(e?.message || e || '').trim();
+        if (msg) setNotifStatus(`Error en notificaciones: ${msg}`);
+      }
+    };
+    tick();
+    setInterval(tick, 20000);
   }
 
   async function loadContract() {
@@ -268,6 +395,22 @@
       btnSave.addEventListener('click', saveSignature);
       btnIn.addEventListener('click', () => registrarAsistencia('entrada'));
       btnOut.addEventListener('click', () => registrarAsistencia('salida'));
+
+      if (btnNotif) {
+        btnNotif.addEventListener('click', async () => {
+          const ok = await ensureNotificationPermission();
+          if (ok) {
+            await ensureServiceWorker();
+            startNotificationsLoop();
+            await showPushLikeNotification('Notificaciones activadas', 'Recibirás alertas mientras este portal esté abierto.');
+          }
+        });
+      }
+
+      // Estado inicial de UI
+      if (!('Notification' in window)) setNotifStatus('Notificaciones no disponibles en este navegador.');
+      else setNotifStatus(`Permiso: ${Notification.permission}`);
+      setNotifLast('—');
 
       await loadContract();
     } catch (e) {

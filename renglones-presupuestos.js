@@ -181,6 +181,7 @@
   const renglonesPredefinidos = renglonesPresupuestos;
 
   // Factores y parámetros constructivos por tipo de cubierta/entrepiso
+  // (Se conservan por compatibilidad con la UI y para estimaciones cuando falten renglones específicos.)
   const factoresCubierta = {
     "losa_solida": {
       rendimiento_mano_obra: 0.25, // m²/hora-persona
@@ -246,6 +247,193 @@
     }
   };
 
+
+  // Base de datos de rendimientos y precios unitarios por renglón y departamento (ejemplo real)
+  const rendimientosYPrecios = [
+    {
+      renglon: "Movimiento de tierras - Excavación manual",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Pala", unidad: "unidad", cantidad: 0.05, precio_unitario: 120 },
+        { nombre: "Carretilla", unidad: "unidad", cantidad: 0.02, precio_unitario: 350 }
+      ],
+      mano_obra: [
+        { oficio: "Peón", rendimiento: 3.5, unidad: "m3/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Sin ajuste para cabecera departamental"
+      }
+    },
+    {
+      renglon: "Concreto f'c=210 kg/cm2 vaciado en sitio",
+      departamento: "Quetzaltenango",
+      materiales: [
+        { nombre: "Cemento Portland", unidad: "bolsa 42.5kg", cantidad: 7.5, precio_unitario: 85 },
+        { nombre: "Arena", unidad: "m3", cantidad: 0.5, precio_unitario: 180 },
+        { nombre: "Grava", unidad: "m3", cantidad: 0.7, precio_unitario: 200 }
+      ],
+      mano_obra: [
+        { oficio: "Oficial albañil", rendimiento: 2.0, unidad: "m3/día", precio_unitario: 180 },
+        { oficio: "Ayudante", rendimiento: 2.0, unidad: "m3/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.08,
+        observaciones: "Ajuste por transporte y altitud"
+      }
+    },
+    {
+      renglon: "Mampostería de block 15x20x40 cm",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Block", unidad: "unidad", cantidad: 12.5, precio_unitario: 7.5 },
+        { nombre: "Cemento Portland", unidad: "bolsa 42.5kg", cantidad: 1.2, precio_unitario: 85 },
+        { nombre: "Arena", unidad: "m3", cantidad: 0.06, precio_unitario: 180 }
+      ],
+      mano_obra: [
+        { oficio: "Oficial albañil", rendimiento: 6.0, unidad: "m2/día", precio_unitario: 180 },
+        { oficio: "Ayudante", rendimiento: 6.0, unidad: "m2/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Sin ajuste para cabecera departamental"
+      }
+    }
+    ,
+    {
+      renglon: "Excavación para Cimientos",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Pala", unidad: "unidad", cantidad: 0.04, precio_unitario: 120 },
+        { nombre: "Carretilla", unidad: "unidad", cantidad: 0.02, precio_unitario: 350 }
+      ],
+      mano_obra: [
+        { oficio: "Peón", rendimiento: 3.0, unidad: "m3/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Estimado base para excavación manual"
+      }
+    },
+    {
+      renglon: "Relleno y Compactación",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Material de relleno", unidad: "m3", cantidad: 1.00, precio_unitario: 75 }
+      ],
+      mano_obra: [
+        { oficio: "Peón", rendimiento: 6.0, unidad: "m3/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Estimado base (sin equipo de compactación)"
+      }
+    },
+    {
+      renglon: "Cimientos de Concreto Ciclópeo",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Cemento Portland", unidad: "bolsa 42.5kg", cantidad: 6.0, precio_unitario: 85 },
+        { nombre: "Arena", unidad: "m3", cantidad: 0.40, precio_unitario: 180 },
+        { nombre: "Grava", unidad: "m3", cantidad: 0.60, precio_unitario: 200 },
+        { nombre: "Piedra bola", unidad: "m3", cantidad: 0.50, precio_unitario: 220 }
+      ],
+      mano_obra: [
+        { oficio: "Oficial albañil", rendimiento: 1.5, unidad: "m3/día", precio_unitario: 180 },
+        { oficio: "Ayudante", rendimiento: 1.5, unidad: "m3/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Estimado base para ciclópeo"
+      }
+    },
+    {
+      renglon: "Repello de Muros Interiores",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Cemento Portland", unidad: "bolsa 42.5kg", cantidad: 0.18, precio_unitario: 85 },
+        { nombre: "Arena", unidad: "m3", cantidad: 0.02, precio_unitario: 180 },
+        { nombre: "Cal hidratada", unidad: "kg", cantidad: 1.50, precio_unitario: 3.50 }
+      ],
+      mano_obra: [
+        { oficio: "Oficial albañil", rendimiento: 12.0, unidad: "m2/día", precio_unitario: 180 },
+        { oficio: "Ayudante", rendimiento: 12.0, unidad: "m2/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Estimado base para repello 1 capa"
+      }
+    },
+    {
+      renglon: "Pintura Interior y Exterior",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Pintura vinílica", unidad: "L", cantidad: 0.15, precio_unitario: 35 },
+        { nombre: "Sellador", unidad: "L", cantidad: 0.05, precio_unitario: 30 },
+        { nombre: "Lija", unidad: "unidad", cantidad: 0.02, precio_unitario: 2.0 }
+      ],
+      mano_obra: [
+        { oficio: "Pintor", rendimiento: 30.0, unidad: "m2/día", precio_unitario: 180 },
+        { oficio: "Ayudante", rendimiento: 30.0, unidad: "m2/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Estimado base (2 manos)"
+      }
+    },
+    {
+      renglon: "Pisos de Cerámica o Porcelanato",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Cerámica/Porcelanato", unidad: "m2", cantidad: 1.05, precio_unitario: 90 },
+        { nombre: "Pegamento cerámico", unidad: "bolsa", cantidad: 0.20, precio_unitario: 55 },
+        { nombre: "Boquilla", unidad: "bolsa", cantidad: 0.05, precio_unitario: 35 }
+      ],
+      mano_obra: [
+        { oficio: "Oficial albañil", rendimiento: 8.0, unidad: "m2/día", precio_unitario: 180 },
+        { oficio: "Ayudante", rendimiento: 8.0, unidad: "m2/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Estimado base"
+      }
+    },
+    {
+      renglon: "Impermeabilización",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Manto asfáltico", unidad: "m2", cantidad: 1.10, precio_unitario: 45 },
+        { nombre: "Primer asfáltico", unidad: "L", cantidad: 0.20, precio_unitario: 28 }
+      ],
+      mano_obra: [
+        { oficio: "Oficial", rendimiento: 20.0, unidad: "m2/día", precio_unitario: 180 },
+        { oficio: "Ayudante", rendimiento: 20.0, unidad: "m2/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Estimado base"
+      }
+    },
+    {
+      renglon: "Instalación Eléctrica Preliminar",
+      departamento: "Guatemala",
+      materiales: [
+        { nombre: "Tubo PVC conduit", unidad: "ml", cantidad: 1.00, precio_unitario: 9 },
+        { nombre: "Cable #12", unidad: "ml", cantidad: 3.00, precio_unitario: 6 },
+        { nombre: "Caja eléctrica", unidad: "unidad", cantidad: 0.20, precio_unitario: 8 },
+        { nombre: "Cinta aislante", unidad: "unidad", cantidad: 0.05, precio_unitario: 5 }
+      ],
+      mano_obra: [
+        { oficio: "Electricista", rendimiento: 50.0, unidad: "ml/día", precio_unitario: 180 },
+        { oficio: "Ayudante", rendimiento: 50.0, unidad: "ml/día", precio_unitario: 120 }
+      ],
+      factores_regionales: {
+        ajuste_precio: 1.00,
+        observaciones: "Estimado base"
+      }
+    }
+  ];
+
   // APUs (Análisis de Precios Unitarios) por departamento de Guatemala
   const apusGuatemala = {
     guatemala: {
@@ -260,6 +448,54 @@
         acero_corrugado: 8.75 // Q/kg
       }
     },
+    sacatepequez: {
+      factor_transporte: 1.10,
+      costo_hora_oficial: 44.90,
+      costo_hora_ayudante: 32.10,
+      materiales_base: { cemento: 66.00, arena: 180.00, grava: 205.00, bloque_15cm: 4.20, acero_corrugado: 8.80 }
+    },
+    chimaltenango: {
+      factor_transporte: 1.12,
+      costo_hora_oficial: 44.20,
+      costo_hora_ayudante: 31.40,
+      materiales_base: { cemento: 66.50, arena: 182.00, grava: 208.00, bloque_15cm: 4.18, acero_corrugado: 8.85 }
+    },
+    escuintla: {
+      factor_transporte: 1.14,
+      costo_hora_oficial: 45.10,
+      costo_hora_ayudante: 32.20,
+      materiales_base: { cemento: 66.25, arena: 188.00, grava: 212.00, bloque_15cm: 4.28, acero_corrugado: 8.90 }
+    },
+    santa_rosa: {
+      factor_transporte: 1.18,
+      costo_hora_oficial: 44.10,
+      costo_hora_ayudante: 31.20,
+      materiales_base: { cemento: 67.20, arena: 190.00, grava: 218.00, bloque_15cm: 4.35, acero_corrugado: 9.05 }
+    },
+    solola: {
+      factor_transporte: 1.16,
+      costo_hora_oficial: 43.20,
+      costo_hora_ayudante: 30.60,
+      materiales_base: { cemento: 67.00, arena: 178.00, grava: 206.00, bloque_15cm: 4.15, acero_corrugado: 8.95 }
+    },
+    suchitepequez: {
+      factor_transporte: 1.17,
+      costo_hora_oficial: 43.90,
+      costo_hora_ayudante: 31.00,
+      materiales_base: { cemento: 67.10, arena: 186.00, grava: 212.00, bloque_15cm: 4.25, acero_corrugado: 9.00 }
+    },
+    retalhuleu: {
+      factor_transporte: 1.19,
+      costo_hora_oficial: 44.30,
+      costo_hora_ayudante: 31.30,
+      materiales_base: { cemento: 67.60, arena: 190.00, grava: 218.00, bloque_15cm: 4.35, acero_corrugado: 9.10 }
+    },
+    san_marcos: {
+      factor_transporte: 1.20,
+      costo_hora_oficial: 42.80,
+      costo_hora_ayudante: 30.20,
+      materiales_base: { cemento: 68.00, arena: 182.00, grava: 210.00, bloque_15cm: 4.20, acero_corrugado: 9.05 }
+    },
     quetzaltenango: {
       factor_transporte: 1.08,
       costo_hora_oficial: 42.30,
@@ -271,6 +507,66 @@
         bloque_15cm: 4.10,
         acero_corrugado: 8.95
       }
+    },
+    totonicapan: {
+      factor_transporte: 1.15,
+      costo_hora_oficial: 42.10,
+      costo_hora_ayudante: 29.70,
+      materiales_base: { cemento: 67.80, arena: 176.00, grava: 206.00, bloque_15cm: 4.12, acero_corrugado: 9.00 }
+    },
+    huehuetenango: {
+      factor_transporte: 1.22,
+      costo_hora_oficial: 41.80,
+      costo_hora_ayudante: 29.40,
+      materiales_base: { cemento: 68.50, arena: 185.00, grava: 214.00, bloque_15cm: 4.30, acero_corrugado: 9.15 }
+    },
+    quiche: {
+      factor_transporte: 1.20,
+      costo_hora_oficial: 42.00,
+      costo_hora_ayudante: 29.60,
+      materiales_base: { cemento: 68.20, arena: 182.00, grava: 212.00, bloque_15cm: 4.25, acero_corrugado: 9.10 }
+    },
+    baja_verapaz: {
+      factor_transporte: 1.18,
+      costo_hora_oficial: 43.10,
+      costo_hora_ayudante: 30.40,
+      materiales_base: { cemento: 67.40, arena: 188.00, grava: 216.00, bloque_15cm: 4.35, acero_corrugado: 9.05 }
+    },
+    alta_verapaz: {
+      factor_transporte: 1.25,
+      costo_hora_oficial: 42.80,
+      costo_hora_ayudante: 30.10,
+      materiales_base: { cemento: 69.20, arena: 195.00, grava: 225.00, bloque_15cm: 4.55, acero_corrugado: 9.45 }
+    },
+    el_progreso: {
+      factor_transporte: 1.16,
+      costo_hora_oficial: 44.40,
+      costo_hora_ayudante: 31.60,
+      materiales_base: { cemento: 66.90, arena: 188.00, grava: 214.00, bloque_15cm: 4.32, acero_corrugado: 9.00 }
+    },
+    zacapa: {
+      factor_transporte: 1.22,
+      costo_hora_oficial: 44.90,
+      costo_hora_ayudante: 32.10,
+      materiales_base: { cemento: 68.20, arena: 198.00, grava: 228.00, bloque_15cm: 4.60, acero_corrugado: 9.55 }
+    },
+    jalapa: {
+      factor_transporte: 1.20,
+      costo_hora_oficial: 43.90,
+      costo_hora_ayudante: 31.10,
+      materiales_base: { cemento: 68.00, arena: 192.00, grava: 220.00, bloque_15cm: 4.45, acero_corrugado: 9.30 }
+    },
+    jutiapa: {
+      factor_transporte: 1.22,
+      costo_hora_oficial: 44.10,
+      costo_hora_ayudante: 31.30,
+      materiales_base: { cemento: 68.40, arena: 196.00, grava: 226.00, bloque_15cm: 4.55, acero_corrugado: 9.45 }
+    },
+    chiquimula: {
+      factor_transporte: 1.24,
+      costo_hora_oficial: 44.40,
+      costo_hora_ayudante: 31.70,
+      materiales_base: { cemento: 68.90, arena: 200.00, grava: 232.00, bloque_15cm: 4.65, acero_corrugado: 9.60 }
     },
     peten: {
       factor_transporte: 1.35,
@@ -303,43 +599,398 @@
     return renglonesPresupuestos[clave] || [];
   }
 
-  function calcularCostoUnitario(renglonId, tipologia, tipoCubierta, departamento, cantidad) {
-    const claveTipologia = (tipologia || '').toUpperCase();
-    const claveDepto = (departamento || '').toLowerCase();
-    const renglon = (renglonesPresupuestos[claveTipologia] || []).find(r => r.id === renglonId);
-    const factores = factoresCubierta[tipoCubierta];
-    const apu = apusGuatemala[claveDepto];
+  function normalizarUnidadBasica(unidad) {
+    const u = (unidad || '').toString().toLowerCase().trim();
+    if (u === 'm²' || u === 'm2') return 'm2';
+    if (u === 'm³' || u === 'm3') return 'm3';
+    if (u === 'ml') return 'ml';
+    if (u === 'kg') return 'kg';
+    return u;
+  }
 
-    if (!renglon || !factores || !apu) return 0;
+  function normalizarClaveDepartamento(departamento) {
+    return (departamento || '')
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/[\s-]+/g, '_');
+  }
 
-    // Cálculos base (simplificado)
-    let costoMateriales = 0;
-    let costoManoObra = 0;
-    let costoEquipos = 0;
-    let costosIndirectos = 0;
+  function normalizarNombreRenglon(renglonNombre) {
+    return (renglonNombre || '')
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ');
+  }
 
-    // Simulación con factores del departamento y mano de obra según cubierta
-    costoMateriales = cantidad * 150 * apu.factor_transporte;
-    costoManoObra = cantidad * (factores.costo_mano_obra_m2 || 0);
-    costoEquipos = cantidad * 25;
-    costosIndirectos = (costoMateriales + costoManoObra + costoEquipos) * 0.18;
+  function obtenerApuDepto(departamento) {
+    const clave = normalizarClaveDepartamento(departamento || 'guatemala') || 'guatemala';
+    return apusGuatemala[clave] || apusGuatemala.guatemala;
+  }
+
+  function encontrarRegistroRendimiento(renglonNombre, departamento) {
+    const nombre = normalizarNombreRenglon(renglonNombre);
+    const depto = normalizarClaveDepartamento(departamento || 'guatemala') || 'guatemala';
+    if (!nombre) return null;
+
+    // 1) Exacto por depto
+    let match = rendimientosYPrecios.find(r =>
+      normalizarNombreRenglon(r.renglon) === nombre &&
+      normalizarClaveDepartamento(r.departamento) === depto
+    );
+    if (match) return match;
+
+    // 2) Exacto por Guatemala como default
+    match = rendimientosYPrecios.find(r =>
+      normalizarNombreRenglon(r.renglon) === nombre &&
+      normalizarClaveDepartamento(r.departamento) === 'guatemala'
+    );
+    if (match) {
+      // Si el depto no tiene registro exacto, aplicamos factor regional del depto solicitado.
+      if (depto !== 'guatemala') {
+        const apuDepto = obtenerApuDepto(departamento);
+        const factor = Number(apuDepto && apuDepto.factor_transporte) || 1;
+        return {
+          ...match,
+          factores_regionales: {
+            ...(match.factores_regionales || {}),
+            ajuste_precio: factor,
+            observaciones: (match.factores_regionales && match.factores_regionales.observaciones)
+              ? match.factores_regionales.observaciones
+              : 'Estimado: ajuste regional aplicado por transporte'
+          }
+        };
+      }
+      return match;
+    }
+
+    // 3) Fallback por palabras clave (plantillas)
+    const apu = obtenerApuDepto(departamento);
+    const factor = Number(apu && apu.factor_transporte) || 1;
+    const jornalOficial = (Number(apu && apu.costo_hora_oficial) || 0) * 8;
+    const jornalAyudante = (Number(apu && apu.costo_hora_ayudante) || 0) * 8;
+    const unidad = null;
+
+    const plantillas = [
+      {
+        test: (n) => n.includes('excav') || n.includes('movimiento de tierras') || n.includes('desmonte'),
+        renglon: 'Movimiento de tierras - Excavación manual',
+        unidad,
+        materiales: [
+          { nombre: 'Pala', unidad: 'unidad', cantidad: 0.05, precio_unitario: 120 },
+          { nombre: 'Carretilla', unidad: 'unidad', cantidad: 0.02, precio_unitario: 350 }
+        ],
+        mano_obra: [
+          { oficio: 'Peón', rendimiento: 3.5, unidad: 'm3/día', precio_unitario: jornalAyudante || 120 }
+        ]
+      },
+      {
+        test: (n) => n.includes('concreto') || n.includes('losa') || n.includes('ciment'),
+        renglon: "Concreto f'c=210 kg/cm2 vaciado en sitio",
+        unidad,
+        materiales: [
+          { nombre: 'Cemento Portland', unidad: 'bolsa 42.5kg', cantidad: 7.5, precio_unitario: (Number(apu.materiales_base && apu.materiales_base.cemento) || 85) },
+          { nombre: 'Arena', unidad: 'm3', cantidad: 0.5, precio_unitario: (Number(apu.materiales_base && apu.materiales_base.arena) || 180) },
+          { nombre: 'Grava', unidad: 'm3', cantidad: 0.7, precio_unitario: (Number(apu.materiales_base && apu.materiales_base.grava) || 200) }
+        ],
+        mano_obra: [
+          { oficio: 'Oficial albañil', rendimiento: 2.0, unidad: 'm3/día', precio_unitario: jornalOficial || 180 },
+          { oficio: 'Ayudante', rendimiento: 2.0, unidad: 'm3/día', precio_unitario: jornalAyudante || 120 }
+        ]
+      },
+      {
+        test: (n) => n.includes('mamposter') || n.includes('bloque') || n.includes('muro'),
+        renglon: 'Mampostería de block 15x20x40 cm',
+        unidad,
+        materiales: [
+          { nombre: 'Block', unidad: 'unidad', cantidad: 12.5, precio_unitario: (Number(apu.materiales_base && apu.materiales_base.bloque_15cm) || 7.5) },
+          { nombre: 'Cemento Portland', unidad: 'bolsa 42.5kg', cantidad: 1.2, precio_unitario: (Number(apu.materiales_base && apu.materiales_base.cemento) || 85) },
+          { nombre: 'Arena', unidad: 'm3', cantidad: 0.06, precio_unitario: (Number(apu.materiales_base && apu.materiales_base.arena) || 180) }
+        ],
+        mano_obra: [
+          { oficio: 'Oficial albañil', rendimiento: 6.0, unidad: 'm2/día', precio_unitario: jornalOficial || 180 },
+          { oficio: 'Ayudante', rendimiento: 6.0, unidad: 'm2/día', precio_unitario: jornalAyudante || 120 }
+        ]
+      },
+      {
+        test: (n) => n.includes('repello') || n.includes('estuco'),
+        renglon: 'Repello de Muros Interiores',
+        unidad,
+        materiales: [
+          { nombre: 'Cemento Portland', unidad: 'bolsa 42.5kg', cantidad: 0.18, precio_unitario: (Number(apu.materiales_base && apu.materiales_base.cemento) || 85) },
+          { nombre: 'Arena', unidad: 'm3', cantidad: 0.02, precio_unitario: (Number(apu.materiales_base && apu.materiales_base.arena) || 180) },
+          { nombre: 'Cal hidratada', unidad: 'kg', cantidad: 1.50, precio_unitario: 3.50 }
+        ],
+        mano_obra: [
+          { oficio: 'Oficial albañil', rendimiento: 12.0, unidad: 'm2/día', precio_unitario: jornalOficial || 180 },
+          { oficio: 'Ayudante', rendimiento: 12.0, unidad: 'm2/día', precio_unitario: jornalAyudante || 120 }
+        ]
+      },
+      {
+        test: (n) => n.includes('pintura') || n.includes('pintor'),
+        renglon: 'Pintura Interior y Exterior',
+        unidad,
+        materiales: [
+          { nombre: 'Pintura vinílica', unidad: 'L', cantidad: 0.15, precio_unitario: 35 },
+          { nombre: 'Sellador', unidad: 'L', cantidad: 0.05, precio_unitario: 30 },
+          { nombre: 'Lija', unidad: 'unidad', cantidad: 0.02, precio_unitario: 2.0 }
+        ],
+        mano_obra: [
+          { oficio: 'Pintor', rendimiento: 30.0, unidad: 'm2/día', precio_unitario: jornalOficial || 180 },
+          { oficio: 'Ayudante', rendimiento: 30.0, unidad: 'm2/día', precio_unitario: jornalAyudante || 120 }
+        ]
+      },
+      {
+        test: (n) => n.includes('piso') || n.includes('cerámica') || n.includes('ceramica') || n.includes('porcelanato'),
+        renglon: 'Pisos de Cerámica o Porcelanato',
+        unidad,
+        materiales: [
+          { nombre: 'Cerámica/Porcelanato', unidad: 'm2', cantidad: 1.05, precio_unitario: 90 },
+          { nombre: 'Pegamento cerámico', unidad: 'bolsa', cantidad: 0.20, precio_unitario: 55 },
+          { nombre: 'Boquilla', unidad: 'bolsa', cantidad: 0.05, precio_unitario: 35 }
+        ],
+        mano_obra: [
+          { oficio: 'Oficial albañil', rendimiento: 8.0, unidad: 'm2/día', precio_unitario: jornalOficial || 180 },
+          { oficio: 'Ayudante', rendimiento: 8.0, unidad: 'm2/día', precio_unitario: jornalAyudante || 120 }
+        ]
+      },
+      {
+        test: (n) => n.includes('impermeabil'),
+        renglon: 'Impermeabilización',
+        unidad,
+        materiales: [
+          { nombre: 'Manto asfáltico', unidad: 'm2', cantidad: 1.10, precio_unitario: 45 },
+          { nombre: 'Primer asfáltico', unidad: 'L', cantidad: 0.20, precio_unitario: 28 }
+        ],
+        mano_obra: [
+          { oficio: 'Oficial', rendimiento: 20.0, unidad: 'm2/día', precio_unitario: jornalOficial || 180 },
+          { oficio: 'Ayudante', rendimiento: 20.0, unidad: 'm2/día', precio_unitario: jornalAyudante || 120 }
+        ]
+      },
+      {
+        test: (n) => n.includes('eléctr') || n.includes('electric') || n.includes('tubo pvc') || n.includes('cable'),
+        renglon: 'Instalación Eléctrica Preliminar',
+        unidad,
+        materiales: [
+          { nombre: 'Tubo PVC conduit', unidad: 'ml', cantidad: 1.00, precio_unitario: 9 },
+          { nombre: 'Cable #12', unidad: 'ml', cantidad: 3.00, precio_unitario: 6 },
+          { nombre: 'Caja eléctrica', unidad: 'unidad', cantidad: 0.20, precio_unitario: 8 },
+          { nombre: 'Cinta aislante', unidad: 'unidad', cantidad: 0.05, precio_unitario: 5 }
+        ],
+        mano_obra: [
+          { oficio: 'Electricista', rendimiento: 50.0, unidad: 'ml/día', precio_unitario: jornalOficial || 180 },
+          { oficio: 'Ayudante', rendimiento: 50.0, unidad: 'ml/día', precio_unitario: jornalAyudante || 120 }
+        ]
+      }
+    ];
+
+    const plantilla = plantillas.find(p => p.test(nombre));
+    if (!plantilla) return null;
 
     return {
-      unitario: costoMateriales + costoManoObra + costoEquipos + costosIndirectos,
-      desglose: {
-        materiales: costoMateriales,
-        mano_obra: costoManoObra,
-        equipos: costoEquipos,
-        indirectos: costosIndirectos,
-        utilidad: (costoMateriales + costoManoObra + costoEquipos + costosIndirectos) * 0.15,
-        impuestos: (costoMateriales + costoManoObra + costoEquipos + costosIndirectos) * 0.12
+      renglon: plantilla.renglon,
+      departamento: depto,
+      materiales: plantilla.materiales,
+      mano_obra: plantilla.mano_obra,
+      factores_regionales: {
+        ajuste_precio: factor,
+        observaciones: 'Estimado por plantilla (sin registro exacto)'
       }
     };
+  }
+
+  function calcularCostoUnitarioInterno(renglonNombre, departamento, cantidad, unidadMedida, opciones) {
+    const cantidadNum = Number(cantidad) || 0;
+    if (cantidadNum <= 0) return { unitario: 0, desglose: { materiales: [], mano_obra: [], equipos: 0 } };
+
+    const unidad = normalizarUnidadBasica(unidadMedida);
+    const registro = encontrarRegistroRendimiento(renglonNombre, departamento);
+    const apuDepto = obtenerApuDepto(departamento);
+    const factorTransporte = Number(apuDepto && apuDepto.factor_transporte) || 1;
+    const ajuste = registro && registro.factores_regionales ? (Number(registro.factores_regionales.ajuste_precio) || 1) : factorTransporte;
+    const tipoCubierta = opciones && opciones.tipoCubierta ? String(opciones.tipoCubierta) : '';
+
+    // Materiales
+    let costoMateriales = 0;
+    const desgloseMateriales = [];
+
+    if (registro && Array.isArray(registro.materiales) && registro.materiales.length > 0) {
+      registro.materiales.forEach((mat) => {
+        const total = (Number(mat.cantidad) || 0) * cantidadNum;
+        const precio = Number(mat.precio_unitario) || 0;
+        const subtotal = total * precio * ajuste;
+        costoMateriales += subtotal;
+        desgloseMateriales.push({ ...mat, total, subtotal });
+      });
+    } else if (tipoCubierta && factoresCubierta[tipoCubierta] && unidad === 'm2') {
+      const fc = factoresCubierta[tipoCubierta];
+      const mp = fc && fc.materiales_por_m2 ? fc.materiales_por_m2 : {};
+      const base = apuDepto && apuDepto.materiales_base ? apuDepto.materiales_base : {};
+      Object.entries(mp).forEach(([key, qtyPerM2]) => {
+        const total = (Number(qtyPerM2) || 0) * cantidadNum;
+        let precio = 0;
+        if (key === 'cemento') precio = Number(base.cemento) || 0;
+        if (key === 'arena') precio = Number(base.arena) || 0;
+        if (key === 'grava') precio = Number(base.grava) || 0;
+        if (key === 'acero') precio = Number(base.acero_corrugado) || 0;
+        const subtotal = total * precio * factorTransporte;
+        costoMateriales += subtotal;
+        desgloseMateriales.push({ nombre: key, unidad: 'unidad', cantidad: Number(qtyPerM2) || 0, precio_unitario: precio, total, subtotal });
+      });
+    }
+
+    // Mano de obra
+    let costoManoObra = 0;
+    const desgloseManoObra = [];
+    if (registro && Array.isArray(registro.mano_obra) && registro.mano_obra.length > 0) {
+      registro.mano_obra.forEach((mo) => {
+        const rendimiento = Number(mo.rendimiento) || 0;
+        const jornales = rendimiento > 0 ? (cantidadNum / rendimiento) : 0;
+        const precio = Number(mo.precio_unitario) || 0;
+        const subtotal = jornales * precio * ajuste;
+        costoManoObra += subtotal;
+        desgloseManoObra.push({ ...mo, jornales, subtotal });
+      });
+    } else if (tipoCubierta && factoresCubierta[tipoCubierta] && unidad === 'm2') {
+      // Mano de obra estimada por cubierta cuando no existe registro exacto.
+      const fc = factoresCubierta[tipoCubierta];
+      const jornalOficial = (Number(apuDepto && apuDepto.costo_hora_oficial) || 0) * 8;
+      const m2PorDia = (Number(fc && fc.rendimiento_mano_obra) || 0) * 8;
+      const jornales = m2PorDia > 0 ? (cantidadNum / m2PorDia) : 0;
+      const precio = Number(fc && fc.costo_mano_obra_m2) > 0
+        ? (Number(fc.costo_mano_obra_m2) * 1) * 1
+        : (jornalOficial || 0);
+      const subtotal = (Number(fc && fc.costo_mano_obra_m2) > 0)
+        ? (Number(fc.costo_mano_obra_m2) * cantidadNum * factorTransporte)
+        : (jornales * precio * factorTransporte);
+      costoManoObra += subtotal;
+      desgloseManoObra.push({ oficio: 'Cuadrilla', rendimiento: m2PorDia || 0, unidad: 'm2/día', precio_unitario: precio, jornales, subtotal });
+    }
+
+    // Fallback genérico: asegura costo > 0 para cualquier renglón (dependiente del departamento)
+    if (costoMateriales === 0 && costoManoObra === 0) {
+      const nombre = (renglonNombre || '').toString().toLowerCase();
+      const base = apuDepto && apuDepto.materiales_base ? apuDepto.materiales_base : {};
+      const jornalOficial = (Number(apuDepto && apuDepto.costo_hora_oficial) || 0) * 8;
+      const jornalAyudante = (Number(apuDepto && apuDepto.costo_hora_ayudante) || 0) * 8;
+
+      // Valores “plantilla genérica” por unidad (solo para evitar 0; se puede refinar con más datos)
+      let rendimientoDia = 0;
+      let matCemento = 0;
+      let matArena = 0;
+      let matGrava = 0;
+      let matAcero = 0;
+      let matBlock = 0;
+
+      if (unidad === 'm3') {
+        rendimientoDia = 3.0;
+        if (nombre.includes('concreto') || nombre.includes('ciment') || nombre.includes('losa')) {
+          matCemento = 7.0; matArena = 0.5; matGrava = 0.7; matAcero = 4.0;
+        }
+      } else if (unidad === 'm2') {
+        rendimientoDia = 10.0;
+        if (nombre.includes('mamposter') || nombre.includes('bloque')) {
+          matBlock = 12.5; matCemento = 1.2; matArena = 0.06;
+        } else if (nombre.includes('repello')) {
+          matCemento = 0.18; matArena = 0.02;
+        } else if (nombre.includes('pintura')) {
+          // materiales estimados por m2 (litros) convertidos a subtotal directo
+        } else {
+          matCemento = 0.12; matArena = 0.015;
+        }
+      } else if (unidad === 'ml') {
+        rendimientoDia = 35.0;
+        matAcero = nombre.includes('viga') || nombre.includes('amarre') ? 2.0 : 0;
+        matCemento = nombre.includes('sobrecimiento') ? 0.4 : 0;
+      } else {
+        rendimientoDia = 1.0;
+      }
+
+      const precioCemento = Number(base.cemento) || 0;
+      const precioArena = Number(base.arena) || 0;
+      const precioGrava = Number(base.grava) || 0;
+      const precioAcero = Number(base.acero_corrugado) || 0;
+      const precioBlock = Number(base.bloque_15cm) || 0;
+
+      const addMat = (nombreMat, unidadMat, cantidadPorUnidad, precioUnit) => {
+        const total = (Number(cantidadPorUnidad) || 0) * cantidadNum;
+        const precio = Number(precioUnit) || 0;
+        const subtotal = total * precio * factorTransporte;
+        if (subtotal > 0) {
+          costoMateriales += subtotal;
+          desgloseMateriales.push({ nombre: nombreMat, unidad: unidadMat, cantidad: Number(cantidadPorUnidad) || 0, precio_unitario: precio, total, subtotal });
+        }
+      };
+
+      addMat('Cemento', 'bolsa', matCemento, precioCemento || 65);
+      addMat('Arena', 'm3', matArena, precioArena || 185);
+      addMat('Grava', 'm3', matGrava, precioGrava || 210);
+      addMat('Acero corrugado', 'kg', matAcero, precioAcero || 8.75);
+      addMat('Block 15cm', 'unidad', matBlock, precioBlock || 4.25);
+
+      const jornales = rendimientoDia > 0 ? (cantidadNum / rendimientoDia) : 0;
+      const precioJornal = (unidad === 'm3') ? (jornalAyudante || 0) : (jornalOficial || 0);
+      const subtotalMO = jornales * precioJornal * factorTransporte;
+      if (subtotalMO > 0) {
+        costoManoObra += subtotalMO;
+        desgloseManoObra.push({ oficio: 'Cuadrilla', rendimiento: rendimientoDia, unidad: `${unidad || 'unidad'}/día`, precio_unitario: precioJornal, jornales, subtotal: subtotalMO });
+      }
+    }
+
+    // Equipos (reservado)
+    const costoEquipos = 0;
+
+    const costoDirecto = costoMateriales + costoManoObra + costoEquipos;
+
+    return {
+      unitario: costoDirecto / cantidadNum,
+      desglose: {
+        materiales: desgloseMateriales,
+        mano_obra: desgloseManoObra,
+        equipos: costoEquipos,
+        costoDirecto,
+        esEstimado: !registro || (registro && registro.factores_regionales && String(registro.factores_regionales.observaciones || '').toLowerCase().includes('estimado'))
+      }
+    };
+  }
+
+  // Compatibilidad: soporta firma antigua por id/tipología/cubierta y firma nueva por nombre.
+  function calcularCostoUnitario() {
+    const args = Array.from(arguments);
+
+    // Firma antigua: (renglonId, tipologia, tipoCubierta, departamento, cantidad)
+    if (typeof args[0] === 'number' && args.length >= 5) {
+      const renglonId = args[0];
+      const tipologia = args[1];
+      const tipoCubierta = args[2];
+      const departamento = args[3];
+      const cantidad = args[4];
+      const claveTipologia = (tipologia || '').toString().toUpperCase();
+      const renglon = (renglonesPresupuestos[claveTipologia] || []).find(r => r && r.id === renglonId);
+      const nombre = renglon && renglon.nombre ? renglon.nombre : '';
+      const unidad = renglon && renglon.unidad ? renglon.unidad : '';
+      return calcularCostoUnitarioInterno(nombre, departamento, cantidad, unidad, { tipoCubierta });
+    }
+
+    // Firma nueva: (renglonNombre, departamento, cantidad, unidadMedida, opciones?)
+    const renglonNombre = args[0];
+    const departamento = args[1];
+    const cantidad = args[2];
+    const unidadMedida = args[3];
+    const opciones = args[4];
+    return calcularCostoUnitarioInterno(renglonNombre, departamento, cantidad, unidadMedida, opciones);
   }
 
   // Exponer a la app
   global.renglonesPresupuestos = renglonesPresupuestos;
   global.renglonesPredefinidos = renglonesPredefinidos;
+  global.rendimientosYPrecios = rendimientosYPrecios;
   global.factoresCubierta = factoresCubierta;
   global.apusGuatemala = apusGuatemala;
   global.obtenerRenglonesPorTipologia = obtenerRenglonesPorTipologia;

@@ -11,8 +11,9 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="rrhh.css">
+    <link rel="stylesheet" href="executive-theme.css">
     <script src="database.js"></script>
     <script src="sync.js"></script>
     <script defer src="pwa.js"></script>
@@ -570,7 +571,7 @@
         }
     </style>
 </head>
-<body>
+<body class="exec-app">
     <!-- Encabezado -->
     <header class="header">
         <div class="logo-container">
@@ -1132,6 +1133,51 @@
         </div>
     </div>
 
+    <!-- Selector de contacto (RRHH) -->
+    <div id="contactPickerOverlay" class="modal-overlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="contactPickerTitle">
+            <div class="modal-header">
+                <h3 class="modal-title" id="contactPickerTitle">Seleccionar contacto</h3>
+                <button class="modal-close" type="button" onclick="ContactPicker.close()" aria-label="Cerrar">×</button>
+            </div>
+            <div class="modal-body">
+                <input id="contactPickerSearch" class="form-control contact-picker-search" type="text" placeholder="Buscar por nombre, puesto o teléfono">
+                <div id="contactPickerList" class="contact-picker-list"></div>
+
+                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(212,175,55,0.2);">
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label class="form-label" for="contactPickerManualName">Nombre (opcional)</label>
+                        <input id="contactPickerManualName" class="form-control" type="text" placeholder="Ej: Juan Pérez">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label class="form-label" for="contactPickerManualPhone">Teléfono</label>
+                        <input id="contactPickerManualPhone" class="form-control" type="tel" placeholder="Ej: 55554444 o +50255554444">
+                    </div>
+                    <div style="display:flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                        <button type="button" class="btn-firma" onclick="ContactPicker.useManual()">
+                            <i class="fas fa-check"></i> Usar número
+                        </button>
+                        <button type="button" class="btn-firma" onclick="ContactPicker.close()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="contactPickerFooter" class="modal-footer" style="display:none; justify-content: space-between; align-items: center;">
+                <div id="contactPickerFooterHint" style="opacity: 0.9;"></div>
+                <div style="display:flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+                    <button type="button" class="btn-firma" onclick="ContactPicker.clearSelection()">
+                        <i class="fas fa-eraser"></i> Limpiar
+                    </button>
+                    <button id="contactPickerConfirmBtn" type="button" class="btn-firma" onclick="ContactPicker.confirm()">
+                        <i class="fas fa-paper-plane"></i> Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Notificaciones -->
     <div class="notificaciones" id="notificaciones"></div>
 
@@ -1243,6 +1289,7 @@
             refrescarVacacionesUI();
             initAsistenciaUI();
             refrescarAsistencias();
+            initContactPickerUI();
 
             const weekInput = document.getElementById('semanaPlanilla');
             if (weekInput && !weekInput.value) {
@@ -2634,19 +2681,428 @@
         // Nota: la sección de Ubicación ahora usa GPS real (asistencias) + Google Maps.
 
         // Funciones de comunicación
+        function normalizePhoneToE164GT(rawPhone) {
+            const raw = String(rawPhone || '').trim();
+            if (!raw) return '';
+
+            let digits = raw.replace(/[^\d+]/g, '');
+            if (digits.startsWith('+')) digits = digits.slice(1);
+            digits = digits.replace(/^00/, '');
+            digits = digits.replace(/^0+/, '');
+
+            // Guatemala: si viene solo local (8 dígitos), anteponer 502
+            if (/^\d{8}$/.test(digits)) digits = `502${digits}`;
+
+            return digits;
+        }
+
+        function isValidE164Digits(digits) {
+            return /^\d{8,15}$/.test(String(digits || ''));
+        }
+
+        function openWhatsApp(phoneE164Digits, text) {
+            const phone = String(phoneE164Digits || '').trim();
+            if (!isValidE164Digits(phone)) {
+                mostrarNotificacion('Teléfono inválido para WhatsApp', 'error');
+                return;
+            }
+            const msg = String(text || '').trim();
+            const url = msg
+                ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+                : `https://wa.me/${phone}`;
+            window.open(url, '_blank');
+        }
+
+        function openTel(phoneRaw) {
+            const raw = String(phoneRaw || '').trim();
+            if (!raw) {
+                mostrarNotificacion('Teléfono vacío', 'error');
+                return;
+            }
+            window.location.href = `tel:${raw}`;
+        }
+
+        function getRRHHContacts() {
+            const out = [];
+
+            // Preferir BD real (database.js)
+            const db = getDB();
+            if (db) {
+                try {
+                    const list = db.get('trabajadores') || [];
+                    for (const t of list) {
+                        if (!t) continue;
+                        const nombre = `${t.nombre || ''} ${t.apellido || ''}`.trim() || t.nombreCompleto || t.nombres || t.fullName || 'Sin nombre';
+                        const telefonoRaw = t.telefono || t.phone || t.celular || t.movil || t.whatsapp || '';
+                        const telefonoE164 = normalizePhoneToE164GT(telefonoRaw);
+                        out.push({
+                            id: String(t.id || t.id_trabajador || nombre),
+                            nombre,
+                            puesto: t.puesto || '—',
+                            telefonoRaw: String(telefonoRaw || '').trim(),
+                            telefonoE164,
+                            source: 'db'
+                        });
+                    }
+                } catch {}
+            }
+
+            // Fallback RRHH local (rrhhData)
+            for (const t of (trabajadoresActivos || [])) {
+                if (!t) continue;
+                const nombre = t.nombreCompleto || t.nombre || t.nombres || t.fullName || 'Sin nombre';
+                const telefonoRaw = t.telefono || t.phone || t.celular || t.movil || '';
+                const telefonoE164 = normalizePhoneToE164GT(telefonoRaw);
+                out.push({
+                    id: String(t.idTrabajador || t.id || t.codigo || nombre),
+                    nombre,
+                    puesto: t.puesto || '—',
+                    telefonoRaw: String(telefonoRaw || '').trim(),
+                    telefonoE164,
+                    source: 'local'
+                });
+            }
+
+            // Aplicantes aprobados (también pueden tener teléfono)
+            for (const a of (aplicantes || [])) {
+                if (!a || a.estado !== 'aprobado') continue;
+                const nombre = a.nombre || 'Sin nombre';
+                const telefonoRaw = a.telefono || '';
+                const telefonoE164 = normalizePhoneToE164GT(telefonoRaw);
+                out.push({
+                    id: String(a.idTrabajador || a.id || nombre),
+                    nombre,
+                    puesto: a.puesto || '—',
+                    telefonoRaw: String(telefonoRaw || '').trim(),
+                    telefonoE164,
+                    source: 'aplicante'
+                });
+            }
+
+            // De-dup por teléfono (si existe), si no por nombre+puesto
+            const byKey = new Map();
+            for (const c of out) {
+                const key = c.telefonoE164 ? `tel:${c.telefonoE164}` : `np:${String(c.nombre).toLowerCase()}|${String(c.puesto).toLowerCase()}`;
+                if (!byKey.has(key)) byKey.set(key, c);
+            }
+            return Array.from(byKey.values());
+        }
+
+        const ContactPicker = {
+            state: {
+                onSelect: null,
+                title: 'Seleccionar contacto',
+                contacts: [],
+                mode: 'single',
+                selectedKeys: new Set(),
+                confirmLabel: 'Confirmar',
+                onConfirm: null,
+                viewContacts: []
+            },
+
+            open({ title, contacts, onSelect, mode, confirmLabel, onConfirm }) {
+                this.state.title = String(title || 'Seleccionar contacto');
+                this.state.contacts = Array.isArray(contacts) ? contacts : [];
+                this.state.onSelect = typeof onSelect === 'function' ? onSelect : null;
+                this.state.mode = (mode === 'multi') ? 'multi' : 'single';
+                this.state.confirmLabel = String(confirmLabel || (this.state.mode === 'multi' ? 'Confirmar' : 'Confirmar'));
+                this.state.onConfirm = (this.state.mode === 'multi' && typeof onConfirm === 'function') ? onConfirm : null;
+                this.state.selectedKeys = new Set();
+                this.state.viewContacts = [];
+
+                const overlay = document.getElementById('contactPickerOverlay');
+                const titleEl = document.getElementById('contactPickerTitle');
+                const search = document.getElementById('contactPickerSearch');
+                const footer = document.getElementById('contactPickerFooter');
+                const confirmBtn = document.getElementById('contactPickerConfirmBtn');
+                const hint = document.getElementById('contactPickerFooterHint');
+                if (titleEl) titleEl.textContent = this.state.title;
+                if (search) search.value = '';
+
+                if (footer) {
+                    footer.style.display = (this.state.mode === 'multi') ? 'flex' : 'none';
+                }
+                if (confirmBtn) {
+                    confirmBtn.textContent = this.state.confirmLabel;
+                }
+                if (hint) {
+                    hint.textContent = (this.state.mode === 'multi') ? 'Seleccione uno o más contactos' : '';
+                }
+
+                this.render();
+
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    overlay.setAttribute('aria-hidden', 'false');
+                }
+                try { search?.focus(); } catch {}
+            },
+
+            close() {
+                const overlay = document.getElementById('contactPickerOverlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                    overlay.setAttribute('aria-hidden', 'true');
+                }
+                this.state.onSelect = null;
+                this.state.onConfirm = null;
+                this.state.selectedKeys = new Set();
+                this.state.viewContacts = [];
+            },
+
+            getContactKey(c) {
+                const telKey = String(c?.telefonoE164 || '').trim();
+                if (telKey) return `tel:${telKey}`;
+                return `id:${String(c?.id || '')}`;
+            },
+
+            toggleIndex(idx) {
+                const i = Number(idx);
+                const c = (Number.isFinite(i) ? (this.state.viewContacts || [])[i] : null);
+                if (!c) return;
+                const key = this.getContactKey(c);
+                if (this.state.selectedKeys.has(key)) this.state.selectedKeys.delete(key);
+                else this.state.selectedKeys.add(key);
+                this.render();
+            },
+
+            clearSelection() {
+                this.state.selectedKeys = new Set();
+                this.render();
+            },
+
+            confirm() {
+                if (this.state.mode !== 'multi') return;
+                const selected = (this.state.contacts || []).filter(c => this.state.selectedKeys.has(this.getContactKey(c)));
+                if (!selected.length) {
+                    mostrarNotificacion('Seleccione al menos un contacto', 'error');
+                    return;
+                }
+                if (typeof this.state.onConfirm === 'function') {
+                    this.state.onConfirm(selected);
+                }
+                this.close();
+            },
+
+            useManual() {
+                const nameEl = document.getElementById('contactPickerManualName');
+                const phoneEl = document.getElementById('contactPickerManualPhone');
+                const nombre = String(nameEl?.value || '').trim() || 'Contacto';
+                const telefonoRaw = String(phoneEl?.value || '').trim();
+                const telefonoE164 = normalizePhoneToE164GT(telefonoRaw);
+                if (!telefonoRaw) {
+                    mostrarNotificacion('Ingrese un teléfono', 'error');
+                    return;
+                }
+                if (!isValidE164Digits(telefonoE164)) {
+                    mostrarNotificacion('Teléfono inválido. Ej: 55554444 o +50255554444', 'error');
+                    return;
+                }
+                const c = { id: `manual:${telefonoE164}`, nombre, puesto: '—', telefonoRaw, telefonoE164, source: 'manual' };
+                if (this.state.mode === 'multi') {
+                    // Agregar dentro del picker y seleccionarlo
+                    this.state.contacts = [...(this.state.contacts || []), c];
+                    this.state.selectedKeys.add(this.getContactKey(c));
+                    if (nameEl) nameEl.value = '';
+                    if (phoneEl) phoneEl.value = '';
+                    mostrarNotificacion('Contacto manual agregado', 'exito');
+                    this.render();
+                    return;
+                }
+
+                if (this.state.onSelect) this.state.onSelect(c);
+                this.close();
+            },
+
+            render() {
+                const listEl = document.getElementById('contactPickerList');
+                const searchEl = document.getElementById('contactPickerSearch');
+                const confirmBtn = document.getElementById('contactPickerConfirmBtn');
+                const hint = document.getElementById('contactPickerFooterHint');
+                if (!listEl) return;
+
+                const q = String(searchEl?.value || '').trim().toLowerCase();
+                const contacts = (this.state.contacts || [])
+                    .filter(c => {
+                        if (!q) return true;
+                        const hay = `${c.nombre || ''} ${c.puesto || ''} ${c.telefonoRaw || ''} ${c.telefonoE164 || ''}`.toLowerCase();
+                        return hay.includes(q);
+                    })
+                    .sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es'));
+
+                this.state.viewContacts = contacts;
+
+                if (this.state.mode === 'multi') {
+                    const totalSelected = (this.state.selectedKeys && typeof this.state.selectedKeys.size === 'number') ? this.state.selectedKeys.size : 0;
+                    if (confirmBtn) {
+                        confirmBtn.textContent = `${this.state.confirmLabel} (${totalSelected})`;
+                    }
+                    if (hint) {
+                        hint.textContent = totalSelected ? `${totalSelected} seleccionado(s)` : 'Seleccione uno o más contactos';
+                    }
+                }
+
+                if (!contacts.length) {
+                    listEl.innerHTML = `<div class="contact-picker-empty">No hay contactos cargados. Agregue teléfonos en <strong>Trabajadores</strong> o use el ingreso manual.</div>`;
+                    return;
+                }
+
+                listEl.innerHTML = contacts.map((c, idx) => {
+                    const tel = c.telefonoRaw || (c.telefonoE164 ? `+${c.telefonoE164}` : '—');
+                    const disabled = !isValidE164Digits(c.telefonoE164);
+                    const btnAttrs = disabled ? 'disabled title="Este contacto no tiene un teléfono válido"' : '';
+                    const key = this.getContactKey(c);
+                    const checked = this.state.selectedKeys && this.state.selectedKeys.has(key);
+                    const checkbox = (this.state.mode === 'multi')
+                        ? `<label style="display:flex; align-items:center; gap: 10px; cursor:pointer; user-select:none;">
+                                <input type="checkbox" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''} onchange="ContactPicker.toggleIndex(${idx})" />
+                                <span style="opacity:0.9;">Seleccionar</span>
+                           </label>`
+                        : '';
+                    return `
+                        <div class="contact-picker-item">
+                            <div>
+                                <div class="contact-picker-name">${escapeHtml(c.nombre || 'Sin nombre')}</div>
+                                <div class="contact-picker-meta">${escapeHtml(c.puesto || '—')} · ${escapeHtml(tel)}</div>
+                            </div>
+                            <div class="contact-picker-actions">
+                                ${checkbox}
+                                ${this.state.mode === 'single' ? `
+                                    <button type="button" class="btn-firma" ${btnAttrs} onclick="ContactPicker.pickIndex(${idx})">
+                                        <i class="fas fa-check"></i> Seleccionar
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            pickIndex(idx) {
+                const contacts = this.state.viewContacts || [];
+                const i = Number(idx);
+                const c = Number.isFinite(i) ? contacts[i] : null;
+                if (!c) {
+                    mostrarNotificacion('No se encontró el contacto', 'error');
+                    return;
+                }
+                if (!isValidE164Digits(c.telefonoE164)) {
+                    mostrarNotificacion('El contacto no tiene teléfono válido', 'error');
+                    return;
+                }
+                if (this.state.onSelect) this.state.onSelect(c);
+                this.close();
+            }
+        };
+
+        // Exponer para handlers inline (onclick="ContactPicker...")
+        window.ContactPicker = ContactPicker;
+
+        function escapeHtml(s) {
+            return String(s || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeAttr(s) {
+            return String(s || '').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        function initContactPickerUI() {
+            const overlay = document.getElementById('contactPickerOverlay');
+            const search = document.getElementById('contactPickerSearch');
+            if (search) {
+                search.addEventListener('input', () => ContactPicker.render());
+            }
+            if (overlay) {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) ContactPicker.close();
+                });
+            }
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') ContactPicker.close();
+            });
+        }
+
         function abrirChatGeneral() {
-            alert('En una implementación real, se abriría un chat grupal con todos los trabajadores activos');
+            const mensaje = prompt('Mensaje para el trabajador (WhatsApp):', 'Hola, ¿podemos coordinar?');
+            if (mensaje === null) return;
+
+            const contacts = getRRHHContacts().filter(c => isValidE164Digits(c.telefonoE164));
+            ContactPicker.open({
+                title: 'Chat por WhatsApp (seleccione trabajador)',
+                contacts,
+                onSelect: (c) => {
+                    openWhatsApp(c.telefonoE164, mensaje);
+                    mostrarNotificacion(`Abriendo WhatsApp: ${c.nombre}`, 'exito');
+                }
+            });
         }
 
         function llamarSupervisor() {
-            alert('Llamando al supervisor...');
+            const all = getRRHHContacts().filter(c => String(c.telefonoRaw || c.telefonoE164 || '').trim());
+            const isSupervisor = (c) => {
+                const p = String(c.puesto || '').toLowerCase();
+                return p.includes('supervisor') || p.includes('residente') || p.includes('encargado') || p.includes('jefe');
+            };
+            const preferred = all.filter(isSupervisor);
+            const contacts = (preferred.length ? preferred : all)
+                .map(c => ({ ...c, telefonoE164: c.telefonoE164 || normalizePhoneToE164GT(c.telefonoRaw) }))
+                .filter(c => String(c.telefonoRaw || '').trim() || isValidE164Digits(c.telefonoE164));
+
+            ContactPicker.open({
+                title: preferred.length ? 'Llamar a Supervisor (seleccione)' : 'Llamar (seleccione contacto)',
+                contacts,
+                onSelect: (c) => {
+                    openTel(c.telefonoRaw || `+${c.telefonoE164}`);
+                    mostrarNotificacion(`Iniciando llamada a: ${c.nombre}`, 'exito');
+                }
+            });
         }
 
         function enviarAlertaGeneral() {
-            const mensaje = prompt('Ingrese el mensaje de alerta:');
-            if (mensaje) {
-                mostrarNotificacion('Alerta enviada a todos los trabajadores', 'exito');
-            }
+            const mensaje = prompt('Ingrese el mensaje de alerta (WhatsApp):', `ALERTA (${new Date().toLocaleString('es-GT')}): `);
+            if (mensaje === null) return;
+
+            const contacts = getRRHHContacts().filter(c => isValidE164Digits(c.telefonoE164));
+            ContactPicker.open({
+                title: 'Enviar alerta por WhatsApp (seleccione uno o varios)',
+                contacts,
+                mode: 'multi',
+                confirmLabel: 'Generar envíos',
+                onConfirm: (selected) => {
+                    // Nota: abrir múltiples ventanas puede ser bloqueado por el navegador.
+                    // Hacemos 1 auto-open y el resto los dejamos como enlaces en un prompt.
+                    const safe = (selected || []).filter(c => isValidE164Digits(c.telefonoE164));
+                    if (!safe.length) {
+                        mostrarNotificacion('No hay contactos con teléfono válido', 'error');
+                        return;
+                    }
+
+                    // Abrir el primero en nueva pestaña
+                    openWhatsApp(safe[0].telefonoE164, mensaje);
+
+                    if (safe.length === 1) {
+                        mostrarNotificacion(`Alerta lista para enviar a: ${safe[0].nombre}`, 'exito');
+                        return;
+                    }
+
+                    // Generar enlaces para el resto (más confiable que múltiples popups)
+                    const links = safe.slice(1)
+                        .map(c => `- ${c.nombre}: https://wa.me/${c.telefonoE164}?text=${encodeURIComponent(String(mensaje || '').trim())}`)
+                        .join('\n');
+
+                    prompt(
+                        `Se abrió WhatsApp para 1 contacto.\n\nPara enviar al resto, copie estos links y ábralos uno por uno (o permita popups):`,
+                        links
+                    );
+
+                    mostrarNotificacion(`Alerta generada para ${safe.length} trabajadores`, 'exito');
+                }
+            });
         }
 
         // Exportación/Importación
