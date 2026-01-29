@@ -43,6 +43,10 @@
         <input id="base" type="text" placeholder="http://localhost:5500/" value="http://localhost:5500/" />
       </div>
       <div class="field">
+        <label for="sb-anon">Supabase anon/public key (opcional, para que el trabajador no configure nada)</label>
+        <input id="sb-anon" type="text" placeholder="eyJ... (anon public)" />
+      </div>
+      <div class="field">
         <label for="token">Token</label>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input id="token" type="text" readonly aria-label="Token" />
@@ -100,13 +104,14 @@
       const contract = el('w-contract').value.trim();
       const base = normalizeBase(el('base').value);
       const token = el('token').value.trim();
+      const anon = (el('sb-anon')?.value || '').trim();
 
       if (!name || !contract || !base) {
         alert('Completa: Nombre, Contrato y URL base');
         return;
       }
 
-      const link = `${base}worker.html?t=${encodeURIComponent(token)}`;
+      const link = `${base}worker.html?t=${encodeURIComponent(token)}${anon ? `&k=${encodeURIComponent(anon)}` : ''}`;
       el('out-link').textContent = link;
 
       const sql = `insert into public.ms_worker_contracts (token, worker_name, project_name, contract_html, status)\nvalues ('${escSql(token)}', '${escSql(name)}', ${proj ? `'${escSql(proj)}'` : 'null'}, '${escSql(contract)}', 'pendiente')\non conflict (token) do update\nset worker_name = excluded.worker_name,\n    project_name = excluded.project_name,\n    contract_html = excluded.contract_html,\n    status = excluded.status,\n    updated_at = now();`;

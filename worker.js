@@ -1,6 +1,7 @@
 (function () {
   const qs = new URLSearchParams(location.search);
   const token = (qs.get('t') || '').trim();
+  const anonKeyFromUrl = (qs.get('k') || '').trim();
 
   const statusEl = document.getElementById('status');
   const kpiWorker = document.getElementById('kpi-worker');
@@ -17,7 +18,39 @@
 
   const sb = window.SUPABASE_PUBLIC || {};
   const baseUrl = String(sb.url || '').replace(/\/$/, '');
-  const anonKey = String(sb.anonKey || '').trim();
+  const ANON_KEY_STORAGE_KEY = 'ms_supabase_anon_key_v1';
+
+  function getAnonKey() {
+    const direct = String(sb.anonKey || '').trim();
+    if (direct) return direct;
+
+    if (anonKeyFromUrl) {
+      try {
+        localStorage.setItem(ANON_KEY_STORAGE_KEY, anonKeyFromUrl);
+      } catch {
+        // ignore
+      }
+      return anonKeyFromUrl;
+    }
+
+    try {
+      const stored = String(localStorage.getItem(ANON_KEY_STORAGE_KEY) || '').trim();
+      if (stored) return stored;
+    } catch {
+      // ignore
+    }
+
+    // Reusar config guardada por Sync UI si existe
+    try {
+      const configs = JSON.parse(localStorage.getItem('provider_configs') || '{}');
+      const k = String(configs?.supabase?.key || '').trim();
+      if (k) return k;
+    } catch {
+      // ignore
+    }
+
+    return '';
+  }
 
   function setStatus(msg, level) {
     statusEl.textContent = msg;
@@ -34,13 +67,15 @@
       setStatus('Falta configurar Supabase URL en supabase.public.js', 'err');
       throw new Error('missing supabase url');
     }
+    const anonKey = getAnonKey();
     if (!anonKey) {
-      setStatus('Falta configurar la anon/public key en supabase.public.js', 'err');
+      setStatus('Falta la anon/public key. Pide al administrador que te reenvíe el link completo o abre el link con ?k=ANON_KEY.', 'err');
       throw new Error('missing anon key');
     }
   }
 
   async function sbRequest(path, options = {}) {
+    const anonKey = getAnonKey();
     const res = await fetch(baseUrl + path, {
       ...options,
       headers: {
