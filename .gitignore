@@ -9,6 +9,9 @@ Thumbs.db
 .env
 .env.*
 
+# Supabase public config (keep local; keys trigger scanners)
+supabase.public.js
+
 # Node (just in case)
 node_modules/
 
