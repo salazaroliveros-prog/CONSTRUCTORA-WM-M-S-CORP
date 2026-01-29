@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#001326" />
+  <title>Preview — Tema Ejecutivo M&S</title>
+
+  <!-- Mantiene el estilo base actual (NO modifica tu app) -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Tema ejecutivo (solo para esta página de preview) -->
+  <link rel="stylesheet" href="executive-theme.preview.css" />
+
+  <!-- Iconos (igual que dashboard.html) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Gráficas (igual que tus páginas actuales) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="exec-preview">
+  <header class="exec-topbar">
+    <div class="exec-brand">
+      <div class="exec-mark">M&S</div>
+      <div>
+        <div class="exec-title">Constructora WM/M&S</div>
+        <div class="exec-subtitle">Panel Ejecutivo — Presupuestos y Control</div>
+      </div>
+    </div>
+
+    <div class="exec-actions">
+      <button class="exec-btn exec-btn-ghost"><i class="fa-solid fa-bell"></i><span>Alertas</span></button>
+      <button class="exec-btn exec-btn-primary"><i class="fa-solid fa-file-arrow-down"></i><span>Exportar</span></button>
+    </div>
+  </header>
+
+  <main class="exec-shell">
+    <section class="exec-kpis">
+      <article class="exec-card">
+        <div class="exec-card-h">
+          <span class="exec-badge"><i class="fa-solid fa-chart-line"></i> Rendimiento</span>
+          <span class="exec-chip exec-chip-ok">+3.2%</span>
+        </div>
+        <div class="exec-kpi">GTQ 1,284,500</div>
+        <div class="exec-kpi-sub">Facturación estimada (mes)</div>
+      </article>
+
+      <article class="exec-card">
+        <div class="exec-card-h">
+          <span class="exec-badge"><i class="fa-solid fa-file-invoice-dollar"></i> Presupuestos</span>
+          <span class="exec-chip">32 activos</span>
+        </div>
+        <div class="exec-kpi">GTQ 842,130</div>
+        <div class="exec-kpi-sub">Costo directo consolidado</div>
+      </article>
+
+      <article class="exec-card">
+        <div class="exec-card-h">
+          <span class="exec-badge"><i class="fa-solid fa-boxes-stacked"></i> Materiales</span>
+          <span class="exec-chip exec-chip-warn">En revisión</span>
+        </div>
+        <div class="exec-kpi">14 ítems</div>
+        <div class="exec-kpi-sub">Top consumo (semana)</div>
+      </article>
+
+      <article class="exec-card">
+        <div class="exec-card-h">
+          <span class="exec-badge"><i class="fa-solid fa-user-helmet-safety"></i> Mano de obra</span>
+          <span class="exec-chip">Planificada</span>
+        </div>
+        <div class="exec-kpi">96 jornales</div>
+        <div class="exec-kpi-sub">Proyección (quincena)</div>
+      </article>
+    </section>
+
+    <section class="exec-grid">
+      <article class="exec-card exec-card-wide">
+        <div class="exec-card-title">
+          <div>
+            <div class="exec-h">Evolución de costos</div>
+            <div class="exec-muted">Interacción: hover, tooltip, zoom visual</div>
+          </div>
+          <div class="exec-card-tools">
+            <button class="exec-btn exec-btn-ghost exec-btn-sm"><i class="fa-solid fa-sliders"></i><span>Filtros</span></button>
+            <button class="exec-btn exec-btn-ghost exec-btn-sm"><i class="fa-solid fa-rotate"></i><span>Actualizar</span></button>
+          </div>
+        </div>
+        <div class="exec-chart-wrap">
+          <canvas id="costChart" height="110"></canvas>
+        </div>
+      </article>
+
+      <article class="exec-card">
+        <div class="exec-card-title">
+          <div>
+            <div class="exec-h">Resumen de materiales</div>
+            <div class="exec-muted">Consolidado por subtotal</div>
+          </div>
+        </div>
+        <div class="exec-table-wrap">
+          <table class="exec-table">
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th class="t-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Cemento</td><td class="t-right">GTQ 98,240</td></tr>
+              <tr><td>Arena</td><td class="t-right">GTQ 44,110</td></tr>
+              <tr><td>Acero</td><td class="t-right">GTQ 38,900</td></tr>
+              <tr><td>Pintura</td><td class="t-right">GTQ 12,450</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="exec-footer">
+      <div class="exec-note">
+        <i class="fa-regular fa-circle-check"></i>
+        <span>Este preview no cambia tus archivos originales.</span>
+      </div>
+      <div class="exec-note">
+        <i class="fa-regular fa-lightbulb"></i>
+        <span>Si te gusta, lo aplico gradualmente (sin romper formatos).</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="executive-charts.preview.js"></script>
+</body>
+</html>

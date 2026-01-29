@@ -1,0 +1,186 @@
+/*
+  Tema Ejecutivo M&S — Aplicación global
+  - No cambia estructura HTML
+  - Se activa agregando class="exec-app" en <body>
+  - Sobrescribe variables y pule componentes existentes
+*/
+
+body.exec-app {
+  /* Tipografía profesional sin dependencias externas */
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+
+  /* Re-define tokens existentes (se heredan a todo) */
+  --primary-dark: #071321;
+  --primary-dark-rgb: 7, 19, 33;
+  --secondary-dark: #001326;
+  --secondary-dark-rgb: 0, 19, 38;
+
+  --accent-gold: #D4AF37;
+  --accent-gold-light: #F4D03F;
+
+  --text-light: rgba(255, 255, 255, 0.92);
+  --text-dark: #0b1220;
+
+  --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.36);
+
+  --border-radius: 14px;
+  --border-radius-sm: 10px;
+
+  background:
+    radial-gradient(1200px 700px at 20% 10%, rgba(212, 175, 55, 0.12), transparent 55%),
+    radial-gradient(1000px 600px at 85% 20%, rgba(23, 162, 184, 0.10), transparent 60%),
+    linear-gradient(135deg, #03101f 0%, var(--primary-dark) 55%, #061426 100%);
+  color: var(--text-light);
+}
+
+/* Encabezados y texto */
+body.exec-app h1,
+body.exec-app h2,
+body.exec-app h3,
+body.exec-app h4,
+body.exec-app h5,
+body.exec-app h6 {
+  letter-spacing: 0.2px;
+  text-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+body.exec-app p {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+/* Header / Topbars existentes */
+body.exec-app .app-header,
+body.exec-app .header {
+  background: rgba(0, 19, 38, 0.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+body.exec-app .main-nav {
+  background: rgba(0, 19, 38, 0.64);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+body.exec-app .nav-link {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(212, 175, 55, 0.16);
+}
+
+body.exec-app .nav-link:hover,
+body.exec-app .nav-link.active {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(212, 175, 55, 0.30);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Tarjetas / secciones */
+body.exec-app .summary-card,
+body.exec-app .card,
+body.exec-app .chart-card,
+body.exec-app .budget-section,
+body.exec-app .modal-content,
+body.exec-app .login-form {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.045));
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  box-shadow: var(--shadow-md);
+}
+
+body.exec-app .summary-card:hover,
+body.exec-app .chart-card:hover {
+  border-color: rgba(212, 175, 55, 0.30);
+}
+
+/* Botones: look ejecutivo manteniendo clases existentes */
+body.exec-app .btn {
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.20);
+}
+
+body.exec-app .btn:hover {
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26);
+}
+
+body.exec-app .btn-primary,
+body.exec-app .btn-success {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.95), rgba(244, 208, 63, 0.90));
+  color: #001326;
+}
+
+body.exec-app .btn-info {
+  background: linear-gradient(135deg, rgba(23, 162, 184, 0.92), rgba(23, 162, 184, 0.72));
+  color: rgba(255, 255, 255, 0.95);
+}
+
+body.exec-app .btn-warning {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.92), rgba(255, 193, 7, 0.75));
+  color: #001326;
+}
+
+body.exec-app .btn-danger {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.92), rgba(220, 53, 69, 0.75));
+  color: rgba(255, 255, 255, 0.95);
+}
+
+body.exec-app .btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.90);
+}
+
+/* Inputs / selects */
+body.exec-app input,
+body.exec-app select,
+body.exec-app textarea,
+body.exec-app .form-control {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  border-radius: 12px;
+}
+
+body.exec-app input:focus,
+body.exec-app select:focus,
+body.exec-app textarea:focus,
+body.exec-app .form-control:focus {
+  outline: none;
+  border-color: rgba(212, 175, 55, 0.34);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12);
+}
+
+/* Tablas */
+body.exec-app .table-responsive {
+  border: 1px solid rgba(212, 175, 55, 0.16);
+  box-shadow: var(--shadow-sm);
+}
+
+body.exec-app .items-table th,
+body.exec-app .materials-table th,
+body.exec-app .table th {
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom-color: rgba(212, 175, 55, 0.22);
+}
+
+body.exec-app .items-table tbody tr:hover,
+body.exec-app .materials-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Modales */
+body.exec-app .modal-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.exec-app .modal-close,
+body.exec-app .item-action-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(212, 175, 55, 0.18);
+}
+
+/* Charts (Chart.js canvas dentro de cards) */
+body.exec-app canvas {
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.25));
+}

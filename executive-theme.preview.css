@@ -1,0 +1,278 @@
+/*
+  Preview aislado: no toca estilos globales de la app.
+  Todo va dentro de .exec-preview para evitar “desconfigurar” el esquema original.
+*/
+
+.exec-preview {
+  --exec-bg: #071321;
+  --exec-surface: rgba(255, 255, 255, 0.06);
+  --exec-surface-2: rgba(255, 255, 255, 0.085);
+  --exec-border: rgba(212, 175, 55, 0.22);
+  --exec-border-strong: rgba(212, 175, 55, 0.34);
+  --exec-text: rgba(255, 255, 255, 0.92);
+  --exec-muted: rgba(255, 255, 255, 0.68);
+  --exec-gold: #D4AF37;
+  --exec-gold-2: #F4D03F;
+  --exec-green: #38D996;
+  --exec-orange: #FFB020;
+  --exec-shadow: 0 14px 38px rgba(0, 0, 0, 0.42);
+  --exec-shadow-soft: 0 10px 26px rgba(0, 0, 0, 0.32);
+
+  /* Tipografía “ejecutiva” (sin depender de descarga). */
+  --exec-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+
+  font-family: var(--exec-font);
+  background: radial-gradient(1200px 700px at 20% 10%, rgba(212, 175, 55, 0.12), transparent 55%),
+              radial-gradient(1000px 600px at 85% 20%, rgba(23, 162, 184, 0.10), transparent 60%),
+              linear-gradient(135deg, #03101f 0%, var(--exec-bg) 55%, #061426 100%);
+  color: var(--exec-text);
+}
+
+.exec-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--exec-border);
+  background: rgba(0, 19, 38, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.exec-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.exec-mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #001326;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, var(--exec-gold), var(--exec-gold-2));
+  box-shadow: 0 10px 24px rgba(212, 175, 55, 0.28);
+}
+
+.exec-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.exec-subtitle {
+  font-size: 0.9rem;
+  color: var(--exec-muted);
+}
+
+.exec-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.exec-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--exec-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--exec-text);
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  font-weight: 700;
+}
+
+.exec-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--exec-border-strong);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.exec-btn-primary {
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.95), rgba(244, 208, 63, 0.90));
+  color: #001326;
+}
+
+.exec-btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.exec-btn-sm {
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.exec-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.exec-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.exec-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+}
+
+.exec-card {
+  background: linear-gradient(180deg, var(--exec-surface), rgba(255, 255, 255, 0.045));
+  border: 1px solid var(--exec-border);
+  border-radius: 16px;
+  box-shadow: var(--exec-shadow-soft);
+  overflow: hidden;
+}
+
+.exec-card-wide {
+  min-height: 320px;
+}
+
+.exec-card-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 14px 8px;
+}
+
+.exec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--exec-muted);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.exec-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.85rem;
+  color: var(--exec-muted);
+  font-weight: 800;
+}
+
+.exec-chip-ok {
+  border-color: rgba(56, 217, 150, 0.32);
+  color: rgba(56, 217, 150, 0.95);
+  background: rgba(56, 217, 150, 0.08);
+}
+
+.exec-chip-warn {
+  border-color: rgba(255, 176, 32, 0.30);
+  color: rgba(255, 176, 32, 0.95);
+  background: rgba(255, 176, 32, 0.08);
+}
+
+.exec-kpi {
+  padding: 0 14px;
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+
+.exec-kpi-sub {
+  padding: 2px 14px 14px;
+  color: var(--exec-muted);
+  font-size: 0.92rem;
+}
+
+.exec-card-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.exec-h {
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+
+.exec-muted {
+  color: var(--exec-muted);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+.exec-chart-wrap {
+  padding: 10px 14px 14px;
+}
+
+.exec-table-wrap {
+  padding: 8px 14px 14px;
+}
+
+.exec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.exec-table th {
+  text-align: left;
+  padding: 10px 8px;
+  color: rgba(212, 175, 55, 0.95);
+  font-weight: 900;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+}
+
+.exec-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.t-right {
+  text-align: right;
+}
+
+.exec-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.exec-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed rgba(212, 175, 55, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--exec-muted);
+}
+
+@media (max-width: 980px) {
+  .exec-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .exec-grid {
+    grid-template-columns: 1fr;
+  }
+}
