@@ -16,6 +16,7 @@
     <script defer src="pwa.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="database.js"></script>
+    <script src="sync.js"></script>
     <style>
         :root {
             --azul-marino: #001f3f;
@@ -696,11 +697,7 @@
             <label for="filtroProyecto"><i class="fas fa-project-diagram"></i> Seleccionar Proyecto</label>
             <select id="filtroProyecto">
                 <option value="">Todos los proyectos</option>
-                <option value="proyecto1">Residencial Las Lomas (Q. 2,500,000)</option>
-                <option value="proyecto2">Edificio Comercial Centro (Q. 8,750,000)</option>
-                <option value="proyecto3">Planta Industrial Norte (Q. 12,300,000)</option>
-                <option value="proyecto4">Puente Carretero Sur (Q. 15,800,000)</option>
-                <option value="proyecto5">Hospital Regional Este (Q. 25,000,000)</option>
+                <option value="" disabled>Sin proyectos (crea uno en PROYECTOS)</option>
             </select>
         </div>
         
@@ -769,7 +766,7 @@
             <div class="kpi-card fade-in">
                 <div class="kpi-icono"><i class="fas fa-money-bill-wave"></i></div>
                 <div class="kpi-titulo">INGRESOS TOTALES</div>
-                <div class="kpi-valor">Q. 48,350,000</div>
+                <div class="kpi-valor">—</div>
                 <div class="kpi-tendencia tendencia-positiva">
                     <i class="fas fa-arrow-up"></i> 12.5% vs mes anterior
                 </div>
@@ -778,7 +775,7 @@
             <div class="kpi-card fade-in">
                 <div class="kpi-icono"><i class="fas fa-coins"></i></div>
                 <div class="kpi-titulo">UTILIDAD NETA</div>
-                <div class="kpi-valor">Q. 7,250,000</div>
+                <div class="kpi-valor">—</div>
                 <div class="kpi-tendencia tendencia-positiva">
                     <i class="fas fa-arrow-up"></i> 8.3% vs mes anterior
                 </div>
@@ -787,7 +784,7 @@
             <div class="kpi-card fade-in">
                 <div class="kpi-icono"><i class="fas fa-calendar-check"></i></div>
                 <div class="kpi-titulo">AVANCE FÍSICO PROMEDIO</div>
-                <div class="kpi-valor">78.5%</div>
+                <div class="kpi-valor">—</div>
                 <div class="kpi-tendencia tendencia-positiva">
                     <i class="fas fa-arrow-up"></i> 2.1% vs semana anterior
                 </div>
@@ -796,7 +793,7 @@
             <div class="kpi-card fade-in">
                 <div class="kpi-icono"><i class="fas fa-chart-line"></i></div>
                 <div class="kpi-titulo">AVANCE FINANCIERO</div>
-                <div class="kpi-valor">82.3%</div>
+                <div class="kpi-valor">—</div>
                 <div class="kpi-tendencia tendencia-negativa">
                     <i class="fas fa-arrow-down"></i> 1.2% vs semana anterior
                 </div>
@@ -805,7 +802,7 @@
             <div class="kpi-card fade-in">
                 <div class="kpi-icono"><i class="fas fa-user-clock"></i></div>
                 <div class="kpi-titulo">RENDIMIENTO PERSONAL</div>
-                <div class="kpi-valor">85.7%</div>
+                <div class="kpi-valor">—</div>
                 <div class="kpi-tendencia tendencia-positiva">
                     <i class="fas fa-arrow-up"></i> 3.5% vs semana anterior
                 </div>
@@ -814,7 +811,7 @@
             <div class="kpi-card fade-in">
                 <div class="kpi-icono"><i class="fas fa-exclamation-triangle"></i></div>
                 <div class="kpi-titulo">PROYECTOS CON RIESGO</div>
-                <div class="kpi-valor">2</div>
+                <div class="kpi-valor">—</div>
                 <div class="kpi-tendencia tendencia-negativa">
                     <i class="fas fa-arrow-up"></i> 1 proyecto más
                 </div>
@@ -824,35 +821,7 @@
         <!-- Sección 2: Gráfica Gantt Interactiva -->
         <h2 class="seccion-titulo"><i class="fas fa-project-diagram"></i> GRÁFICA GANTT - AVANCE DE PROYECTOS</h2>
         <div class="gantt-container fade-in">
-            <div class="gantt-bar completado" style="width: 90%;">
-                <div class="progreso" style="width: 90%;"></div>
-                <div class="nombre">Residencial Las Lomas</div>
-                <div class="porcentaje">90%</div>
-            </div>
-            
-            <div class="gantt-bar" style="width: 85%;">
-                <div class="progreso" style="width: 85%;"></div>
-                <div class="nombre">Edificio Comercial Centro</div>
-                <div class="porcentaje">85%</div>
-            </div>
-            
-            <div class="gantt-bar" style="width: 65%;">
-                <div class="progreso" style="width: 65%;"></div>
-                <div class="nombre">Planta Industrial Norte</div>
-                <div class="porcentaje">65%</div>
-            </div>
-            
-            <div class="gantt-bar atrasado" style="width: 45%;">
-                <div class="progreso" style="width: 45%;"></div>
-                <div class="nombre">Puente Carretero Sur</div>
-                <div class="porcentaje">45% (Atrasado)</div>
-            </div>
-            
-            <div class="gantt-bar" style="width: 30%;">
-                <div class="progreso" style="width: 30%;"></div>
-                <div class="nombre">Hospital Regional Este</div>
-                <div class="porcentaje">30%</div>
-            </div>
+            <div style="padding: 12px; text-align: center; opacity: 0.85;">Sin proyectos para mostrar.</div>
         </div>
 
         <!-- Sección 3: Gráficas principales (10 gráficas como mínimo) -->
@@ -972,32 +941,7 @@
         <!-- Sección 4: Alertas y notificaciones -->
         <h2 class="seccion-titulo"><i class="fas fa-bell"></i> ALERTAS Y NOTIFICACIONES CRÍTICAS</h2>
         <div class="alertas-container fade-in">
-            <div class="alerta-item alerta-critica">
-                <div class="alerta-icono"><i class="fas fa-exclamation-circle"></i></div>
-                <div>
-                    <strong>RIESGO ALTO: Puente Carretero Sur - Atraso del 15%</strong>
-                    <p>El proyecto presenta un atraso significativo en la etapa de cimentación. Se requiere intervención inmediata del equipo directivo.</p>
-                    <small><i class="fas fa-clock"></i> Última actualización: Hoy 10:30 AM</small>
-                </div>
-            </div>
-            
-            <div class="alerta-item alerta-advertencia">
-                <div class="alerta-icono"><i class="fas fa-exclamation-triangle"></i></div>
-                <div>
-                    <strong>ADVERTENCIA: Sobrecosto en materiales - Planta Industrial Norte</strong>
-                    <p>El gasto en acero estructural supera en 12% lo presupuestado. Revisar proveedores y cantidades.</p>
-                    <small><i class="fas fa-clock"></i> Última actualización: Ayer 3:45 PM</small>
-                </div>
-            </div>
-            
-            <div class="alerta-item alerta-informativa">
-                <div class="alerta-icono"><i class="fas fa-info-circle"></i></div>
-                <div>
-                    <strong>INFORMACIÓN: Reunión de seguimiento programada</strong>
-                    <p>Reunión ejecutiva de seguimiento programada para el viernes 15 de noviembre, 9:00 AM en sala de juntas principal.</p>
-                    <small><i class="fas fa-clock"></i> Programada: Viernes 15 Nov, 9:00 AM</small>
-                </div>
-            </div>
+            <div style="padding: 12px; text-align: center; opacity: 0.85;">Sin alertas activas.</div>
         </div>
 
         <!-- Sección 5: Tabla de proyectos detallada -->
@@ -1017,108 +961,7 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><strong>Residencial Las Lomas</strong><br><small>15 viviendas - Zona 10</small></td>
-                    <td>Q. 2,500,000</td>
-                    <td>Q. 2,150,000</td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-verde" style="width: 90%;"></div>
-                        </div>
-                        90%
-                    </td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-azul" style="width: 86%;"></div>
-                        </div>
-                        86%
-                    </td>
-                    <td>15 Dic 2024</td>
-                    <td><span class="estado-proyecto estado-en-curso">EN CURSO</span></td>
-                    <td><span style="color: var(--verde);">BAJO</span></td>
-                </tr>
-                
-                <tr>
-                    <td><strong>Edificio Comercial Centro</strong><br><small>8 niveles - Centro Histórico</small></td>
-                    <td>Q. 8,750,000</td>
-                    <td>Q. 7,200,000</td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-verde" style="width: 85%;"></div>
-                        </div>
-                        85%
-                    </td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-azul" style="width: 82%;"></div>
-                        </div>
-                        82%
-                    </td>
-                    <td>30 Nov 2024</td>
-                    <td><span class="estado-proyecto estado-en-curso">EN CURSO</span></td>
-                    <td><span style="color: #f39c12;">MEDIO</span></td>
-                </tr>
-                
-                <tr>
-                    <td><strong>Planta Industrial Norte</strong><br><small>5,000 m² - Zona Industrial</small></td>
-                    <td>Q. 12,300,000</td>
-                    <td>Q. 9,800,000</td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-naranja" style="width: 65%;"></div>
-                        </div>
-                        65%
-                    </td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-azul" style="width: 80%;"></div>
-                        </div>
-                        80%
-                    </td>
-                    <td>15 Ene 2025</td>
-                    <td><span class="estado-proyecto estado-en-curso">EN CURSO</span></td>
-                    <td><span style="color: var(--rojo);">ALTO</span></td>
-                </tr>
-                
-                <tr>
-                    <td><strong>Puente Carretero Sur</strong><br><small>150m luz - Carretera CA-1</small></td>
-                    <td>Q. 15,800,000</td>
-                    <td>Q. 12,500,000</td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-rojo" style="width: 45%;"></div>
-                        </div>
-                        45%
-                    </td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-azul" style="width: 79%;"></div>
-                        </div>
-                        79%
-                    </td>
-                    <td>30 Oct 2024</td>
-                    <td><span class="estado-proyecto estado-atrasado">ATRASADO</span></td>
-                    <td><span style="color: var(--rojo); font-weight: bold;">CRÍTICO</span></td>
-                </tr>
-                
-                <tr>
-                    <td><strong>Hospital Regional Este</strong><br><small>200 camas - Departamento</small></td>
-                    <td>Q. 25,000,000</td>
-                    <td>Q. 8,450,000</td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-azul" style="width: 30%;"></div>
-                        </div>
-                        30%
-                    </td>
-                    <td>
-                        <div class="barra-progreso">
-                            <div class="progreso-fill progreso-azul" style="width: 34%;"></div>
-                        </div>
-                        34%
-                    </td>
-                    <td>30 Jun 2025</td>
-                    <td><span class="estado-proyecto estado-activo">INICIADO</span></td>
-                    <td><span style="color: var(--verde);">BAJO</span></td>
+                    <td colspan="8" style="text-align:center; opacity:0.85; padding: 12px;">Sin proyectos registrados.</td>
                 </tr>
             </tbody>
         </table>
@@ -1491,7 +1334,10 @@
             if (!container) return;
 
             const proyectos = (datosDashboard.proyectos || []).slice(0, 8);
-            if (!proyectos.length) return;
+            if (!proyectos.length) {
+                container.innerHTML = '<div style="padding: 12px; text-align: center; opacity: 0.85;">Sin proyectos para mostrar.</div>';
+                return;
+            }
 
             container.innerHTML = proyectos.map(p => {
                 const avance = clamp(Number(p.avanceFisico) || 0, 0, 100);
@@ -1527,7 +1373,10 @@
             if (!tbody) return;
 
             const proyectos = (datosDashboard.proyectos || []).slice(0, 10);
-            if (!proyectos.length) return;
+            if (!proyectos.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; opacity:0.85; padding: 12px;">Sin proyectos registrados.</td></tr>';
+                return;
+            }
 
             function formatDateShort(value) {
                 const d = parseISODateOrNull(value);
@@ -1575,7 +1424,10 @@
             if (!container) return;
 
             const db = window.AdvancedDB;
-            if (!db) return;
+            if (!db) {
+                container.innerHTML = '<div style="padding: 12px; text-align: center; opacity: 0.85;">Sin alertas activas.</div>';
+                return;
+            }
 
             const filtroProyectoId = document.getElementById('filtroProyecto')?.value || '';
             const fechaInicio = parseISODateOrNull(document.getElementById('filtroFechaInicio')?.value);
@@ -1599,7 +1451,10 @@
                 .sort((a, b) => (prioRank[String(b.prioridad || '').toLowerCase()] || 0) - (prioRank[String(a.prioridad || '').toLowerCase()] || 0))
                 .slice(0, 3);
 
-            if (!items.length) return;
+            if (!items.length) {
+                container.innerHTML = '<div style="padding: 12px; text-align: center; opacity: 0.85;">Sin alertas activas.</div>';
+                return;
+            }
 
             function uiType(a) {
                 const pr = String(a.prioridad || '').toLowerCase();
@@ -1647,8 +1502,12 @@
             const select = document.getElementById('filtroProyecto');
             if (!select) return;
 
-            // Solo reconstruir si tenemos proyectos reales
-            if (!Array.isArray(proyectos) || proyectos.length === 0) return;
+            // Si no hay proyectos, limpiar opciones demo/anteriores
+            if (!Array.isArray(proyectos) || proyectos.length === 0) {
+                select.innerHTML = '<option value="">Todos los proyectos</option><option value="" disabled>Sin proyectos (crea uno en PROYECTOS)</option>';
+                select.value = '';
+                return;
+            }
 
             const currentValue = select.value;
 
@@ -1700,22 +1559,26 @@
         function cargarDatosDashboard() {
             const db = window.AdvancedDB;
 
-            // Fallback: datos demo si la BD no está disponible
+            // Sin BD: dashboard vacío (sin datos demo)
             if (!db) {
+                popularFiltroProyectos([]);
                 datosDashboard = {
-                    proyectos: [
-                        { nombre: 'Residencial Las Lomas', ubicacion: 'Zona 10', presupuesto: 2500000, ingreso: 2500000, gasto: 2150000, avanceFisico: 90, avanceFinanciero: 86, estado: 'activo', fechaFinEstimada: '2024-12-15' },
-                        { nombre: 'Edificio Comercial Centro', ubicacion: 'Centro Histórico', presupuesto: 8750000, ingreso: 8750000, gasto: 7200000, avanceFisico: 85, avanceFinanciero: 82, estado: 'activo', fechaFinEstimada: '2024-11-30' },
-                        { nombre: 'Planta Industrial Norte', ubicacion: 'Zona Industrial', presupuesto: 12300000, ingreso: 12300000, gasto: 9800000, avanceFisico: 65, avanceFinanciero: 80, estado: 'activo', fechaFinEstimada: '2025-01-15' },
-                        { nombre: 'Puente Carretero Sur', ubicacion: 'Carretera CA-1', presupuesto: 15800000, ingreso: 15800000, gasto: 12500000, avanceFisico: 45, avanceFinanciero: 79, estado: 'activo', fechaFinEstimada: '2024-10-30' },
-                        { nombre: 'Hospital Regional Este', ubicacion: 'Departamento', presupuesto: 25000000, ingreso: 25000000, gasto: 8450000, avanceFisico: 30, avanceFinanciero: 34, estado: 'espera', fechaFinEstimada: '2025-06-30' }
-                    ],
-                    ingresosTotales: 48350000,
-                    gastosTotales: 41100000,
-                    utilidadNeta: 7250000,
-                    riesgoCount: 2,
-                    rendimientoPromedio: 85.7,
-                    _source: 'demo'
+                    proyectos: [],
+                    ingresosTotales: 0,
+                    gastosTotales: 0,
+                    utilidadNeta: 0,
+                    riesgoCount: 0,
+                    rendimientoPromedio: 0,
+                    costoDistribucion: { materiales: 0, mano: 0, equipos: 0, subcontratos: 0, administrativo: 0 },
+                    stockMateriales: [],
+                    tendencias: {
+                        monthKeys: lastNMonthKeys(11),
+                        ingresosPorMes: {},
+                        utilidadPorMes: {},
+                        margenUtilidadPctPorMes: []
+                    },
+                    eficienciaDepto: {},
+                    _source: 'empty-no-db'
                 };
                 updateKPIsAndHeaders();
                 renderDashboardUI();
@@ -1744,22 +1607,25 @@
                 : proyectosAll
             ).slice(0, 10);
 
-            // Si no hay datos reales, usar demo para evitar gráficas vacías
+            // Sin proyectos: dashboard vacío (sin datos demo)
             if (proyectos.length === 0) {
                 datosDashboard = {
-                    proyectos: [
-                        { nombre: 'Residencial Las Lomas', ubicacion: 'Zona 10', presupuesto: 2500000, ingreso: 2500000, gasto: 2150000, avanceFisico: 90, avanceFinanciero: 86, estado: 'activo', fechaFinEstimada: '2024-12-15' },
-                        { nombre: 'Edificio Comercial Centro', ubicacion: 'Centro Histórico', presupuesto: 8750000, ingreso: 8750000, gasto: 7200000, avanceFisico: 85, avanceFinanciero: 82, estado: 'activo', fechaFinEstimada: '2024-11-30' },
-                        { nombre: 'Planta Industrial Norte', ubicacion: 'Zona Industrial', presupuesto: 12300000, ingreso: 12300000, gasto: 9800000, avanceFisico: 65, avanceFinanciero: 80, estado: 'activo', fechaFinEstimada: '2025-01-15' },
-                        { nombre: 'Puente Carretero Sur', ubicacion: 'Carretera CA-1', presupuesto: 15800000, ingreso: 15800000, gasto: 12500000, avanceFisico: 45, avanceFinanciero: 79, estado: 'activo', fechaFinEstimada: '2024-10-30' },
-                        { nombre: 'Hospital Regional Este', ubicacion: 'Departamento', presupuesto: 25000000, ingreso: 25000000, gasto: 8450000, avanceFisico: 30, avanceFinanciero: 34, estado: 'espera', fechaFinEstimada: '2025-06-30' }
-                    ],
-                    ingresosTotales: 48350000,
-                    gastosTotales: 41100000,
-                    utilidadNeta: 7250000,
-                    riesgoCount: 2,
-                    rendimientoPromedio: 85.7,
-                    _source: 'demo-empty'
+                    proyectos: [],
+                    ingresosTotales: 0,
+                    gastosTotales: 0,
+                    utilidadNeta: 0,
+                    riesgoCount: 0,
+                    rendimientoPromedio: 0,
+                    costoDistribucion: { materiales: 0, mano: 0, equipos: 0, subcontratos: 0, administrativo: 0 },
+                    stockMateriales: [],
+                    tendencias: {
+                        monthKeys: lastNMonthKeys(11),
+                        ingresosPorMes: {},
+                        utilidadPorMes: {},
+                        margenUtilidadPctPorMes: []
+                    },
+                    eficienciaDepto: {},
+                    _source: 'empty'
                 };
                 updateKPIsAndHeaders();
                 renderDashboardUI();
@@ -2104,7 +1970,7 @@
             const distLabels = ['Materiales', 'Mano de Obra', 'Equipos', 'Subcontratos', 'Administrativo'];
             const distData = dist
                 ? [dist.materiales, dist.mano, dist.equipos, dist.subcontratos, dist.administrativo]
-                : [45, 25, 15, 10, 5];
+                : [0, 0, 0, 0, 0];
             charts.distribucionCostos = new Chart(ctx4, {
                 type: 'pie',
                 data: {
@@ -2140,11 +2006,11 @@
             const asistencias = (datosDashboard.transacciones && Array.isArray(datosDashboard.transacciones)) ? [] : [];
             // Nota: rendimiento detallado por equipo se calcula por asistencias reales si existen.
             const db = window.AdvancedDB;
-            let rendimientoLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct'];
+            let rendimientoLabels = lastNMonthKeys(10).map(labelFromMonthKey);
             let rendimientoDatasets = [
-                { label: 'Rendimiento Albañiles', data: [78, 82, 85, 83, 86, 88, 85, 87, 89, 92], color: colores.azul },
-                { label: 'Rendimiento Maestros', data: [85, 87, 89, 88, 90, 92, 91, 93, 94, 95], color: colores.verde },
-                { label: 'Rendimiento Ayudantes', data: [65, 68, 72, 70, 75, 78, 76, 79, 82, 85], color: colores.naranja }
+                { label: 'Rendimiento Albañiles', data: new Array(rendimientoLabels.length).fill(0), color: colores.azul },
+                { label: 'Rendimiento Maestros', data: new Array(rendimientoLabels.length).fill(0), color: colores.verde },
+                { label: 'Rendimiento Ayudantes', data: new Array(rendimientoLabels.length).fill(0), color: colores.naranja }
             ];
 
             if (db) {
@@ -2275,8 +2141,8 @@
             // 6. Gráfica de Control de Materiales
             const ctx6 = document.getElementById('graficaControlMateriales').getContext('2d');
             const stock = Array.isArray(datosDashboard.stockMateriales) ? datosDashboard.stockMateriales.slice(0, 6) : [];
-            const matLabels = stock.length ? stock.map(m => (m.nombre || '').toString().slice(0, 14)) : ['Cemento', 'Acero', 'Bloque', 'Arena', 'Grava', 'Madera'];
-            const matData = stock.length ? stock.map(m => Number(m.ratio) || 0) : [85, 92, 78, 90, 88, 75];
+            const matLabels = stock.length ? stock.map(m => (m.nombre || '').toString().slice(0, 14)) : ['Sin datos'];
+            const matData = stock.length ? stock.map(m => Number(m.ratio) || 0) : [0];
             charts.controlMateriales = new Chart(ctx6, {
                 type: 'polarArea',
                 data: {
@@ -2308,10 +2174,10 @@
             const trendLabels = monthKeys.map(labelFromMonthKey);
             const ingresosSerie = tendencias?.ingresosPorMes
                 ? monthKeys.map(k => (tendencias.ingresosPorMes[k] || 0) / 1_000_000)
-                : [3.2, 3.5, 3.8, 4.1, 4.3, 4.5, 4.2, 4.6, 4.8, 5.2, 5.5];
+                : new Array(monthKeys.length).fill(0);
             const margenSerie = tendencias?.margenUtilidadPctPorMes
                 ? tendencias.margenUtilidadPctPorMes
-                : [12, 13, 14, 15, 16, 15, 14, 15, 16, 17, 18];
+                : new Array(monthKeys.length).fill(0);
             charts.tendencias = new Chart(ctx7, {
                 type: 'line',
                 data: {
@@ -2593,6 +2459,31 @@
                 const ventana = window.open('', '_blank');
                 const fecha = new Date().toLocaleDateString();
                 const hora = new Date().toLocaleTimeString();
+
+                const proyectos = Array.isArray(datosDashboard?.proyectos) ? datosDashboard.proyectos : [];
+                const ingresos = Number(datosDashboard?.ingresosTotales) || 0;
+                const utilidad = Number(datosDashboard?.utilidadNeta) || 0;
+                const avance = proyectos.length
+                    ? (proyectos.reduce((s, p) => s + (Number(p.avanceFisico) || 0), 0) / proyectos.length)
+                    : 0;
+
+                const rowsHtml = proyectos.length
+                    ? proyectos.map(p => {
+                        const af = clamp(Number(p.avanceFisico) || 0, 0, 100);
+                        const afin = clamp(Number(p.avanceFinanciero) || 0, 0, 100);
+                        const e = estadoLabel(p.estado, af);
+                        return `
+                            <tr>
+                                <td>${String(p.nombre || 'Proyecto')}</td>
+                                <td>${formatMoneyGTQ(Number(p.presupuesto) || 0)}</td>
+                                <td>${formatMoneyGTQ(Number(p.gasto) || 0)}</td>
+                                <td>${af.toFixed(0)}%</td>
+                                <td>${afin.toFixed(0)}%</td>
+                                <td>${e.text}</td>
+                            </tr>
+                        `;
+                    }).join('')
+                    : '<tr><td colspan="6">Sin proyectos registrados.</td></tr>';
                 
                 ventana.document.write(`
                     <html>
@@ -2621,15 +2512,15 @@
                         <div class="kpi-grid">
                             <div class="kpi-card">
                                 <h4>Ingresos Totales</h4>
-                                <p style="font-size: 24px; font-weight: bold; color: #27ae60;">Q. 48,350,000</p>
+                                <p style="font-size: 24px; font-weight: bold; color: #27ae60;">${formatMoneyGTQ(ingresos)}</p>
                             </div>
                             <div class="kpi-card">
                                 <h4>Utilidad Neta</h4>
-                                <p style="font-size: 24px; font-weight: bold; color: #2ecc71;">Q. 7,250,000</p>
+                                <p style="font-size: 24px; font-weight: bold; color: #2ecc71;">${formatMoneyGTQ(utilidad)}</p>
                             </div>
                             <div class="kpi-card">
                                 <h4>Avance Promedio</h4>
-                                <p style="font-size: 24px; font-weight: bold; color: #3498db;">78.5%</p>
+                                <p style="font-size: 24px; font-weight: bold; color: #3498db;">${avance.toFixed(1)}%</p>
                             </div>
                         </div>
                         
@@ -2643,46 +2534,7 @@
                                 <th>Avance Financiero</th>
                                 <th>Estado</th>
                             </tr>
-                            <tr>
-                                <td>Residencial Las Lomas</td>
-                                <td>Q. 2,500,000</td>
-                                <td>Q. 2,150,000</td>
-                                <td>90%</td>
-                                <td>86%</td>
-                                <td>En Curso</td>
-                            </tr>
-                            <tr>
-                                <td>Edificio Comercial Centro</td>
-                                <td>Q. 8,750,000</td>
-                                <td>Q. 7,200,000</td>
-                                <td>85%</td>
-                                <td>82%</td>
-                                <td>En Curso</td>
-                            </tr>
-                            <tr>
-                                <td>Planta Industrial Norte</td>
-                                <td>Q. 12,300,000</td>
-                                <td>Q. 9,800,000</td>
-                                <td>65%</td>
-                                <td>80%</td>
-                                <td>En Curso</td>
-                            </tr>
-                            <tr>
-                                <td>Puente Carretero Sur</td>
-                                <td>Q. 15,800,000</td>
-                                <td>Q. 12,500,000</td>
-                                <td>45%</td>
-                                <td>79%</td>
-                                <td>Atrasado</td>
-                            </tr>
-                            <tr>
-                                <td>Hospital Regional Este</td>
-                                <td>Q. 25,000,000</td>
-                                <td>Q. 8,450,000</td>
-                                <td>30%</td>
-                                <td>34%</td>
-                                <td>Iniciado</td>
-                            </tr>
+                            ${rowsHtml}
                         </table>
                         
                         <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
@@ -2711,15 +2563,17 @@
             }
         }
         
-        // Configurar eventos de las barras Gantt
-        document.querySelectorAll('.gantt-bar').forEach(bar => {
-            bar.addEventListener('click', function() {
-                const nombre = this.querySelector('.nombre').textContent;
-                const porcentaje = this.querySelector('.porcentaje').textContent;
-                
-                mostrarNotificacion(`Proyecto: ${nombre} - Avance: ${porcentaje}`, 'info');
+        // Configurar eventos (delegación) para barras Gantt renderizadas dinámicamente
+        const ganttContainer = document.querySelector('.gantt-container');
+        if (ganttContainer) {
+            ganttContainer.addEventListener('click', (ev) => {
+                const bar = ev.target && ev.target.closest ? ev.target.closest('.gantt-bar') : null;
+                if (!bar) return;
+                const nombre = bar.querySelector('.nombre')?.textContent || 'Proyecto';
+                const porcentaje = bar.querySelector('.porcentaje')?.textContent || '';
+                mostrarNotificacion(`Proyecto: ${nombre}${porcentaje ? ` - Avance: ${porcentaje}` : ''}`, 'info');
             });
-        });
+        }
         
         // Estilos CSS para animaciones de notificaciones
         const style = document.createElement('style');

@@ -14,15 +14,34 @@ Aplicación web estática para gestión de construcción:
 
 ---
 
+## ⚠️ APLICACIÓN LISTA PARA PRODUCCIÓN
+
+**Estado: ✅ LIMPIA Y LISTA PARA USAR CON DATOS REALES**
+
+Esta aplicación ha sido completamente limpiada de datos de prueba y está lista para iniciar con datos reales de su empresa.
+
+### 🧹 Antes de Comenzar
+
+Si la aplicación tiene datos de prueba residuales en su navegador:
+
+1. Abrir `limpiar-datos.html` en el navegador
+2. Seguir las instrucciones para limpiar el localStorage
+3. La base de datos iniciará completamente vacía
+
+**Ver:** `LIMPIEZA_DATOS.md` para más detalles sobre los cambios realizados.
+
+---
+
 ## Estructura del proyecto
 
 Archivos principales:
 - `index.html`, `inicio.html`, `dashboard.html`, `proyectos.html`, `presupuestos.html`, `compras.html`, `seguimiento.html`, `rrhh.html`, `rendimiento.html`
 - `styles.css`, `rrhh.css`
 - `app.js` (utilidades, navegación, helpers compartidos)
-- `database.js` (**AdvancedDB**: capa de almacenamiento compartida)
-- `sync.js` (sincronización)
+- `database.js` (**AdvancedDB**: capa de almacenamiento compartida - **SIN DATOS DE PRUEBA**)
+- `sync.js` (sincronización con Supabase/Google Sheets/Firestore)
 - `pwa.js`, `manifest.json`, `sw.js` (PWA/offline)
+- `limpiar-datos.html` (**Herramienta de limpieza de base de datos**)
 
 ---
 

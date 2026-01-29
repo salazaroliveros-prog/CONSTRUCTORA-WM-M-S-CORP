@@ -594,10 +594,6 @@
                 <label for="filtroProyecto"><i class="fas fa-project-diagram"></i> Seleccionar Proyecto</label>
                 <select id="filtroProyecto">
                     <option value="">-- Seleccionar proyecto --</option>
-                    <option value="proyecto1">Proyecto Residencial Las Lomas</option>
-                    <option value="proyecto2">Edificio Comercial Centro</option>
-                    <option value="proyecto3">Planta Industrial Norte</option>
-                    <option value="proyecto4">Puente Carretero Sur</option>
                 </select>
             </div>
             
@@ -654,8 +650,6 @@
                 <label for="nombreProyectoContratacion"><i class="fas fa-hard-hat"></i> Proyecto para Contratación</label>
                 <select id="nombreProyectoContratacion">
                     <option value="">-- Seleccionar proyecto --</option>
-                    <option value="proyecto1">Proyecto Residencial Las Lomas</option>
-                    <option value="proyecto2">Edificio Comercial Centro</option>
                 </select>
             </div>
 
@@ -856,67 +850,10 @@
             <h2 class="seccion-titulo"><i class="fas fa-users"></i> Aplicantes y Contratos</h2>
             
             <div class="lista-aplicantes">
-                <!-- Aplicante 1 -->
-                <div class="aplicante-card">
-                    <div class="aplicante-header">
-                        <h3>Juan Pérez López</h3>
-                        <span class="estado-contrato estado-pendiente">Pendiente</span>
-                    </div>
-                    <p><strong>Puesto:</strong> Supervisor</p>
-                    <p><strong>Teléfono:</strong> 5555-1234</p>
-                    <p><strong>Proyecto:</strong> Residencial Las Lomas</p>
-                    <p><strong>Experiencia:</strong> 5 años en construcciones residenciales</p>
-                    <div style="margin-top: 15px; display: flex; gap: 10px;">
-                        <button onclick="verDetallesAplicante(1)" class="btn-firma" style="background: #3498db;">
-                            <i class="fas fa-eye"></i> Ver Detalles
-                        </button>
-                        <button onclick="aprobarContrato(1)" class="btn-firma" style="background: var(--verde);">
-                            <i class="fas fa-check"></i> Aprobar
-                        </button>
-                        <button onclick="rechazarContrato(1)" class="btn-firma" style="background: var(--rojo);">
-                            <i class="fas fa-times"></i> Rechazar
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Aplicante 2 -->
-                <div class="aplicante-card">
-                    <div class="aplicante-header">
-                        <h3>María González</h3>
-                        <span class="estado-contrato estado-aprobado">Activo</span>
-                    </div>
-                    <p><strong>Puesto:</strong> Maestro de Obras</p>
-                    <p><strong>Teléfono:</strong> 5555-5678</p>
-                    <p><strong>Proyecto:</strong> Edificio Comercial Centro</p>
-                    <p><strong>Experiencia:</strong> 3 años en obras comerciales</p>
-                    <div style="margin-top: 15px; display: flex; gap: 10px;">
-                        <button onclick="verDetallesAplicante(2)" class="btn-firma" style="background: #3498db;">
-                            <i class="fas fa-eye"></i> Ver Detalles
-                        </button>
-                        <button onclick="desactivarContrato(2)" class="btn-firma" style="background: #e67e22;">
-                            <i class="fas fa-user-slash"></i> Desactivar
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Aplicante 3 -->
-                <div class="aplicante-card">
-                    <div class="aplicante-header">
-                        <h3>Carlos Ramírez</h3>
-                        <span class="estado-contrato estado-rechazado">Inactivo</span>
-                    </div>
-                    <p><strong>Puesto:</strong> Ayudante</p>
-                    <p><strong>Teléfono:</strong> 5555-9012</p>
-                    <p><strong>Proyecto:</strong> Planta Industrial Norte</p>
-                    <p><strong>Motivo:</strong> 3 días sin asistir</p>
-                    <div style="margin-top: 15px; display: flex; gap: 10px;">
-                        <button onclick="verDetallesAplicante(3)" class="btn-firma" style="background: #3498db;">
-                            <i class="fas fa-eye"></i> Ver Detalles
-                        </button>
-                        <button onclick="reactivarContrato(3)" class="btn-firma" style="background: #9b59b6;">
-                            <i class="fas fa-redo"></i> Reactivar
-                        </button>
-                    </div>
+                <!-- Los aplicantes aparecerán aquí cuando se agreguen desde la base de datos -->
+                <div style="text-align: center; padding: 40px; color: #888;">
+                    <i class="fas fa-user-plus" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
+                    <p>No hay aplicantes registrados. Los aplicantes aparecerán aquí cuando se agreguen al sistema.</p>
                 </div>
             </div>
             
@@ -944,8 +881,6 @@
                     <label for="proyectoAsistencia"><i class="fas fa-hard-hat"></i> Proyecto</label>
                     <select id="proyectoAsistencia">
                         <option value="todos">Todos los proyectos</option>
-                        <option value="proyecto1">Residencial Las Lomas</option>
-                        <option value="proyecto2">Edificio Comercial Centro</option>
                     </select>
                 </div>
             </div>
@@ -1004,8 +939,7 @@
             <div style="background: rgba(231, 76, 60, 0.2); padding: 15px; border-radius: 8px; border-left: 4px solid var(--rojo);">
                 <h4><i class="fas fa-exclamation-triangle"></i> Alertas Activas</h4>
                 <ul style="margin-top: 10px;">
-                    <li><strong>Pedro Sánchez:</strong> 3 días consecutivos sin asistir. Contrato será desactivado automáticamente.</li>
-                    <li><strong>Luis Martínez:</strong> Retardos frecuentes (4 veces esta semana).</li>
+                    <li><span style="opacity: 0.9;">Sin alertas activas por ahora.</span></li>
                 </ul>
             </div>
             
@@ -1030,8 +964,6 @@
                     <label for="proyectoPlanilla"><i class="fas fa-project-diagram"></i> Proyecto</label>
                     <select id="proyectoPlanilla">
                         <option value="todos">Todos los proyectos</option>
-                        <option value="proyecto1">Residencial Las Lomas</option>
-                        <option value="proyecto2">Edificio Comercial Centro</option>
                     </select>
                 </div>
             </div>
@@ -1473,6 +1405,8 @@
             // Poblar proyectos en el select existente si hay datos reales
             const projectSelect = document.getElementById('proyectoAsistencia');
             const projectPlanilla = document.getElementById('proyectoPlanilla');
+            const projectFilter = document.getElementById('filtroProyecto');
+            const projectContratacion = document.getElementById('nombreProyectoContratacion');
             const projects = getProjects();
             if (projectSelect && projects.length) {
                 projectSelect.innerHTML = `
@@ -1486,6 +1420,24 @@
                     <option value="todos">Todos los proyectos</option>
                     ${projects.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
                 `;
+            }
+
+            if (projectFilter) {
+                projectFilter.innerHTML = projects.length
+                    ? `
+                        <option value="">-- Seleccionar proyecto --</option>
+                        ${projects.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
+                    `
+                    : `<option value="" selected>(Sin proyectos registrados)</option>`;
+            }
+
+            if (projectContratacion) {
+                projectContratacion.innerHTML = projects.length
+                    ? `
+                        <option value="">-- Seleccionar proyecto --</option>
+                        ${projects.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
+                    `
+                    : `<option value="" selected>(Sin proyectos registrados)</option>`;
             }
 
             // Al cambiar filtros, refrescar tabla

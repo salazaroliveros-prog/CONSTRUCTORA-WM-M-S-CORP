@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpiar Datos - M&S Constructora</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #e74c3c;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .warning-icon {
+            text-align: center;
+            font-size: 64px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #856404;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            color: #856404;
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(149, 165, 166, 0.3);
+        }
+
+        .status {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+            display: block;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="warning-icon">⚠️</div>
+        <h1>Limpiar Base de Datos Local</h1>
+        
+        <div class="info-box">
+            <h3>⚠️ ADVERTENCIA</h3>
+            <p><strong>Esta acción eliminará TODOS los datos almacenados localmente en su navegador, incluyendo:</strong></p>
+            <ul>
+                <li>Proyectos</li>
+                <li>Transacciones</li>
+                <li>Presupuestos</li>
+                <li>Materiales</li>
+                <li>Trabajadores</li>
+                <li>Proveedores</li>
+                <li>Asistencias</li>
+                <li>Compras</li>
+                <li>Alertas</li>
+                <li>Configuraciones</li>
+            </ul>
+            <p style="margin-top: 15px;"><strong>Esta acción NO se puede deshacer.</strong></p>
+            <p>Use esta herramienta solo si desea iniciar con una base de datos completamente vacía.</p>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-danger" onclick="limpiarDatos()">
+                🗑️ Limpiar Todos los Datos
+            </button>
+            <button class="btn-secondary" onclick="volverInicio()">
+                ← Volver al Inicio
+            </button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="footer">
+            <p>CONSTRUCTORA M&S - Sistema de Gestión v2.0</p>
+        </div>
+    </div>
+
+    <script>
+        function limpiarDatos() {
+            const confirmacion = confirm(
+                '⚠️ ÚLTIMA ADVERTENCIA ⚠️\n\n' +
+                '¿Está COMPLETAMENTE SEGURO de que desea eliminar TODOS los datos?\n\n' +
+                'Esta acción NO se puede deshacer.\n\n' +
+                'Presione "Aceptar" para continuar o "Cancelar" para abortar.'
+            );
+
+            if (!confirmacion) {
+                return;
+            }
+
+            try {
+                // Obtener todas las claves del localStorage
+                const keys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('ms_constructora_')) {
+                        keys.push(key);
+                    }
+                }
+
+                // Eliminar todas las claves de la aplicación
+                keys.forEach(key => {
+                    localStorage.removeItem(key);
+                });
+
+                // También limpiar cualquier dato residual
+                const colecciones = [
+                    'proyectos', 'transacciones', 'presupuestos', 'materiales',
+                    'proveedores', 'trabajadores', 'asistencias', 'compras',
+                    'alertas', 'logs', 'config', 'presupuestos_items', 'rendimientos'
+                ];
+
+                colecciones.forEach(coleccion => {
+                    localStorage.removeItem('ms_constructora_' + coleccion);
+                });
+
+                // Limpiar configuración de sincronización (no usa prefijo ms_constructora_)
+                const syncKeys = [
+                    'sync_provider',
+                    'sync_config',
+                    'sync_queue',
+                    'sync_history',
+                    'provider_configs',
+                    'last_sync',
+                    // Keys versionadas usadas por SyncManager
+                    'ms_constructora_device_id_v1',
+                    'ms_constructora_sync_group_id_v1',
+                    'ms_constructora_sync_tombstones_v1',
+                    'ms_constructora_sync_last_meta_v1'
+                ];
+                syncKeys.forEach(k => localStorage.removeItem(k));
+
+                // Mostrar mensaje de éxito
+                const status = document.getElementById('status');
+                status.className = 'status success';
+                status.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                    <div>Datos eliminados exitosamente</div>
+                    <div style="margin-top: 10px; font-weight: normal;">
+                        Se eliminaron ${keys.length} registros del sistema.
+                        <br><br>
+                        La aplicación está lista para usar con datos reales.
+                        <br><br>
+                        <a href="index.html" style="color: #155724; text-decoration: underline;">
+                            Haga clic aquí para volver al inicio
+                        </a>
+                    </div>
+                `;
+
+                console.log('✅ Base de datos limpiada exitosamente');
+                console.log(`📊 Total de registros eliminados: ${keys.length}`);
+
+            } catch (error) {
+                const status = document.getElementById('status');
+                status.className = 'status error';
+                status.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
+                    <div>Error al limpiar datos</div>
+                    <div style="margin-top: 10px; font-weight: normal;">
+                        ${error.message}
+                    </div>
+                `;
+                console.error('Error al limpiar datos:', error);
+            }
+        }
+
+        function volverInicio() {
+            window.location.href = 'index.html';
+        }
+
+        // Mostrar información al cargar
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🧹 Herramienta de limpieza de base de datos cargada');
+            console.log('⚠️ Esta herramienta eliminará TODOS los datos locales');
+            
+            // Contar registros actuales
+            let count = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('ms_constructora_')) {
+                    count++;
+                }
+            }
+            console.log(`📊 Registros actuales en la base de datos: ${count}`);
+        });
+    </script>
+</body>
+</html>

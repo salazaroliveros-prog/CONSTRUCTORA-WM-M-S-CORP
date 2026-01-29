@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Portal de Trabajador - M&S</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body{background:#0b1f33;color:#fff}
+    .container{max-width:980px;margin:24px auto;padding:0 16px}
+    .card{background:rgba(255,255,255,0.06);border:1px solid rgba(212,175,55,0.35);border-radius:12px;padding:16px;margin:14px 0}
+    .row{display:grid;grid-template-columns:1fr;gap:14px}
+    @media (min-width:920px){.row{grid-template-columns:1.2fr 0.8fr}}
+    .muted{opacity:0.85}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid rgba(212,175,55,0.55);background:#102a44;color:#fff;cursor:pointer}
+    .btn-primary{background:linear-gradient(90deg,#D4AF37,#b9972f);color:#0b1f33;font-weight:700}
+    .btn-danger{border-color:rgba(231,76,60,0.7);background:rgba(231,76,60,0.15)}
+    .btn:disabled{opacity:0.5;cursor:not-allowed}
+    .flex{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .field{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+    input,textarea{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.25);color:#fff}
+    canvas{width:100%;height:220px;border-radius:12px;border:1px dashed rgba(255,255,255,0.25);background:#fff;touch-action:none}
+    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .kpi .mini{background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px}
+    .kpi .mini h4{margin:0 0 6px 0;font-size:13px;opacity:0.9}
+    .kpi .mini div{font-size:15px;font-weight:700}
+    .ok{color:#2ecc71}
+    .err{color:#e74c3c}
+    .warn{color:#f1c40f}
+    .contract{background:#fff;color:#111;border-radius:12px;padding:14px;max-height:420px;overflow:auto}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Portal del Trabajador</h2>
+    <p class="muted">Este link es personal. Si no ves tu contrato, avisa al administrador.</p>
+
+    <div id="status" class="card muted">Cargando…</div>
+
+    <div class="row">
+      <div>
+        <div class="card">
+          <h3>Contrato</h3>
+          <div class="kpi">
+            <div class="mini"><h4>Trabajador</h4><div id="kpi-worker">—</div></div>
+            <div class="mini"><h4>Estado</h4><div id="kpi-status">—</div></div>
+          </div>
+          <div class="field">
+            <label>Contrato</label>
+            <div id="contract" class="contract">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Firma (dibujada)</h3>
+          <p class="muted">Firma dentro del recuadro. Luego presiona “Guardar firma”.</p>
+          <canvas id="sig" width="900" height="440"></canvas>
+          <div class="flex" style="margin-top:10px">
+            <button id="btn-clear" class="btn btn-danger" type="button">Limpiar</button>
+            <button id="btn-save" class="btn btn-primary" type="button">Guardar firma</button>
+          </div>
+          <div class="field">
+            <label>Nombre (para confirmar)</label>
+            <input id="signed-name" type="text" placeholder="Escribe tu nombre completo" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h3>Asistencia</h3>
+          <p class="muted">Marca entrada/salida con GPS (si aceptas permisos).</p>
+          <div class="flex">
+            <button id="btn-in" class="btn btn-primary" type="button">Entrada</button>
+            <button id="btn-out" class="btn" type="button">Salida</button>
+          </div>
+          <div class="field">
+            <label>Observación (opcional)</label>
+            <input id="att-note" type="text" placeholder="Ej: Llegué 10 min tarde" />
+          </div>
+          <div class="field">
+            <label>Último registro</label>
+            <div id="last-att" class="muted">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Ayuda</h3>
+          <ul class="muted" style="margin-left:18px;line-height:1.7">
+            <li>Abre este portal desde WhatsApp.</li>
+            <li>Si te pide permisos de ubicación, acepta para registrar GPS.</li>
+            <li>Si el contrato no aparece, pide que te reenvíen el link.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top:18px">© CONSTRUCTORA WM/M&S</p>
+  </div>
+
+  <script src="supabase.public.js"></script>
+  <script src="worker.js"></script>
+</body>
+</html>

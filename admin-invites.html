@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Generar Link de Trabajador - M&S</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body{background:#0b1f33;color:#fff}
+    .container{max-width:980px;margin:24px auto;padding:0 16px}
+    .card{background:rgba(255,255,255,0.06);border:1px solid rgba(212,175,55,0.35);border-radius:12px;padding:16px;margin:14px 0}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px}
+    @media (min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+    .field{display:flex;flex-direction:column;gap:6px}
+    input,textarea{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.25);color:#fff}
+    textarea{min-height:160px}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid rgba(212,175,55,0.55);background:#102a44;color:#fff;cursor:pointer}
+    .btn-primary{background:linear-gradient(90deg,#D4AF37,#b9972f);color:#0b1f33;font-weight:700}
+    pre{white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.15);padding:12px;border-radius:12px}
+    .muted{opacity:0.85}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Generar link por WhatsApp (trabajador)</h2>
+    <p class="muted">Esto NO escribe en Supabase. Te genera el token, el link y un SQL para pegar en Supabase → SQL Editor o Table Editor.</p>
+
+    <div class="card grid">
+      <div class="field">
+        <label for="w-name">Nombre del trabajador</label>
+        <input id="w-name" type="text" placeholder="Ej: Pedro López" />
+      </div>
+      <div class="field">
+        <label for="w-proj">Proyecto (opcional)</label>
+        <input id="w-proj" type="text" placeholder="Ej: Bodega Zona 12" />
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label for="w-contract">Contrato (HTML simple)</label>
+        <textarea id="w-contract" placeholder="Pega aquí el contrato en HTML (ej: <h3>Contrato</h3><p>...</p>)"></textarea>
+      </div>
+      <div class="field">
+        <label for="base">URL base donde está la app (ej: https://tu-dominio.com/)</label>
+        <input id="base" type="text" placeholder="http://localhost:5500/" value="http://localhost:5500/" />
+      </div>
+      <div class="field">
+        <label for="token">Token</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input id="token" type="text" readonly aria-label="Token" />
+          <button id="btn-new" class="btn" type="button">Nuevo</button>
+        </div>
+      </div>
+      <div style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap">
+        <button id="btn-gen" class="btn btn-primary" type="button">Generar Link + SQL</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Link para WhatsApp</h3>
+      <pre id="out-link">—</pre>
+    </div>
+
+    <div class="card">
+      <h3>SQL (insert/replace)</h3>
+      <pre id="out-sql">—</pre>
+      <p class="muted">Luego en Supabase habilita RLS según el esquema actualizado en supabase_schema.sql.</p>
+    </div>
+  </div>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+
+    function randToken() {
+      // token largo y no adivinable (base36)
+      const a = Math.random().toString(36).slice(2);
+      const b = Math.random().toString(36).slice(2);
+      const c = Date.now().toString(36);
+      return `t_${c}_${a}${b}`;
+    }
+
+    function escSql(s) {
+      return String(s || '').replace(/'/g, "''");
+    }
+
+    function normalizeBase(url) {
+      const s = String(url || '').trim();
+      if (!s) return '';
+      return /\/$/.test(s) ? s : (s + '/');
+    }
+
+    function refreshToken() {
+      el('token').value = randToken();
+    }
+
+    el('btn-new').addEventListener('click', refreshToken);
+    refreshToken();
+
+    el('btn-gen').addEventListener('click', () => {
+      const name = el('w-name').value.trim();
+      const proj = el('w-proj').value.trim();
+      const contract = el('w-contract').value.trim();
+      const base = normalizeBase(el('base').value);
+      const token = el('token').value.trim();
+
+      if (!name || !contract || !base) {
+        alert('Completa: Nombre, Contrato y URL base');
+        return;
+      }
+
+      const link = `${base}worker.html?t=${encodeURIComponent(token)}`;
+      el('out-link').textContent = link;
+
+      const sql = `insert into public.ms_worker_contracts (token, worker_name, project_name, contract_html, status)\nvalues ('${escSql(token)}', '${escSql(name)}', ${proj ? `'${escSql(proj)}'` : 'null'}, '${escSql(contract)}', 'pendiente')\non conflict (token) do update\nset worker_name = excluded.worker_name,\n    project_name = excluded.project_name,\n    contract_html = excluded.contract_html,\n    status = excluded.status,\n    updated_at = now();`;
+
+      el('out-sql').textContent = sql;
+    });
+  </script>
+</body>
+</html>

@@ -591,7 +591,19 @@ class SyncManager {
     // ===== GESTIÓN DE PROVEEDORES =====
     getProviderConfig(provider) {
         const configs = JSON.parse(localStorage.getItem('provider_configs')) || {};
-        return configs[provider] || {};
+        const defaults = {
+            // Prefill seguro: solo URL (sin API key)
+            supabase: {
+                url: 'https://slbzwylbnzzarrxejpql.supabase.co',
+                table: 'ms_constructora_state',
+                schema: 'public'
+            }
+        };
+
+        return {
+            ...(defaults[provider] || {}),
+            ...(configs[provider] || {})
+        };
     }
 
     saveProviderConfig(provider, config) {
@@ -1272,6 +1284,25 @@ class SyncUI {
     }
 
     saveSyncSettings() {
+        const isLikelyJwt = (token) => {
+            const s = String(token || '').trim();
+            return s.split('.').length === 3;
+        };
+
+        const decodeJwtPayload = (token) => {
+            try {
+                const parts = String(token || '').trim().split('.');
+                if (parts.length !== 3) return null;
+                const base64Url = parts[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+                const json = atob(padded);
+                return JSON.parse(json);
+            } catch {
+                return null;
+            }
+        };
+
         // Guardar configuración general
         const autoSync = document.getElementById('auto-sync-select').value === 'true';
         const interval = parseInt(document.getElementById('sync-interval').value) * 1000;
@@ -1301,9 +1332,21 @@ class SyncUI {
                 break;
                 
             case 'supabase':
+                const sbKey = document.getElementById('sb-key').value;
+                if (isLikelyJwt(sbKey)) {
+                    const payload = decodeJwtPayload(sbKey);
+                    const role = payload?.role;
+                    if (role === 'service_role') {
+                        this.syncService.showNotification(
+                            '⚠️ NO uses service_role en el navegador. Usa la anon/public key (Project Settings → API).',
+                            'error'
+                        );
+                        return;
+                    }
+                }
                 providerConfig = {
                     url: document.getElementById('sb-url').value,
-                    key: document.getElementById('sb-key').value,
+                    key: sbKey,
                     table: (document.getElementById('sb-table')?.value || 'ms_constructora_state').trim() || 'ms_constructora_state'
                 };
                 break;

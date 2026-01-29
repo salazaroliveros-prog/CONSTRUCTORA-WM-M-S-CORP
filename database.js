@@ -276,11 +276,6 @@ class AdvancedDatabase {
             }
         });
 
-        // Cargar datos de prueba si está vacío
-        if (this.get('proyectos').length === 0) {
-            this.loadSampleData();
-        }
-
         // Iniciar limpieza automática
         this.startAutoCleanup();
     }
@@ -830,102 +825,6 @@ class AdvancedDatabase {
 
     off(event, callback) {
         window.removeEventListener(`db:${event}`, (e) => callback(e.detail));
-    }
-
-    // ===== DATOS DE EJEMPLO =====
-    loadSampleData() {
-        console.log('Cargando datos de ejemplo...');
-        
-        // Proyectos de ejemplo
-        const proyectos = [
-            {
-                codigo: 'PROY-2401-001',
-                nombre: 'Casa Residencial Las Lomas',
-                cliente: 'Juan Pérez',
-                ubicacion: 'Zona 10, Ciudad de Guatemala',
-                tipologia: 'RESIDENCIAL',
-                areaTerreno: 500,
-                areaConstruccion: 350,
-                estado: 'activo',
-                fechaInicio: '2024-01-15',
-                fechaFinEstimada: '2024-08-15',
-                presupuestoAprobado: 1500000,
-                avanceFisico: 45,
-                avanceFinanciero: 38,
-                descripcion: 'Construcción de casa residencial de dos niveles'
-            },
-            {
-                codigo: 'PROY-2402-002',
-                nombre: 'Edificio Comercial Centro',
-                cliente: 'Corporación ABC',
-                ubicacion: 'Zona 4, Mixco',
-                tipologia: 'COMERCIAL',
-                areaTerreno: 1200,
-                areaConstruccion: 3000,
-                estado: 'activo',
-                fechaInicio: '2024-02-01',
-                fechaFinEstimada: '2024-12-31',
-                presupuestoAprobado: 5000000,
-                avanceFisico: 25,
-                avanceFinanciero: 20,
-                descripcion: 'Edificio de 5 niveles para oficinas y locales comerciales'
-            },
-            {
-                codigo: 'PROY-2403-003',
-                nombre: 'Bodega Industrial Norte',
-                cliente: 'Industrias XYZ',
-                ubicacion: 'Zona 12, Guatemala',
-                tipologia: 'INDUSTRIAL',
-                areaTerreno: 2000,
-                areaConstruccion: 1500,
-                estado: 'espera',
-                presupuestoAprobado: 2500000,
-                descripcion: 'Bodega industrial con oficinas anexas'
-            }
-        ];
-
-        proyectos.forEach(proyecto => this.insert('proyectos', proyecto));
-
-        // Transacciones de ejemplo
-        const transacciones = [
-            {
-                proyectoId: this.findOne('proyectos', { codigo: 'PROY-2401-001' }).id,
-                tipo: 'gasto',
-                descripcion: 'Compra de cemento',
-                monto: 12500,
-                moneda: 'GTQ',
-                unidad: 'saco',
-                cantidad: 250,
-                categoria: 'materiales',
-                proveedorId: 'PROV-001',
-                fecha: '2024-01-20',
-                mes: 'Enero'
-            },
-            {
-                proyectoId: this.findOne('proyectos', { codigo: 'PROY-2401-001' }).id,
-                tipo: 'gasto',
-                descripcion: 'Pago de planilla semanal',
-                monto: 35000,
-                moneda: 'GTQ',
-                categoria: 'planilla',
-                fecha: '2024-01-26',
-                mes: 'Enero'
-            },
-            {
-                proyectoId: this.findOne('proyectos', { codigo: 'PROY-2401-001' }).id,
-                tipo: 'ingreso',
-                descripcion: 'Aporte cliente',
-                monto: 300000,
-                moneda: 'GTQ',
-                categoria: 'aporte',
-                fecha: '2024-01-15',
-                mes: 'Enero'
-            }
-        ];
-
-        transacciones.forEach(transaccion => this.insert('transacciones', transaccion));
-
-        console.log('Datos de ejemplo cargados exitosamente');
     }
 }
 
