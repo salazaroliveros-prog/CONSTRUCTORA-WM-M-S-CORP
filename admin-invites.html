@@ -44,7 +44,10 @@
       </div>
       <div class="field">
         <label for="sb-anon">Supabase anon/public key (opcional, para que el trabajador no configure nada)</label>
-        <input id="sb-anon" type="text" placeholder="eyJ... (anon public)" />
+        <input id="sb-anon" type="password" placeholder="eyJ... (anon public)" autocomplete="off" />
+        <label class="muted" style="display:flex;gap:8px;align-items:center;user-select:none">
+          <input id="sb-show" type="checkbox" /> Mostrar key
+        </label>
       </div>
       <div class="field">
         <label for="token">Token</label>
@@ -60,11 +63,17 @@
 
     <div class="card">
       <h3>Link para WhatsApp</h3>
+      <div style="margin:8px 0 10px 0;display:flex;gap:10px;flex-wrap:wrap">
+        <button id="btn-copy-link" class="btn" type="button">Copiar link</button>
+      </div>
       <pre id="out-link">—</pre>
     </div>
 
     <div class="card">
       <h3>SQL (insert/replace)</h3>
+      <div style="margin:8px 0 10px 0;display:flex;gap:10px;flex-wrap:wrap">
+        <button id="btn-copy-sql" class="btn" type="button">Copiar SQL</button>
+      </div>
       <pre id="out-sql">—</pre>
       <p class="muted">Luego en Supabase habilita RLS según el esquema actualizado en supabase_schema.sql.</p>
     </div>
@@ -95,8 +104,54 @@
       el('token').value = randToken();
     }
 
+    async function copyText(text) {
+      const value = String(text || '').trim();
+      if (!value || value === '—') return false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(value);
+          return true;
+        }
+      } catch {
+        // fallback below
+      }
+
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = value;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+
     el('btn-new').addEventListener('click', refreshToken);
     refreshToken();
+
+    // Mostrar/ocultar key
+    el('sb-show')?.addEventListener('change', (e) => {
+      const show = Boolean(e?.target?.checked);
+      const inp = el('sb-anon');
+      if (inp) inp.type = show ? 'text' : 'password';
+    });
+
+    el('btn-copy-link')?.addEventListener('click', async () => {
+      const ok = await copyText(el('out-link')?.textContent);
+      if (!ok) alert('No hay link para copiar. Genera el link primero.');
+    });
+
+    el('btn-copy-sql')?.addEventListener('click', async () => {
+      const ok = await copyText(el('out-sql')?.textContent);
+      if (!ok) alert('No hay SQL para copiar. Genera el SQL primero.');
+    });
 
     el('btn-gen').addEventListener('click', () => {
       const name = el('w-name').value.trim();
