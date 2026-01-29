@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001326">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>COMPRAS - Sistema M&S</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <script src="app.js"></script>
+    <script src="database.js"></script>
+    <script src="sync.js"></script>
+    <script defer src="pwa.js"></script>
+    <style>
+        /* Estilos específicos para compras.css */
+        .supplier-card {
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            transition: all 0.3s;
+        }
+
+        .supplier-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+
+        .stock-level {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .stock-high {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+
+        .stock-medium {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .stock-low {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+
+        .order-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-solicitado {
+            background: rgba(23, 162, 184, 0.2);
+            color: #17a2b8;
+            border: 1px solid #17a2b8;
+        }
+
+        .status-aprobado {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+
+        .status-en_proceso {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .status-entregado {
+            background: rgba(111, 66, 193, 0.2);
+            color: #6f42c1;
+            border: 1px solid #6f42c1;
+        }
+
+        .material-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .whatsapp-btn:hover {
+            background: #1da851;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo-section">
+                        <div class="logo-text">CONSTRUCTORA WM/M&S</div>
+                        <div class="logo-slogan">EDIFICANDO EL FUTURO</div>
+                    </div>
+                    <div class="header-controls">
+                        <div class="real-time-clock" id="realTimeClock"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <div class="container">
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="inicio.html" class="nav-link"><i class="fas fa-home nav-icon"></i> INICIO</a></li>
+                    <li class="nav-item"><a href="proyectos.html" class="nav-link"><i class="fas fa-project-diagram nav-icon"></i> PROYECTOS</a></li>
+                    <li class="nav-item"><a href="presupuestos.html" class="nav-link"><i class="fas fa-calculator nav-icon"></i> PRESUPUESTOS</a></li>
+                    <li class="nav-item"><a href="seguimiento.html" class="nav-link"><i class="fas fa-chart-line nav-icon"></i> SEGUIMIENTO</a></li>
+                    <li class="nav-item"><a href="compras.html" class="nav-link active"><i class="fas fa-shopping-cart nav-icon"></i> COMPRAS</a></li>
+                    <li class="nav-item"><a href="rrhh.html" class="nav-link"><i class="fas fa-users nav-icon"></i> RR.HH.</a></li>
+                    <li class="nav-item"><a href="dashboard.html" class="nav-link"><i class="fas fa-tachometer-alt nav-icon"></i> DASHBOARD</a></li>
+                    <li class="nav-item"><a href="#" class="nav-link" onclick="App.logout()"><i class="fas fa-sign-out-alt nav-icon"></i> SALIR</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="app-hero">
+                <h1 class="app-title">SISTEMA DE COMPRAS</h1>
+                <p class="app-slogan">Gestión de pedidos a proveedores y control de stock</p>
+            </div>
+
+            <!-- Controles principales -->
+            <div class="main-controls">
+                <div class="control-card">
+                    <h3><i class="fas fa-filter"></i> FILTRAR PROYECTO</h3>
+                    <select class="form-control" id="projectFilter" onchange="cargarComprasProyecto()" aria-label="Filtrar proyecto">
+                        <option value="">Todos los proyectos</option>
+                    </select>
+                </div>
+                <div class="control-card">
+                    <h3><i class="fas fa-boxes"></i> TIPO DE MATERIAL</h3>
+                    <select class="form-control" id="materialTypeFilter" aria-label="Filtrar por tipo de material">
+                        <option value="">Todos los materiales</option>
+                        <option value="materiales_basicos">Materiales Básicos</option>
+                        <option value="materiales_estructurales">Materiales Estructurales</option>
+                        <option value="acabados">Acabados</option>
+                        <option value="equipos">Equipos</option>
+                    </select>
+                </div>
+                <div class="control-card">
+                    <h3><i class="fas fa-truck"></i> ESTADO PEDIDO</h3>
+                    <select class="form-control" id="orderStatusFilter" aria-label="Filtrar por estado del pedido">
+                        <option value="">Todos los estados</option>
+                        <option value="solicitado">Solicitado</option>
+                        <option value="aprobado">Aprobado</option>
+                        <option value="en_proceso">En Proceso</option>
+                        <option value="entregado">Entregado</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div class="control-card">
+                    <h3><i class="fas fa-plus-circle"></i> ACCIONES RÁPIDAS</h3>
+                    <button class="btn btn-primary btn-sm w-100 mb-2" onclick="nuevoPedido()">
+                        <i class="fas fa-plus"></i> NUEVO PEDIDO
+                    </button>
+                    <button class="btn btn-info btn-sm w-100" onclick="SyncService.syncNow()">
+                        <i class="fas fa-sync-alt"></i> SINCRONIZAR
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs principales -->
+            <div class="tabs">
+                <button class="tab active" onclick="cambiarTabCompras('tab-pedidos')">
+                    <i class="fas fa-clipboard-list"></i> PEDIDOS ACTIVOS
+                </button>
+                <button class="tab" onclick="cambiarTabCompras('tab-stock')">
+                    <i class="fas fa-warehouse"></i> CONTROL DE STOCK
+                </button>
+                <button class="tab" onclick="cambiarTabCompras('tab-proveedores')">
+                    <i class="fas fa-address-book"></i> PROVEEDORES
+                </button>
+                <button class="tab" onclick="cambiarTabCompras('tab-historial')">
+                    <i class="fas fa-history"></i> HISTORIAL
+                </button>
+            </div>
+
+            <!-- Tab: Pedidos Activos -->
+            <div class="tab-content active" id="tab-pedidos">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-shopping-cart"></i> PEDIDOS DE MATERIALES</h3>
+                        <button class="btn btn-success btn-sm" onclick="enviarPedidosWhatsApp()">
+                            <i class="fab fa-whatsapp"></i> ENVIAR A PROVEEDORES
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="ordersTable">
+                                <thead>
+                                    <tr>
+                                        <th>ORDEN #</th>
+                                        <th>PROYECTO</th>
+                                        <th>PROVEEDOR</th>
+                                        <th>FECHA SOLICITUD</th>
+                                        <th>ENTREGA EST.</th>
+                                        <th>MONTO TOTAL</th>
+                                        <th>ESTADO</th>
+                                        <th>ACCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ordersTableBody">
+                                    <!-- Se carga dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalle de pedido seleccionado -->
+                <div class="card mt-4 is-hidden" id="orderDetailsCard">
+                    <div class="card-header">
+                        <h3 class="card-title" id="orderDetailsTitle">DETALLE DE PEDIDO</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="orderDetailsContent">
+                            <!-- Se carga dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Control de Stock -->
+            <div class="tab-content" id="tab-stock">
+                <div class="row">
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-box"></i> INVENTARIO DE MATERIALES</h3>
+                                <button class="btn btn-primary btn-sm" onclick="actualizarInventario()">
+                                    <i class="fas fa-sync-alt"></i> ACTUALIZAR
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="inventoryTable">
+                                        <thead>
+                                            <tr>
+                                                <th>CÓDIGO</th>
+                                                <th>MATERIAL</th>
+                                                <th>CATEGORÍA</th>
+                                                <th>STOCK ACTUAL</th>
+                                                <th>STOCK MÍNIMO</th>
+                                                <th>NIVEL</th>
+                                                <th>ÚLTIMO PRECIO</th>
+                                                <th>ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="inventoryTableBody">
+                                            <!-- Se carga dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-chart-bar"></i> ANÁLISIS DE STOCK</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="metric-card">
+                                            <h4>MATERIALES BAJOS</h4>
+                                            <div class="metric-value" id="lowStockCount">0</div>
+                                            <div class="metric-label">Requieren reabastecimiento</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="metric-card">
+                                            <h4>VALOR INVENTARIO</h4>
+                                            <div class="metric-value" id="inventoryValue">GTQ 0.00</div>
+                                            <div class="metric-label">Valor total en stock</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <h5>ALERTAS DE STOCK BAJO</h5>
+                                    <div id="stockAlerts">
+                                        <!-- Se cargan dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Proveedores -->
+            <div class="tab-content" id="tab-proveedores">
+                <div class="row">
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-address-book"></i> PROVEEDORES REGISTRADOS</h3>
+                                <button class="btn btn-primary btn-sm" onclick="nuevoProveedor()">
+                                    <i class="fas fa-plus"></i> NUEVO PROVEEDOR
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row" id="suppliersGrid">
+                                    <!-- Se carga dinámicamente -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-star"></i> EVALUACIÓN DE PROVEEDORES</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="supplierRatings">
+                                    <!-- Se carga dinámicamente -->
+                                </div>
+                                <div class="mt-4">
+                                    <h5>PROVEEDORES DESTACADOS</h5>
+                                    <div id="topSuppliers">
+                                        <!-- Se carga dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Historial -->
+            <div class="tab-content" id="tab-historial">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-history"></i> HISTORIAL DE COMPRAS</h3>
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-sm" onclick="exportarHistorial()">
+                                <i class="fas fa-file-export"></i> EXPORTAR
+                            </button>
+                            <button class="btn btn-info btn-sm" onclick="generarReporteCompras()">
+                                <i class="fas fa-file-pdf"></i> REPORTE
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="historyTable">
+                                <thead>
+                                    <tr>
+                                        <th>FECHA</th>
+                                        <th>ORDEN #</th>
+                                        <th>PROVEEDOR</th>
+                                        <th>PROYECTO</th>
+                                        <th>DESCRIPCIÓN</th>
+                                        <th>MONTO</th>
+                                        <th>ESTADO</th>
+                                        <th>FACTURA</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody">
+                                    <!-- Se carga dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Nuevo Pedido -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">NUEVO PEDIDO DE MATERIALES</h3>
+                <button class="modal-close" onclick="cerrarModalCompras()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="orderForm" onsubmit="guardarPedido(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="order-project">Proyecto *</label>
+                            <select class="form-control" id="order-project" required>
+                                <option value="">Seleccionar proyecto</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="order-supplier">Proveedor *</label>
+                            <select class="form-control" id="order-supplier" required>
+                                <option value="">Seleccionar proveedor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="order-delivery-date">Fecha Entrega Estimada</label>
+                            <input type="date" class="form-control" id="order-delivery-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="order-payment-method">Método de Pago</label>
+                            <select class="form-control" id="order-payment-method">
+                                <option value="contado">Contado</option>
+                                <option value="credito_15">Crédito 15 días</option>
+                                <option value="credito_30">Crédito 30 días</option>
+                                <option value="credito_60">Crédito 60 días</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Materiales a Solicitar</label>
+                        <div id="order-materials-container">
+                            <!-- Se generan dinámicamente -->
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="agregarMaterialPedido()">
+                            <i class="fas fa-plus"></i> Agregar Material
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-notes">Observaciones</label>
+                        <textarea class="form-control" id="order-notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="order-totals-summary">
+                    <div>Subtotal: <span id="orderSubtotalPreview">GTQ 0.00</span></div>
+                    <div>IVA (12%): <span id="orderIvaPreview">GTQ 0.00</span></div>
+                    <div>Total: <span id="orderTotalPreview">GTQ 0.00</span></div>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalCompras()">Cancelar</button>
+                <button type="submit" class="btn btn-primary" form="orderForm">Guardar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Nuevo Proveedor -->
+    <div class="modal-overlay" id="supplierModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">NUEVO PROVEEDOR</h3>
+                <button class="modal-close" onclick="cerrarModalProveedor()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="supplierForm" onsubmit="guardarProveedor(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="supplier-code">Código *</label>
+                            <input type="text" class="form-control" id="supplier-code" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-name">Nombre *</label>
+                            <input type="text" class="form-control" id="supplier-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-type">Tipo *</label>
+                            <select class="form-control" id="supplier-type" required>
+                                <option value="materiales">Materiales</option>
+                                <option value="equipos">Equipos</option>
+                                <option value="servicios">Servicios</option>
+                                <option value="subcontrato">Subcontrato</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-contact">Contacto *</label>
+                            <input type="text" class="form-control" id="supplier-contact" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-phone">Teléfono *</label>
+                            <input type="tel" class="form-control" id="supplier-phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-email">Email</label>
+                            <input type="email" class="form-control" id="supplier-email">
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-num">NIT</label>
+                            <input type="text" class="form-control" id="supplier-num">
+                        </div>
+                        <div class="form-group">
+                            <label for="supplier-address">Dirección</label>
+                            <input type="text" class="form-control" id="supplier-address">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="supplier-products">Productos/Servicios</label>
+                        <textarea class="form-control" id="supplier-products" rows="3" 
+                                  placeholder="Lista de productos o servicios que ofrece"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="supplier-delivery">Plazo de Entrega (días)</label>
+                        <input type="number" class="form-control" id="supplier-delivery" min="0" value="7">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="supplier-payment">Condiciones de Pago</label>
+                        <textarea class="form-control" id="supplier-payment" rows="2" 
+                                  placeholder="Ej: 30 días, anticipo 50%, etc."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalProveedor()">Cancelar</button>
+                <button type="submit" class="btn btn-primary" form="supplierForm">Guardar Proveedor</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de Compras
+        class ComprasSystem {
+            constructor() {
+                this.proyectos = [];
+                this.proveedores = [];
+                this.materiales = [];
+                this.pedidos = [];
+                this.currentTab = 'tab-pedidos';
+                this.currentOrder = null;
+            }
+
+            async init() {
+                await this.loadData();
+                this.setupFilters();
+                this.renderOrders();
+                this.renderInventory();
+                this.renderSuppliers();
+                this.renderHistory();
+                this.setupEventListeners();
+            }
+
+            async loadData() {
+                this.proyectos = AdvancedDB.find('proyectos', { estado: { $in: ['activo', 'espera'] } });
+                this.proveedores = AdvancedDB.find('proveedores', { estado: 'activo' });
+                this.materiales = AdvancedDB.find('materiales', { estado: 'activo' }) || [];
+                this.pedidos = AdvancedDB.get('compras') || [];
+            }
+
+            setupFilters() {
+                const projectFilter = document.getElementById('projectFilter');
+                projectFilter.innerHTML = '<option value="">Todos los proyectos</option>';
+                this.proyectos.forEach(proyecto => {
+                    projectFilter.innerHTML += `<option value="${proyecto.id}">${proyecto.codigo} - ${proyecto.nombre}</option>`;
+                });
+
+                // Configurar filtros
+                document.getElementById('materialTypeFilter').addEventListener('change', () => this.renderInventory());
+                document.getElementById('orderStatusFilter').addEventListener('change', () => this.renderOrders());
+
+                // Llenar selects de modales
+                this.fillModalSelects();
+            }
+
+            fillModalSelects() {
+                // Proyectos para modal de pedido
+                const orderProjectSelect = document.getElementById('order-project');
+                orderProjectSelect.innerHTML = '<option value="">Seleccionar proyecto</option>';
+                this.proyectos.forEach(proyecto => {
+                    orderProjectSelect.innerHTML += `<option value="${proyecto.id}">${proyecto.codigo} - ${proyecto.nombre}</option>`;
+                });
+
+                // Proveedores para modal de pedido
+                const orderSupplierSelect = document.getElementById('order-supplier');
+                orderSupplierSelect.innerHTML = '<option value="">Seleccionar proveedor</option>';
+                this.proveedores.forEach(proveedor => {
+                    orderSupplierSelect.innerHTML += `<option value="${proveedor.id}">${proveedor.nombre}</option>`;
+                });
+            }
+
+            setupEventListeners() {
+                // Configurar fecha de entrega mínima (mañana)
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                document.getElementById('order-delivery-date').min = tomorrow.toISOString().split('T')[0];
+            }
+
+            // ===== RENDERIZADO DE CONTENIDO =====
+
+            renderOrders() {
+                const tbody = document.getElementById('ordersTableBody');
+                const projectFilter = document.getElementById('projectFilter').value;
+                const statusFilter = document.getElementById('orderStatusFilter').value;
+
+                let filteredOrders = [...this.pedidos];
+
+                // Aplicar filtros
+                if (projectFilter) {
+                    filteredOrders = filteredOrders.filter(order => order.proyectoId === projectFilter);
+                }
+
+                if (statusFilter) {
+                    filteredOrders = filteredOrders.filter(order => order.estado === statusFilter);
+                }
+
+                // Ordenar por fecha más reciente
+                filteredOrders.sort((a, b) => new Date(b.fechaSolicitud) - new Date(a.fechaSolicitud));
+
+                if (filteredOrders.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center p-4">
+                                <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
+                                <p>No hay pedidos registrados</p>
+                                <button class="btn btn-primary btn-sm mt-2" onclick="nuevoPedido()">
+                                    <i class="fas fa-plus"></i> Crear primer pedido
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                filteredOrders.forEach(pedido => {
+                    const proyecto = this.proyectos.find(p => p.id === pedido.proyectoId);
+                    const proveedor = this.proveedores.find(p => p.id === pedido.proveedorId);
+                    
+                    const statusClass = this.getStatusClass(pedido.estado);
+                    const statusText = this.getStatusText(pedido.estado);
+
+                    html += `
+                        <tr onclick="comprasSystem.viewOrderDetails('${pedido.id}')" style="cursor: pointer;">
+                            <td><strong>${pedido.numeroOrden}</strong></td>
+                            <td>${proyecto ? proyecto.codigo : 'N/A'}</td>
+                            <td>${proveedor ? proveedor.nombre : 'N/A'}</td>
+                            <td>${new Date(pedido.fechaSolicitud).toLocaleDateString('es-GT')}</td>
+                            <td>${pedido.fechaEntregaEstimada ? new Date(pedido.fechaEntregaEstimada).toLocaleDateString('es-GT') : 'No definida'}</td>
+                            <td><strong>${Utils.formatCurrency(pedido.total || 0)}</strong></td>
+                            <td><span class="order-status ${statusClass}">${statusText}</span></td>
+                            <td>
+                                <div class="item-actions">
+                                    <button class="item-action-btn" onclick="event.stopPropagation(); comprasSystem.editOrder('${pedido.id}')" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="item-action-btn" onclick="event.stopPropagation(); comprasSystem.sendToWhatsApp('${pedido.id}')" title="Enviar WhatsApp">
+                                        <i class="fab fa-whatsapp"></i>
+                                    </button>
+                                    <button class="item-action-btn" onclick="event.stopPropagation(); comprasSystem.updateStatus('${pedido.id}', 'entregado')" title="Marcar entregado">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+            }
+
+            renderInventory() {
+                const tbody = document.getElementById('inventoryTableBody');
+                const typeFilter = document.getElementById('materialTypeFilter').value;
+
+                let filteredMaterials = [...this.materiales];
+
+                // Aplicar filtro por tipo
+                if (typeFilter) {
+                    filteredMaterials = filteredMaterials.filter(mat => mat.categoria === typeFilter);
+                }
+
+                if (filteredMaterials.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center p-4">
+                                <i class="fas fa-boxes fa-3x mb-3" style="opacity: 0.3;"></i>
+                                <p>No hay materiales registrados</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                // Calcular métricas
+                let lowStockCount = 0;
+                let inventoryValue = 0;
+
+                let html = '';
+                filteredMaterials.forEach(material => {
+                    const stockLevel = this.getStockLevel(material);
+                    const stockClass = this.getStockClass(stockLevel);
+                    const stockText = this.getStockText(stockLevel);
+
+                    // Calcular valor del material en stock
+                    const materialValue = (material.stockActual || 0) * (material.precioUnitario || 0);
+                    inventoryValue += materialValue;
+
+                    // Contar materiales bajos
+                    if (stockLevel === 'low') lowStockCount++;
+
+                    html += `
+                        <tr>
+                            <td><strong>${material.codigo}</strong></td>
+                            <td>${material.nombre}</td>
+                            <td>${material.categoria ? material.categoria.replace('_', ' ') : 'N/A'}</td>
+                            <td>${material.stockActual || 0} ${material.unidad}</td>
+                            <td>${material.stockMinimo || 0} ${material.unidad}</td>
+                            <td><span class="stock-level ${stockClass}">${stockText}</span></td>
+                            <td>${Utils.formatCurrency(material.precioUnitario || 0)}</td>
+                            <td>
+                                <div class="item-actions">
+                                    <button class="item-action-btn" onclick="comprasSystem.requestMaterial('${material.id}')" title="Solicitar">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </button>
+                                    <button class="item-action-btn" onclick="comprasSystem.updateStock('${material.id}')" title="Actualizar stock">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+
+                // Actualizar métricas
+                document.getElementById('lowStockCount').textContent = lowStockCount;
+                document.getElementById('inventoryValue').textContent = Utils.formatCurrency(inventoryValue);
+
+                // Mostrar alertas de stock bajo
+                this.showStockAlerts();
+            }
+
+            renderSuppliers() {
+                const suppliersGrid = document.getElementById('suppliersGrid');
+                const ratingsContainer = document.getElementById('supplierRatings');
+                const topSuppliersContainer = document.getElementById('topSuppliers');
+
+                if (this.proveedores.length === 0) {
+                    suppliersGrid.innerHTML = `
+                        <div class="col-12 text-center p-4">
+                            <i class="fas fa-address-book fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p>No hay proveedores registrados</p>
+                            <button class="btn btn-primary btn-sm mt-2" onclick="nuevoProveedor()">
+                                <i class="fas fa-plus"></i> Registrar primer proveedor
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Renderizar tarjetas de proveedores
+                let suppliersHtml = '';
+                this.proveedores.forEach(proveedor => {
+                    suppliersHtml += `
+                        <div class="col-md-6">
+                            <div class="supplier-card">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-1">${proveedor.nombre}</h5>
+                                        <p class="mb-1"><small><i class="fas fa-tag"></i> ${this.getSupplierTypeText(proveedor.tipo)}</small></p>
+                                        <p class="mb-1"><small><i class="fas fa-user"></i> ${proveedor.contacto}</small></p>
+                                        <p class="mb-1"><small><i class="fas fa-phone"></i> ${proveedor.telefono}</small></p>
+                                        ${proveedor.email ? `<p class="mb-1"><small><i class="fas fa-envelope"></i> ${proveedor.email}</small></p>` : ''}
+                                    </div>
+                                    <div>
+                                        <span class="badge badge-primary">${proveedor.rating || 'N/A'}/5</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-sm btn-primary" onclick="comprasSystem.viewSupplier('${proveedor.id}')">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" onclick="comprasSystem.editSupplier('${proveedor.id}')">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                    <button class="btn btn-sm btn-success" onclick="comprasSystem.newOrderToSupplier('${proveedor.id}')">
+                                        <i class="fas fa-cart-plus"></i> Pedido
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                suppliersGrid.innerHTML = suppliersHtml;
+
+                // Renderizar evaluaciones
+                ratingsContainer.innerHTML = this.renderSupplierRatings();
+                
+                // Renderizar mejores proveedores
+                topSuppliersContainer.innerHTML = this.renderTopSuppliers();
+            }
+
+            renderHistory() {
+                const tbody = document.getElementById('historyTableBody');
+                
+                // Ordenar pedidos por fecha (más recientes primero)
+                const sortedOrders = [...this.pedidos].sort((a, b) => new Date(b.fechaSolicitud) - new Date(a.fechaSolicitud));
+
+                if (sortedOrders.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center p-4">
+                                <i class="fas fa-history fa-3x mb-3" style="opacity: 0.3;"></i>
+                                <p>No hay historial de compras</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                sortedOrders.slice(0, 50).forEach(pedido => { // Mostrar últimos 50 registros
+                    const proyecto = this.proyectos.find(p => p.id === pedido.proyectoId);
+                    const proveedor = this.proveedores.find(p => p.id === pedido.proveedorId);
+                    const statusClass = this.getStatusClass(pedido.estado);
+                    const statusText = this.getStatusText(pedido.estado);
+
+                    html += `
+                        <tr>
+                            <td>${new Date(pedido.fechaSolicitud).toLocaleDateString('es-GT')}</td>
+                            <td><strong>${pedido.numeroOrden}</strong></td>
+                            <td>${proveedor ? proveedor.nombre : 'N/A'}</td>
+                            <td>${proyecto ? proyecto.codigo : 'N/A'}</td>
+                            <td>${pedido.items ? pedido.items.length + ' items' : 'Sin detalles'}</td>
+                            <td>${Utils.formatCurrency(pedido.total || 0)}</td>
+                            <td><span class="order-status ${statusClass}">${statusText}</span></td>
+                            <td>
+                                ${pedido.facturaNumero ? 
+                                    `<span class="badge badge-success">${pedido.facturaNumero}</span>` : 
+                                    '<span class="badge badge-warning">Pendiente</span>'}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+            }
+
+            // ===== FUNCIONES AUXILIARES =====
+
+            getStatusClass(status) {
+                switch(status) {
+                    case 'solicitado': return 'status-solicitado';
+                    case 'aprobado': return 'status-aprobado';
+                    case 'en_proceso': return 'status-en_proceso';
+                    case 'entregado': return 'status-entregado';
+                    case 'cancelado': return 'status-cancelado';
+                    default: return 'status-solicitado';
+                }
+            }
+
+            getStatusText(status) {
+                const statusMap = {
+                    'solicitado': 'SOLICITADO',
+                    'aprobado': 'APROBADO',
+                    'en_proceso': 'EN PROCESO',
+                    'entregado': 'ENTREGADO',
+                    'cancelado': 'CANCELADO'
+                };
+                return statusMap[status] || status.toUpperCase();
+            }
+
+            getStockLevel(material) {
+                const stockActual = material.stockActual || 0;
+                const stockMinimo = material.stockMinimo || 0;
+
+                if (stockActual <= stockMinimo * 0.5) return 'low';
+                if (stockActual <= stockMinimo) return 'medium';
+                return 'high';
+            }
+
+            getStockClass(level) {
+                switch(level) {
+                    case 'low': return 'stock-low';
+                    case 'medium': return 'stock-medium';
+                    case 'high': return 'stock-high';
+                    default: return 'stock-high';
+                }
+            }
+
+            getStockText(level) {
+                switch(level) {
+                    case 'low': return 'BAJO';
+                    case 'medium': return 'MEDIO';
+                    case 'high': return 'ALTO';
+                    default: return 'ALTO';
+                }
+            }
+
+            getSupplierTypeText(type) {
+                const typeMap = {
+                    'materiales': 'Materiales',
+                    'equipos': 'Equipos',
+                    'servicios': 'Servicios',
+                    'subcontrato': 'Subcontrato'
+                };
+                return typeMap[type] || type;
+            }
+
+            renderSupplierRatings() {
+                // Calcular promedio de ratings
+                const ratings = this.proveedores.map(p => p.rating || 0).filter(r => r > 0);
+                const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : 'N/A';
+
+                return `
+                    <div class="text-center">
+                        <div class="metric-value">${avgRating}/5</div>
+                        <div class="metric-label">Rating Promedio</div>
+                        <div class="mt-3">
+                            ${[5, 4, 3, 2, 1].map(stars => {
+                                const count = this.proveedores.filter(p => Math.round(p.rating || 0) === stars).length;
+                                const percent = this.proveedores.length > 0 ? (count / this.proveedores.length * 100).toFixed(0) : 0;
+                                return `
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div style="width: 50px; text-align: right;">${stars}★</div>
+                                        <div class="progress flex-grow-1 ml-2" style="height: 20px;">
+                                            <div class="progress-bar bg-warning" style="width: ${percent}%"></div>
+                                        </div>
+                                        <div style="width: 40px; text-align: right;">${percent}%</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderTopSuppliers() {
+                // Ordenar proveedores por rating
+                const topSuppliers = [...this.proveedores]
+                    .filter(p => p.rating && p.rating >= 4)
+                    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                    .slice(0, 5);
+
+                if (topSuppliers.length === 0) {
+                    return '<p class="text-center">No hay proveedores destacados</p>';
+                }
+
+                return topSuppliers.map(proveedor => `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background: rgba(255,255,255,0.05); border-radius: 5px;">
+                        <div>
+                            <strong>${proveedor.nombre}</strong><br>
+                            <small>${this.getSupplierTypeText(proveedor.tipo)}</small>
+                        </div>
+                        <div>
+                            <span class="badge badge-warning">${proveedor.rating || 'N/A'}/5</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            showStockAlerts() {
+                const alertsContainer = document.getElementById('stockAlerts');
+                const lowStockMaterials = this.materiales.filter(mat => this.getStockLevel(mat) === 'low');
+
+                if (lowStockMaterials.length === 0) {
+                    alertsContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> Todos los materiales tienen stock adecuado
+                        </div>
+                    `;
+                    return;
+                }
+
+                let alertsHtml = '';
+                lowStockMaterials.slice(0, 5).forEach(material => {
+                    alertsHtml += `
+                        <div class="alert alert-danger d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>${material.codigo}</strong> - ${material.nombre}<br>
+                                <small>Stock: ${material.stockActual || 0} ${material.unidad} (Mínimo: ${material.stockMinimo || 0})</small>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="comprasSystem.requestMaterial('${material.id}')">
+                                <i class="fas fa-shopping-cart"></i> Solicitar
+                            </button>
+                        </div>
+                    `;
+                });
+
+                alertsContainer.innerHTML = alertsHtml;
+            }
+
+            // ===== FUNCIONALIDADES =====
+
+            viewOrderDetails(orderId) {
+                const pedido = this.pedidos.find(p => p.id === orderId);
+                if (!pedido) return;
+
+                this.currentOrder = pedido;
+                const proyecto = this.proyectos.find(p => p.id === pedido.proyectoId);
+                const proveedor = this.proveedores.find(p => p.id === pedido.proveedorId);
+
+                document.getElementById('orderDetailsCard').classList.remove('is-hidden');
+                document.getElementById('orderDetailsTitle').textContent = `PEDIDO: ${pedido.numeroOrden}`;
+
+                let itemsHtml = '';
+                if (pedido.items && pedido.items.length > 0) {
+                    itemsHtml = pedido.items.map(item => `
+                        <div class="material-item">
+                            <div>
+                                <strong>${item.material}</strong><br>
+                                <small>Cantidad: ${item.cantidad} ${item.unidad}</small>
+                            </div>
+                            <div>
+                                ${Utils.formatCurrency(item.precio)}<br>
+                                <small>Total: ${Utils.formatCurrency(item.cantidad * item.precio)}</small>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                const content = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Proyecto:</strong> ${proyecto ? proyecto.nombre : 'N/A'}</p>
+                            <p><strong>Proveedor:</strong> ${proveedor ? proveedor.nombre : 'N/A'}</p>
+                            <p><strong>Fecha Solicitud:</strong> ${new Date(pedido.fechaSolicitud).toLocaleDateString('es-GT')}</p>
+                            <p><strong>Entrega Estimada:</strong> ${pedido.fechaEntregaEstimada ? new Date(pedido.fechaEntregaEstimada).toLocaleDateString('es-GT') : 'No definida'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Estado:</strong> <span class="order-status ${this.getStatusClass(pedido.estado)}">${this.getStatusText(pedido.estado)}</span></p>
+                            <p><strong>Método de Pago:</strong> ${pedido.metodoPago || 'No especificado'}</p>
+                            <p><strong>Factura:</strong> ${pedido.facturaNumero || 'Pendiente'}</p>
+                            <p><strong>Total:</strong> ${Utils.formatCurrency(pedido.total || 0)}</p>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-4">Materiales solicitados:</h5>
+                    ${itemsHtml || '<p class="text-center">No hay items detallados</p>'}
+                    
+                    ${pedido.observaciones ? `
+                        <h5 class="mt-4">Observaciones:</h5>
+                        <p>${pedido.observaciones}</p>
+                    ` : ''}
+                    
+                    <div class="mt-4 text-center">
+                        <button class="btn btn-primary" onclick="comprasSystem.editOrder('${pedido.id}')">
+                            <i class="fas fa-edit"></i> Editar Pedido
+                        </button>
+                        <button class="whatsapp-btn ml-2" onclick="comprasSystem.sendToWhatsApp('${pedido.id}')">
+                            <i class="fab fa-whatsapp"></i> Enviar por WhatsApp
+                        </button>
+                        <button class="btn btn-success ml-2" onclick="comprasSystem.generatePurchaseOrder('${pedido.id}')">
+                            <i class="fas fa-file-pdf"></i> Generar Orden
+                        </button>
+                    </div>
+                `;
+
+                document.getElementById('orderDetailsContent').innerHTML = content;
+
+                // Scroll a la sección de detalles
+                document.getElementById('orderDetailsCard').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            editOrder(orderId) {
+                const pedido = this.pedidos.find(p => p.id === orderId);
+                if (!pedido) return;
+
+                this.currentOrder = pedido;
+                this.openOrderModal(pedido);
+            }
+
+            openOrderModal(pedido = null) {
+                document.getElementById('orderModal').style.display = 'flex';
+
+                // Si no viene pedido, es un alta nueva (evita sobrescribir el último editado).
+                this.currentOrder = pedido && pedido.id ? pedido : null;
+                
+                if (pedido) {
+                    document.getElementById('modalTitle').textContent = 'EDITAR PEDIDO';
+                    
+                    // Llenar formulario con datos del pedido
+                    document.getElementById('order-project').value = pedido.proyectoId;
+                    document.getElementById('order-supplier').value = pedido.proveedorId;
+                    document.getElementById('order-delivery-date').value = pedido.fechaEntregaEstimada || '';
+                    document.getElementById('order-payment-method').value = pedido.metodoPago || 'contado';
+                    document.getElementById('order-notes').value = pedido.observaciones || '';
+                    
+                    // Limpiar y llenar materiales
+                    const container = document.getElementById('order-materials-container');
+                    container.innerHTML = '';
+                    
+                    if (pedido.items && pedido.items.length > 0) {
+                        pedido.items.forEach(item => {
+                            this.addMaterialRow(item);
+                        });
+                    } else {
+                        this.addMaterialRow();
+                    }
+                } else {
+                    document.getElementById('modalTitle').textContent = 'NUEVO PEDIDO';
+                    document.getElementById('orderForm').reset();
+                    
+                    // Limpiar materiales y agregar primera fila
+                    const container = document.getElementById('order-materials-container');
+                    container.innerHTML = '';
+                    this.addMaterialRow();
+                }
+
+                this.calculateOrderTotal();
+            }
+
+            addMaterialRow(item = null) {
+                const container = document.getElementById('order-materials-container');
+                const rowId = 'material-row-' + Date.now();
+                
+                const rowHtml = `
+                    <div class="form-grid" id="${rowId}" style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                        <div class="form-group">
+                            <label>Material</label>
+                            <select class="form-control material-select" onchange="comprasSystem.updateMaterialPrice(this)">
+                                <option value="">Seleccionar material</option>
+                                ${this.materiales.map(mat => `
+                                    <option value="${mat.id}" data-price="${mat.precioUnitario}" data-unit="${mat.unidad}" 
+                                            ${item && item.materialId === mat.id ? 'selected' : ''}>
+                                        ${mat.codigo} - ${mat.nombre}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad</label>
+                            <input type="number" class="form-control material-quantity" step="0.01" min="0" 
+                                   value="${item ? item.cantidad : 1}" onchange="comprasSystem.calculateMaterialTotal(this)">
+                        </div>
+                        <div class="form-group">
+                            <label>Unidad</label>
+                            <input type="text" class="form-control material-unit" value="${item ? item.unidad : ''}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Precio Unitario (GTQ)</label>
+                            <input type="number" class="form-control material-price" step="0.01" min="0" 
+                                   value="${item ? item.precio : 0}" onchange="comprasSystem.calculateMaterialTotal(this)">
+                        </div>
+                        <div class="form-group">
+                            <label>Total (GTQ)</label>
+                            <input type="number" class="form-control material-total" step="0.01" min="0" value="0" readonly>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove(); comprasSystem.calculateOrderTotal()">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML += rowHtml;
+                
+                // Si hay item, actualizar precio y calcular total
+                if (item) {
+                    setTimeout(() => {
+                        const row = document.getElementById(rowId);
+                        row.querySelector('.material-price').value = item.precio || 0;
+                        this.calculateMaterialTotal(row.querySelector('.material-quantity'));
+                    }, 100);
+                }
+            }
+
+            updateMaterialPrice(select) {
+                const row = select.closest('.form-grid');
+                const materialId = select.value;
+                const material = this.materiales.find(m => m.id === materialId);
+                
+                if (material) {
+                    row.querySelector('.material-unit').value = material.unidad;
+                    row.querySelector('.material-price').value = material.precioUnitario || 0;
+                    this.calculateMaterialTotal(row.querySelector('.material-quantity'));
+                }
+            }
+
+            calculateMaterialTotal(input) {
+                const row = input.closest('.form-grid');
+                const cantidad = parseFloat(row.querySelector('.material-quantity').value) || 0;
+                const precio = parseFloat(row.querySelector('.material-price').value) || 0;
+                const total = cantidad * precio;
+                
+                row.querySelector('.material-total').value = total.toFixed(2);
+                this.calculateOrderTotal();
+            }
+
+            calculateOrderTotal() {
+                let subtotal = 0;
+                document.querySelectorAll('#order-materials-container .form-grid').forEach(row => {
+                    const total = parseFloat(row.querySelector('.material-total')?.value) || 0;
+                    subtotal += total;
+                });
+
+                const iva = subtotal * 0.12;
+                const totalConIva = subtotal + iva;
+
+                const subtotalEl = document.getElementById('orderSubtotalPreview');
+                const ivaEl = document.getElementById('orderIvaPreview');
+                const totalEl = document.getElementById('orderTotalPreview');
+
+                if (subtotalEl) subtotalEl.textContent = Utils.formatCurrency(subtotal);
+                if (ivaEl) ivaEl.textContent = Utils.formatCurrency(iva);
+                if (totalEl) totalEl.textContent = Utils.formatCurrency(totalConIva);
+            }
+
+            async guardarPedido(event) {
+                event.preventDefault();
+                
+                try {
+                    const editOrderId = this.currentOrder && this.currentOrder.id ? this.currentOrder.id : null;
+                    const proyectoId = document.getElementById('order-project').value;
+                    const proveedorId = document.getElementById('order-supplier').value;
+                    const fechaEntrega = document.getElementById('order-delivery-date').value;
+                    const metodoPago = document.getElementById('order-payment-method').value;
+                    const observaciones = document.getElementById('order-notes').value;
+                    
+                    // Validaciones
+                    if (!proyectoId || !proveedorId) {
+                        Utils.showNotification('Complete los campos obligatorios', 'warning');
+                        return;
+                    }
+                    
+                    // Recopilar materiales del formulario
+                    const materiales = [];
+                    let totalPedido = 0;
+                    
+                    document.querySelectorAll('#order-materials-container .form-grid').forEach(row => {
+                        const materialId = row.querySelector('.material-select').value;
+                        const cantidad = parseFloat(row.querySelector('.material-quantity').value) || 0;
+                        const precio = parseFloat(row.querySelector('.material-price').value) || 0;
+                        const unidad = row.querySelector('.material-unit').value;
+                        
+                        if (materialId && cantidad > 0 && precio > 0) {
+                            const material = this.materiales.find(m => m.id === materialId);
+                            materiales.push({
+                                materialId: materialId,
+                                material: material ? material.nombre : 'Material desconocido',
+                                cantidad: cantidad,
+                                unidad: unidad,
+                                precio: precio,
+                                total: cantidad * precio
+                            });
+                            
+                            totalPedido += cantidad * precio;
+                        }
+                    });
+                    
+                    if (materiales.length === 0) {
+                        Utils.showNotification('Agregue al menos un material al pedido', 'warning');
+                        return;
+                    }
+                    
+                    // Crear objeto de pedido
+                    if (editOrderId) {
+                        AdvancedDB.update('compras', editOrderId, {
+                            proyectoId: proyectoId,
+                            proveedorId: proveedorId,
+                            fechaEntregaEstimada: fechaEntrega || null,
+                            items: materiales,
+                            subtotal: totalPedido,
+                            iva: totalPedido * 0.12,
+                            total: totalPedido * 1.12,
+                            metodoPago: metodoPago,
+                            observaciones: observaciones,
+                            syncStatus: 'pending'
+                        });
+                        Utils.showNotification('Pedido actualizado exitosamente', 'success');
+                    } else {
+                        const pedido = {
+                            numeroOrden: this.generateOrderNumber(),
+                            proyectoId: proyectoId,
+                            proveedorId: proveedorId,
+                            fechaSolicitud: new Date().toISOString().split('T')[0],
+                            fechaEntregaEstimada: fechaEntrega || null,
+                            items: materiales,
+                            subtotal: totalPedido,
+                            iva: totalPedido * 0.12, // 12% IVA
+                            total: totalPedido * 1.12,
+                            estado: 'solicitado',
+                            metodoPago: metodoPago,
+                            observaciones: observaciones,
+                            creadoPor: 'admin', // En una implementación real, usar el usuario actual
+                            syncStatus: 'pending'
+                        };
+                        AdvancedDB.insert('compras', pedido);
+                        Utils.showNotification('Pedido guardado exitosamente', 'success');
+                    }
+                    
+                    this.cerrarModalCompras();
+                    
+                    // Recargar datos y actualizar vista
+                    await this.loadData();
+                    this.renderOrders();
+                    this.renderInventory();
+                    this.renderHistory();
+                    
+                    // Sincronizar
+                    SyncService.syncNow();
+                    
+                } catch (error) {
+                    console.error('Error guardando pedido:', error);
+                    Utils.showNotification('Error al guardar pedido: ' + error.message, 'error');
+                }
+            }
+
+            generateOrderNumber() {
+                const fecha = new Date();
+                const year = fecha.getFullYear().toString().substr(-2);
+                const month = (fecha.getMonth() + 1).toString().padStart(2, '0');
+                const count = this.pedidos.filter(p => p.numeroOrden && p.numeroOrden.includes(`ORD-${year}${month}`)).length + 1;
+                return `ORD-${year}${month}-${count.toString().padStart(4, '0')}`;
+            }
+
+            async reservarMateriales(materiales) {
+                for (const item of materiales) {
+                    const material = this.materiales.find(m => m.id === item.materialId);
+                    if (material) {
+                        // En una implementación real, aquí se reservaría el material
+                        // Por ahora solo registramos la transacción
+                        console.log(`Reservando ${item.cantidad} ${item.unidad} de ${material.nombre}`);
+                    }
+                }
+            }
+
+            sendToWhatsApp(orderId) {
+                const pedido = this.pedidos.find(p => p.id === orderId);
+                if (!pedido) return;
+                
+                const proveedor = this.proveedores.find(p => p.id === pedido.proveedorId);
+                if (!proveedor || !proveedor.telefono) {
+                    Utils.showNotification('El proveedor no tiene número de teléfono registrado', 'warning');
+                    return;
+                }
+                
+                // Formatear mensaje para WhatsApp
+                let mensaje = `*SOLICITUD DE COTIZACIÓN - CONSTRUCTORA M&S*\n\n`;
+                mensaje += `*Orden:* ${pedido.numeroOrden}\n`;
+                mensaje += `*Fecha:* ${new Date(pedido.fechaSolicitud).toLocaleDateString('es-GT')}\n`;
+                mensaje += `*Entrega Estimada:* ${pedido.fechaEntregaEstimada ? new Date(pedido.fechaEntregaEstimada).toLocaleDateString('es-GT') : 'A convenir'}\n\n`;
+                mensaje += `*MATERIALES SOLICITADOS:*\n`;
+                
+                if (pedido.items && pedido.items.length > 0) {
+                    pedido.items.forEach((item, index) => {
+                        mensaje += `${index + 1}. ${item.material} - ${item.cantidad} ${item.unidad}\n`;
+                    });
+                }
+                
+                mensaje += `\n*OBSERVACIONES:*\n${pedido.observaciones || 'Ninguna'}\n\n`;
+                mensaje += `Por favor confirme disponibilidad y envíe cotización.\n`;
+                mensaje += `*Gracias.*`;
+                
+                // Codificar mensaje para URL
+                const mensajeCodificado = encodeURIComponent(mensaje);
+                const telefono = proveedor.telefono.replace(/\D/g, '');
+                
+                // Crear enlace de WhatsApp
+                const whatsappUrl = `https://wa.me/${telefono}?text=${mensajeCodificado}`;
+                
+                // Abrir en nueva pestaña
+                window.open(whatsappUrl, '_blank');
+                
+                Utils.showNotification('Mensaje preparado para WhatsApp', 'success');
+            }
+
+            updateStatus(orderId, newStatus) {
+                const pedido = this.pedidos.find(p => p.id === orderId);
+                if (!pedido) return;
+                const previousStatus = pedido.estado;
+                
+                Utils.confirm(
+                    `¿Cambiar estado del pedido ${pedido.numeroOrden} a "${this.getStatusText(newStatus)}"?`,
+                    async () => {
+                        try {
+                            AdvancedDB.update('compras', orderId, { 
+                                estado: newStatus,
+                                fechaEntregaReal: newStatus === 'entregado' ? new Date().toISOString().split('T')[0] : null
+                            });
+
+                            // Si pasa a ENTREGADO por primera vez, sumar al inventario.
+                            if (newStatus === 'entregado' && previousStatus !== 'entregado') {
+                                const pedidoActualizado = (AdvancedDB.get('compras') || []).find(p => p.id === orderId) || pedido;
+                                const items = pedidoActualizado.items || [];
+
+                                for (const item of items) {
+                                    if (!item.materialId) continue;
+                                    const mat = (AdvancedDB.get('materiales') || []).find(m => m.id === item.materialId);
+                                    if (!mat) continue;
+
+                                    const cantidad = Number(item.cantidad) || 0;
+                                    if (cantidad <= 0) continue;
+
+                                    AdvancedDB.update('materiales', mat.id, {
+                                        stockActual: (Number(mat.stockActual) || 0) + cantidad,
+                                        // Opcional: actualizar precio al último precio de compra
+                                        precioUnitario: Number(item.precio) || mat.precioUnitario
+                                    });
+                                }
+                            }
+                            
+                            Utils.showNotification('Estado del pedido actualizado', 'success');
+                            
+                            // Recargar datos
+                            await this.loadData();
+                            this.renderOrders();
+                            this.renderHistory();
+                            this.renderInventory();
+                            
+                        } catch (error) {
+                            console.error('Error actualizando estado:', error);
+                            Utils.showNotification('Error al actualizar estado', 'error');
+                        }
+                    }
+                );
+            }
+
+            requestMaterial(materialId) {
+                const material = this.materiales.find(m => m.id === materialId);
+                if (!material) return;
+                
+                // Abrir modal de nuevo pedido con el material pre-seleccionado
+                this.openOrderModal();
+                
+                // Después de que se cargue el modal, seleccionar el material
+                setTimeout(() => {
+                    const container = document.getElementById('order-materials-container');
+                    const firstRow = container.querySelector('.form-grid');
+                    if (firstRow) {
+                        const select = firstRow.querySelector('.material-select');
+                        select.value = materialId;
+                        this.updateMaterialPrice(select);
+                        
+                        // Establecer cantidad sugerida (stock mínimo - stock actual)
+                        const cantidadSugerida = Math.max(1, (material.stockMinimo || 0) - (material.stockActual || 0));
+                        firstRow.querySelector('.material-quantity').value = cantidadSugerida;
+                        this.calculateMaterialTotal(firstRow.querySelector('.material-quantity'));
+                    }
+                }, 500);
+            }
+
+            updateStock(materialId) {
+                const material = this.materiales.find(m => m.id === materialId);
+                if (!material) return;
+                
+                Utils.showModal(
+                    'Actualizar Stock',
+                    `
+                    <div class="form-group">
+                        <label>Material: <strong>${material.nombre}</strong></label>
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Actual: ${material.stockActual || 0} ${material.unidad}</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Nuevo Stock</label>
+                        <input type="number" class="form-control" id="newStock" 
+                               value="${material.stockActual || 0}" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Unitario Actualizado (GTQ)</label>
+                        <input type="number" class="form-control" id="newPrice" 
+                               value="${material.precioUnitario || 0}" step="0.01" min="0">
+                    </div>
+                    `,
+                    [
+                        {
+                            text: 'Cancelar',
+                            type: 'secondary',
+                            onclick: 'this.closest(".modal-overlay").remove()'
+                        },
+                        {
+                            text: 'Actualizar',
+                            type: 'primary',
+                            onclick: `async () => {
+                                const newStock = parseFloat(document.getElementById('newStock').value);
+                                const newPrice = parseFloat(document.getElementById('newPrice').value);
+                                
+                                if (isNaN(newStock) || newStock < 0) {
+                                    Utils.showNotification('Stock inválido', 'error');
+                                    return;
+                                }
+                                
+                                try {
+                                    await AdvancedDB.update('materiales', '${materialId}', {
+                                        stockActual: newStock,
+                                        precioUnitario: newPrice,
+                                        precioActualizado: new Date().toISOString()
+                                    });
+                                    
+                                    Utils.showNotification('Stock actualizado exitosamente', 'success');
+                                    document.querySelector('.modal-overlay').remove();
+                                    
+                                    // Recargar inventario
+                                    comprasSystem.loadData().then(() => comprasSystem.renderInventory());
+                                    
+                                } catch (error) {
+                                    console.error('Error actualizando stock:', error);
+                                    Utils.showNotification('Error al actualizar stock', 'error');
+                                }
+                            }`
+                        }
+                    ]
+                );
+            }
+
+            viewSupplier(supplierId) {
+                const proveedor = this.proveedores.find(p => p.id === supplierId);
+                if (!proveedor) return;
+                
+                const pedidosProveedor = this.pedidos.filter(p => p.proveedorId === supplierId);
+                const totalCompras = pedidosProveedor.reduce((sum, p) => sum + (p.total || 0), 0);
+                
+                let pedidosHtml = '';
+                if (pedidosProveedor.length > 0) {
+                    pedidosProveedor.slice(0, 5).forEach(pedido => {
+                        pedidosHtml += `
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background: rgba(255,255,255,0.05); border-radius: 5px;">
+                                <div>
+                                    <strong>${pedido.numeroOrden}</strong><br>
+                                    <small>${new Date(pedido.fechaSolicitud).toLocaleDateString('es-GT')}</small>
+                                </div>
+                                <div>
+                                    <span class="badge ${this.getStatusClass(pedido.estado)}">${this.getStatusText(pedido.estado)}</span><br>
+                                    <small>${Utils.formatCurrency(pedido.total || 0)}</small>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                Utils.showModal(
+                    `Proveedor: ${proveedor.nombre}`,
+                    `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Tipo:</strong> ${this.getSupplierTypeText(proveedor.tipo)}</p>
+                            <p><strong>Contacto:</strong> ${proveedor.contacto}</p>
+                            <p><strong>Teléfono:</strong> ${proveedor.telefono}</p>
+                            ${proveedor.email ? `<p><strong>Email:</strong> ${proveedor.email}</p>` : ''}
+                            ${proveedor.nit ? `<p><strong>NIT:</strong> ${proveedor.nit}</p>` : ''}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Rating:</strong> <span class="badge badge-warning">${proveedor.rating || 'N/A'}/5</span></p>
+                            <p><strong>Plazo Entrega:</strong> ${proveedor.plazoEntrega || 7} días</p>
+                            <p><strong>Total Compras:</strong> ${Utils.formatCurrency(totalCompras)}</p>
+                            <p><strong>Pedidos Realizados:</strong> ${pedidosProveedor.length}</p>
+                        </div>
+                    </div>
+                    
+                    ${proveedor.direccion ? `
+                        <div class="mt-3">
+                            <strong>Dirección:</strong><br>
+                            ${proveedor.direccion}
+                        </div>
+                    ` : ''}
+                    
+                    ${proveedor.productos ? `
+                        <div class="mt-3">
+                            <strong>Productos/Servicios:</strong><br>
+                            ${proveedor.productos}
+                        </div>
+                    ` : ''}
+                    
+                    ${proveedor.condicionesPago ? `
+                        <div class="mt-3">
+                            <strong>Condiciones de Pago:</strong><br>
+                            ${proveedor.condicionesPago}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="mt-4">
+                        <h5>Últimos Pedidos:</h5>
+                        ${pedidosHtml || '<p class="text-center">No hay pedidos registrados</p>'}
+                    </div>
+                    `,
+                    [
+                        {
+                            text: 'Cerrar',
+                            type: 'secondary',
+                            onclick: 'this.closest(".modal-overlay").remove()'
+                        },
+                        {
+                            text: 'Nuevo Pedido',
+                            type: 'primary',
+                            onclick: `() => {
+                                document.querySelector('.modal-overlay').remove();
+                                comprasSystem.newOrderToSupplier('${supplierId}');
+                            }`
+                        },
+                        {
+                            text: 'Editar',
+                            type: 'info',
+                            onclick: `() => {
+                                document.querySelector('.modal-overlay').remove();
+                                comprasSystem.editSupplier('${supplierId}');
+                            }`
+                        }
+                    ]
+                );
+            }
+
+            editSupplier(supplierId) {
+                const proveedor = this.proveedores.find(p => p.id === supplierId);
+                if (!proveedor) return;
+                
+                // Llenar formulario con datos del proveedor
+                document.getElementById('supplier-code').value = proveedor.codigo || '';
+                document.getElementById('supplier-name').value = proveedor.nombre || '';
+                document.getElementById('supplier-type').value = proveedor.tipo || '';
+                document.getElementById('supplier-contact').value = proveedor.contacto || '';
+                document.getElementById('supplier-phone').value = proveedor.telefono || '';
+                document.getElementById('supplier-email').value = proveedor.email || '';
+                document.getElementById('supplier-num').value = proveedor.nit || '';
+                document.getElementById('supplier-address').value = proveedor.direccion || '';
+                document.getElementById('supplier-products').value = proveedor.productos || '';
+                document.getElementById('supplier-delivery').value = proveedor.plazoEntrega || 7;
+                document.getElementById('supplier-payment').value = proveedor.condicionesPago || '';
+                
+                document.getElementById('supplierModal').style.display = 'flex';
+                document.querySelector('#supplierModal .modal-title').textContent = 'EDITAR PROVEEDOR';
+                
+                // Guardar ID del proveedor actual
+                document.getElementById('supplierModal').dataset.supplierId = supplierId;
+            }
+
+            async guardarProveedor(event) {
+                event.preventDefault();
+                
+                try {
+                    const supplierId = document.getElementById('supplierModal').dataset.supplierId;
+                    const datosProveedor = {
+                        codigo: document.getElementById('supplier-code').value,
+                        nombre: document.getElementById('supplier-name').value,
+                        tipo: document.getElementById('supplier-type').value,
+                        contacto: document.getElementById('supplier-contact').value,
+                        telefono: document.getElementById('supplier-phone').value,
+                        email: document.getElementById('supplier-email').value,
+                        nit: document.getElementById('supplier-num').value,
+                        direccion: document.getElementById('supplier-address').value,
+                        productos: document.getElementById('supplier-products').value,
+                        plazoEntrega: parseInt(document.getElementById('supplier-delivery').value) || 7,
+                        condicionesPago: document.getElementById('supplier-payment').value,
+                        estado: 'activo'
+                    };
+                    
+                    // Validaciones
+                    if (!datosProveedor.codigo || !datosProveedor.nombre || !datosProveedor.contacto || !datosProveedor.telefono) {
+                        Utils.showNotification('Complete los campos obligatorios', 'warning');
+                        return;
+                    }
+                    
+                    if (supplierId) {
+                        // Actualizar proveedor existente
+                        await AdvancedDB.update('proveedores', supplierId, datosProveedor);
+                        Utils.showNotification('Proveedor actualizado exitosamente', 'success');
+                    } else {
+                        // Crear nuevo proveedor
+                        datosProveedor.rating = 0;
+                        await AdvancedDB.insert('proveedores', datosProveedor);
+                        Utils.showNotification('Proveedor creado exitosamente', 'success');
+                    }
+                    
+                    this.cerrarModalProveedor();
+                    
+                    // Recargar datos
+                    await this.loadData();
+                    this.renderSuppliers();
+                    this.fillModalSelects();
+                    
+                    // Sincronizar
+                    SyncService.syncNow();
+                    
+                } catch (error) {
+                    console.error('Error guardando proveedor:', error);
+                    Utils.showNotification('Error al guardar proveedor: ' + error.message, 'error');
+                }
+            }
+
+            newOrderToSupplier(supplierId) {
+                this.openOrderModal();
+                setTimeout(() => {
+                    document.getElementById('order-supplier').value = supplierId;
+                }, 100);
+            }
+
+            generatePurchaseOrder(orderId) {
+                const pedido = this.pedidos.find(p => p.id === orderId);
+                if (!pedido) return;
+                
+                const proyecto = this.proyectos.find(p => p.id === pedido.proyectoId);
+                const proveedor = this.proveedores.find(p => p.id === pedido.proveedorId);
+                
+                const orderData = {
+                    pedido: pedido,
+                    proyecto: proyecto,
+                    proveedor: proveedor,
+                    fechaGeneracion: new Date().toLocaleDateString('es-GT'),
+                    numeroOrden: pedido.numeroOrden
+                };
+                
+                Utils.generatePDF(orderData, `Orden_Compra_${pedido.numeroOrden}`);
+                Utils.showNotification('Orden de compra generada', 'success');
+            }
+
+            exportarHistorial() {
+                try {
+                    const datosExportar = this.pedidos.map(pedido => {
+                        const proyecto = this.proyectos.find(p => p.id === pedido.proyectoId);
+                        const proveedor = this.proveedores.find(prov => prov.id === pedido.proveedorId);
+                        
+                        return {
+                            'Orden #': pedido.numeroOrden,
+                            'Fecha Solicitud': pedido.fechaSolicitud,
+                            'Proveedor': proveedor ? proveedor.nombre : 'N/A',
+                            'Proyecto': proyecto ? proyecto.codigo : 'N/A',
+                            'Estado': this.getStatusText(pedido.estado),
+                            'Subtotal (GTQ)': pedido.subtotal || 0,
+                            'IVA (GTQ)': pedido.iva || 0,
+                            'Total (GTQ)': pedido.total || 0,
+                            'Factura': pedido.facturaNumero || '',
+                            'Observaciones': pedido.observaciones || ''
+                        };
+                    });
+                    
+                    Utils.exportToCSV(datosExportar, `historial_compras_${new Date().toISOString().split('T')[0]}`);
+                    Utils.showNotification('Historial exportado exitosamente', 'success');
+                    
+                } catch (error) {
+                    console.error('Error exportando historial:', error);
+                    Utils.showNotification('Error al exportar historial', 'error');
+                }
+            }
+
+            generarReporteCompras() {
+                try {
+                    const reportData = {
+                        resumen: {
+                            totalPedidos: this.pedidos.length,
+                            pedidosActivos: this.pedidos.filter(p => p.estado !== 'entregado' && p.estado !== 'cancelado').length,
+                            totalCompras: this.pedidos.reduce((sum, p) => sum + (p.total || 0), 0),
+                            proveedoresActivos: this.proveedores.length
+                        },
+                        pedidosRecientes: this.pedidos.slice(0, 10),
+                        materialesBajos: this.materiales.filter(mat => this.getStockLevel(mat) === 'low'),
+                        fechaGeneracion: new Date().toLocaleDateString('es-GT')
+                    };
+                    
+                    Utils.generatePDF(reportData, `reporte_compras_${new Date().toISOString().split('T')[0]}`);
+                    Utils.showNotification('Reporte generado exitosamente', 'success');
+                    
+                } catch (error) {
+                    console.error('Error generando reporte:', error);
+                    Utils.showNotification('Error al generar reporte', 'error');
+                }
+            }
+
+            cerrarModalCompras() {
+                document.getElementById('orderModal').style.display = 'none';
+                this.currentOrder = null;
+            }
+
+            cerrarModalProveedor() {
+                document.getElementById('supplierModal').style.display = 'none';
+                delete document.getElementById('supplierModal').dataset.supplierId;
+                document.getElementById('supplierForm').reset();
+            }
+
+            // ===== FUNCIONES GLOBALES =====
+
+            cargarComprasProyecto() {
+                this.renderOrders();
+                this.renderHistory();
+            }
+
+            cambiarTabCompras(tabId) {
+                // Remover clase active de todas las tabs
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Activar tab seleccionada
+                document.querySelector(`button[onclick*="${tabId}"]`).classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+                
+                this.currentTab = tabId;
+            }
+
+            actualizarInventario() {
+                this.renderInventory();
+                Utils.showNotification('Inventario actualizado', 'success');
+            }
+
+            enviarPedidosWhatsApp() {
+                const pedidosPendientes = this.pedidos.filter(p => p.estado === 'solicitado');
+                
+                if (pedidosPendientes.length === 0) {
+                    Utils.showNotification('No hay pedidos pendientes para enviar', 'info');
+                    return;
+                }
+                
+                Utils.confirm(
+                    `¿Enviar ${pedidosPendientes.length} pedido(s) pendientes a proveedores por WhatsApp?`,
+                    () => {
+                        pedidosPendientes.forEach(pedido => {
+                            this.sendToWhatsApp(pedido.id);
+                        });
+                        Utils.showNotification(`${pedidosPendientes.length} pedidos preparados para WhatsApp`, 'success');
+                    }
+                );
+            }
+        }
+
+        // Inicializar sistema de compras
+        const comprasSystem = new ComprasSystem();
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            Utils.showLoading('Cargando sistema de compras...');
+            await comprasSystem.init();
+            Utils.hideLoading();
+        });
+
+        // Funciones globales para llamadas desde HTML
+        window.nuevoPedido = () => comprasSystem.openOrderModal();
+        window.nuevoProveedor = () => {
+            document.getElementById('supplierModal').style.display = 'flex';
+            document.querySelector('#supplierModal .modal-title').textContent = 'NUEVO PROVEEDOR';
+            delete document.getElementById('supplierModal').dataset.supplierId;
+            document.getElementById('supplierForm').reset();
+        };
+        window.agregarMaterialPedido = () => comprasSystem.addMaterialRow();
+        window.cambiarTabCompras = (tabId) => comprasSystem.cambiarTabCompras(tabId);
+        window.cerrarModalCompras = () => comprasSystem.cerrarModalCompras();
+        window.cerrarModalProveedor = () => comprasSystem.cerrarModalProveedor();
+        window.guardarPedido = (e) => comprasSystem.guardarPedido(e);
+        window.guardarProveedor = (e) => comprasSystem.guardarProveedor(e);
+        window.cargarComprasProyecto = () => comprasSystem.cargarComprasProyecto();
+        window.actualizarInventario = () => comprasSystem.actualizarInventario();
+        window.enviarPedidosWhatsApp = () => comprasSystem.enviarPedidosWhatsApp();
+        window.exportarHistorial = () => comprasSystem.exportarHistorial();
+        window.generarReporteCompras = () => comprasSystem.generarReporteCompras();
+    </script>
+</body>
+</html>

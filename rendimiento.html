@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001326">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>M&S - Rendimiento de Personal</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="pwa.js"></script>
+    <script src="database.js"></script>
+    <script src="sync.js"></script>
+    <style>
+        /* Estilos consistentes con RRHH */
+        :root {
+            --azul-marino: #001f3f;
+            --amarillo-mostaza: #FFD700;
+            --gris-oscuro: #333333;
+            --gris-claro: #f4f4f4;
+            --verde: #2ecc71;
+            --rojo: #e74c3c;
+            --naranja: #e67e22;
+            --azul: #3498db;
+            --morado: #9b59b6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--gris-oscuro) 0%, #000 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, var(--azul-marino) 0%, #002851 100%);
+            color: var(--amarillo-mostaza);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: var(--amarillo-mostaza);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--azul-marino);
+            font-size: 1.5rem;
+        }
+        
+        .titulo {
+            font-size: 1.4rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .eslogan {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+        
+        .reloj-fecha {
+            text-align: right;
+            font-size: 0.9rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Filtros */
+        .filtros {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .filtro-grupo label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--amarillo-mostaza);
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        /* Botones de navegación */
+        .botones-navegacion {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .btn {
+            padding: 15px;
+            border-radius: 10px;
+            border: none;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-inicio {
+            background: linear-gradient(90deg, #3498db, #2980b9);
+        }
+        
+        .btn-rrhh {
+            background: linear-gradient(90deg, #9b59b6, #8e44ad);
+        }
+        
+        .btn-guardar {
+            background: linear-gradient(90deg, #27ae60, #219653);
+        }
+        
+        .btn-sincronizar {
+            background: linear-gradient(90deg, #e67e22, #d35400);
+        }
+        
+        .btn-imprimir {
+            background: linear-gradient(90deg, #34495e, #2c3e50);
+        }
+        
+        .btn-salir {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+        
+        /* Contenido principal */
+        .contenido-principal {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+        
+        @media (max-width: 1024px) {
+            .contenido-principal {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Panel izquierdo - Registro de rendimiento */
+        .panel-registro {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .seccion-titulo {
+            color: var(--amarillo-mostaza);
+            border-bottom: 2px solid var(--amarillo-mostaza);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .formulario-rendimiento {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .campo-formulario {
+            margin-bottom: 20px;
+        }
+        
+        .campo-formulario label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #ddd;
+        }
+        
+        .campo-formulario input, 
+        .campo-formulario select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+        }
+        
+        /* Equipos de trabajo */
+        .equipos-trabajo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .equipo-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .equipo-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--amarillo-mostaza);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+        }
+        
+        .equipo-card.seleccionado {
+            background: rgba(52, 152, 219, 0.2);
+            border-color: var(--amarillo-mostaza);
+        }
+        
+        .equipo-titulo {
+            color: var(--amarillo-mostaza);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .rendimiento-estandar {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        /* Panel derecho - Resultados y análisis */
+        .panel-analisis {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        /* Indicadores de rendimiento */
+        .indicadores {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .indicador {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .indicador-valor {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .indicador-optimo {
+            color: var(--verde);
+        }
+        
+        .indicador-regular {
+            color: #f39c12;
+        }
+        
+        .indicador-deficiente {
+            color: var(--rojo);
+        }
+        
+        /* Historial de rendimiento */
+        .historial-rendimiento {
+            margin-top: 25px;
+        }
+        
+        .tabla-rendimiento {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .tabla-rendimiento th {
+            background: var(--azul-marino);
+            color: var(--amarillo-mostaza);
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .tabla-rendimiento td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tabla-rendimiento tr:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        /* Gráfica de rendimiento */
+        .grafica-container {
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .barra-rendimiento {
+            position: absolute;
+            bottom: 0;
+            width: 30px;
+            background: var(--verde);
+            border-radius: 5px 5px 0 0;
+            transition: height 0.5s ease;
+        }
+        
+        /* Alertas y recomendaciones */
+        .alertas-container {
+            margin-top: 25px;
+        }
+        
+        .alerta {
+            background: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid var(--rojo);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 10px;
+        }
+        
+        .alerta.optimizacion {
+            background: rgba(46, 204, 113, 0.2);
+            border-left-color: var(--verde);
+        }
+        
+        .alerta.recomendacion {
+            background: rgba(241, 196, 15, 0.2);
+            border-left-color: #f1c40f;
+        }
+        
+        /* Renglones de trabajo */
+        .renglones-container {
+            margin-top: 25px;
+        }
+        
+        .renglon-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .renglon-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .renglon-nombre {
+            font-weight: bold;
+            color: var(--amarillo-mostaza);
+        }
+        
+        .rendimiento-renglon {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .barra-progreso {
+            flex-grow: 1;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progreso-fill {
+            height: 100%;
+            border-radius: 5px;
+        }
+        
+        .progreso-optimo {
+            background: var(--verde);
+        }
+        
+        .progreso-regular {
+            background: #f39c12;
+        }
+        
+        .progreso-deficiente {
+            background: var(--rojo);
+        }
+        
+        /* Notificaciones */
+        .notificaciones {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            width: 300px;
+            z-index: 2000;
+        }
+        
+        .notificacion {
+            background: rgba(0, 0, 0, 0.9);
+            border-left: 5px solid;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        
+        .notificacion.exito {
+            border-left-color: var(--verde);
+        }
+        
+        .notificacion.error {
+            border-left-color: var(--rojo);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .botones-navegacion {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .formulario-rendimiento {
+                grid-template-columns: 1fr;
+            }
+            
+            .indicadores {
+                grid-template-columns: 1fr;
+            }
+            
+            .reloj-fecha {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Encabezado -->
+    <header class="header">
+        <div class="logo-container">
+            <div class="logo">M&S</div>
+            <div>
+                <div class="titulo">CONSTRUCTORA WM/M&S - Rendimiento de Personal</div>
+                <div class="eslogan">EDIFICANDO EL FUTURO</div>
+            </div>
+        </div>
+        <div class="reloj-fecha">
+            <div id="fechaActual"></div>
+            <div id="horaActual"></div>
+        </div>
+    </header>
+
+    <!-- Contenedor principal -->
+    <div class="container">
+        <!-- Filtros -->
+        <div class="filtros">
+            <div class="filtro-grupo">
+                <label for="filtroProyecto"><i class="fas fa-project-diagram"></i> Proyecto</label>
+                <select id="filtroProyecto">
+                    <option value="">-- Seleccionar proyecto --</option>
+                </select>
+            </div>
+            
+            <div class="filtro-grupo">
+                <label for="filtroFecha"><i class="fas fa-calendar-alt"></i> Fecha</label>
+                <input type="date" id="filtroFecha" value="">
+            </div>
+            
+            <div class="filtro-grupo">
+                <label for="filtroEquipo"><i class="fas fa-users"></i> Equipo</label>
+                <select id="filtroEquipo">
+                    <option value="">Todos los equipos</option>
+                    <option value="albanil-ayudante">Albañil + Ayudante</option>
+                    <option value="maestro-ayudante">Maestro + Ayudante</option>
+                    <option value="supervisor-equipo">Supervisor + Equipo</option>
+                </select>
+            </div>
+            
+            <div class="filtro-grupo">
+                <label for="filtroRenglon"><i class="fas fa-tasks"></i> Renglón de Trabajo</label>
+                <select id="filtroRenglon">
+                    <option value="">Todos los renglones</option>
+                    <option value="mamposteria">Mampostería</option>
+                    <option value="colado">Colado de Concreto</option>
+                    <option value="repello">Repello</option>
+                    <option value="pisos">Instalación de Pisos</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Botones de navegación -->
+        <div class="botones-navegacion">
+            <button class="btn btn-inicio" onclick="cambiarSeccion('inicio')">
+                <i class="fas fa-home"></i> Inicio
+            </button>
+            <button class="btn btn-rrhh" onclick="cambiarSeccion('rrhh')">
+                <i class="fas fa-users-cog"></i> RRHH
+            </button>
+            <button class="btn btn-guardar" onclick="guardarRendimiento()">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <button class="btn btn-sincronizar" onclick="sincronizarRendimiento()">
+                <i class="fas fa-cloud-upload-alt"></i> Sincronizar
+            </button>
+            <button class="btn btn-imprimir" onclick="imprimirReporteRendimiento()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            <button class="btn btn-salir" onclick="salir()">
+                <i class="fas fa-sign-out-alt"></i> Salir
+            </button>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="contenido-principal">
+            <!-- Panel izquierdo: Registro de rendimiento -->
+            <div class="panel-registro">
+                <h2 class="seccion-titulo"><i class="fas fa-clipboard-check"></i> Registro de Rendimiento Diario</h2>
+                
+                <div class="formulario-rendimiento">
+                    <div class="campo-formulario">
+                        <label for="equipoTrabajo"><i class="fas fa-user-hard-hat"></i> Equipo de Trabajo</label>
+                        <select id="equipoTrabajo">
+                            <option value="">-- Seleccionar equipo --</option>
+                            <option value="albanil-ayudante">Albañil + Ayudante</option>
+                            <option value="maestro-ayudante">Maestro de Obras + Ayudante</option>
+                            <option value="supervisor-equipo">Supervisor + 3 Ayudantes</option>
+                            <option value="especializado">Equipo Especializado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="campo-formulario">
+                        <label for="renglonTrabajo"><i class="fas fa-toolbox"></i> Renglón de Trabajo</label>
+                        <select id="renglonTrabajo">
+                            <option value="">-- Seleccionar renglón --</option>
+                            <option value="mamposteria_bloque">Mampostería de Bloque (m²)</option>
+                            <option value="colado_losa">Colado de Losa (m³)</option>
+                            <option value="repello_muros">Repello de Muros (m²)</option>
+                            <option value="instalacion_pisos">Instalación de Pisos (m²)</option>
+                            <option value="colado_columnas">Colado de Columnas (unidad)</option>
+                            <option value="instalacion_ceramica">Instalación de Cerámica (m²)</option>
+                            <option value="pintura_muros">Pintura de Muros (m²)</option>
+                            <option value="carpinteria">Carpintería (unidad)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="campo-formulario">
+                        <label for="cantidadRealizada"><i class="fas fa-ruler-combined"></i> Cantidad Realizada</label>
+                        <input type="number" id="cantidadRealizada" step="0.01" placeholder="Ej: 25.5">
+                    </div>
+                    
+                    <div class="campo-formulario">
+                        <label for="horasTrabajadas"><i class="fas fa-clock"></i> Horas Trabajadas</label>
+                        <input type="number" id="horasTrabajadas" step="0.5" placeholder="Ej: 8.5" value="8">
+                    </div>
+                    
+                    <div class="campo-formulario">
+                        <label for="numeroTrabajadores"><i class="fas fa-user-friends"></i> Número de Trabajadores</label>
+                        <input type="number" id="numeroTrabajadores" min="1" max="10" value="2">
+                    </div>
+                    
+                    <div class="campo-formulario">
+                        <label for="observaciones"><i class="fas fa-sticky-note"></i> Observaciones</label>
+                        <input type="text" id="observaciones" placeholder="Condiciones de trabajo, clima, etc.">
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <button onclick="calcularRendimiento()" class="btn" style="background: linear-gradient(90deg, #3498db, #2980b9); width: 100%;">
+                        <i class="fas fa-calculator"></i> Calcular Rendimiento
+                    </button>
+                </div>
+                
+                <!-- Equipos de trabajo estándar -->
+                <h3 style="color: var(--amarillo-mostaza); margin: 30px 0 15px 0;">
+                    <i class="fas fa-users"></i> Equipos de Trabajo Estándar
+                </h3>
+                
+                <div class="equipos-trabajo">
+                    <div class="equipo-card" onclick="seleccionarEquipo('albanil-ayudante')">
+                        <div class="equipo-titulo">Albañil + Ayudante</div>
+                        <p><strong>Rendimiento estándar:</strong></p>
+                        <ul style="margin-top: 8px; padding-left: 20px; font-size: 0.9rem;">
+                            <li>Mampostería: 15-20 m²/día</li>
+                            <li>Repello: 25-30 m²/día</li>
+                            <li>Pisos: 20-25 m²/día</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="equipo-card" onclick="seleccionarEquipo('maestro-ayudante')">
+                        <div class="equipo-titulo">Maestro + 2 Ayudantes</div>
+                        <p><strong>Rendimiento estándar:</strong></p>
+                        <ul style="margin-top: 8px; padding-left: 20px; font-size: 0.9rem;">
+                            <li>Colado losa: 15-20 m³/día</li>
+                            <li>Columnas: 3-4 unidades/día</li>
+                            <li>Vigas: 8-10 ml/día</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="equipo-card" onclick="seleccionarEquipo('especializado')">
+                        <div class="equipo-titulo">Equipo Especializado</div>
+                        <p><strong>Rendimiento estándar:</strong></p>
+                        <ul style="margin-top: 8px; padding-left: 20px; font-size: 0.9rem;">
+                            <li>Estructuras metálicas: 0.5-1 ton/día</li>
+                            <li>Inst. eléctrica: 50-70 puntos/día</li>
+                            <li>Inst. sanitaria: 40-60 unidades/día</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Tabla de rendimientos históricos -->
+                <h3 style="color: var(--amarillo-mostaza); margin: 30px 0 15px 0;">
+                    <i class="fas fa-history"></i> Registros del Día
+                </h3>
+                
+                <table class="tabla-rendimiento">
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Renglón</th>
+                            <th>Cantidad</th>
+                            <th>Rendimiento</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRegistros">
+                        <!-- Los registros se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Panel derecho: Análisis y resultados -->
+            <div class="panel-analisis">
+                <h2 class="seccion-titulo"><i class="fas fa-chart-line"></i> Análisis de Rendimiento</h2>
+                
+                <!-- Indicadores clave -->
+                <div class="indicadores">
+                    <div class="indicador">
+                        <div><i class="fas fa-tachometer-alt"></i> Rendimiento Actual</div>
+                        <div class="indicador-valor" id="indicadorRendimiento">0%</div>
+                        <div id="estadoRendimiento">Sin datos</div>
+                    </div>
+                    
+                    <div class="indicador">
+                        <div><i class="fas fa-bullseye"></i> vs. Estándar</div>
+                        <div class="indicador-valor" id="indicadorComparacion">0%</div>
+                        <div id="estadoComparacion">Sin comparar</div>
+                    </div>
+                    
+                    <div class="indicador">
+                        <div><i class="fas fa-cube"></i> Productividad</div>
+                        <div class="indicador-valor" id="indicadorProductividad">0</div>
+                        <div>Unidades/hora</div>
+                    </div>
+                    
+                    <div class="indicador">
+                        <div><i class="fas fa-money-bill-wave"></i> Eficiencia Costo</div>
+                        <div class="indicador-valor" id="indicadorEficiencia">0%</div>
+                        <div>Relación costo/rendimiento</div>
+                    </div>
+                </div>
+                
+                <!-- Gráfica de rendimiento -->
+                <h3 style="color: var(--amarillo-mostaza); margin-top: 25px;">
+                    <i class="fas fa-chart-bar"></i> Gráfica de Rendimiento por Equipo
+                </h3>
+                
+                <div class="grafica-container" id="graficaRendimiento">
+                    <!-- Las barras se generarán dinámicamente -->
+                </div>
+                
+                <!-- Análisis y recomendaciones -->
+                <div class="alertas-container">
+                    <h3 style="color: var(--amarillo-mostaza); margin: 25px 0 15px 0;">
+                        <i class="fas fa-exclamation-circle"></i> Análisis y Recomendaciones
+                    </h3>
+                    
+                    <div id="contenedorAlertas">
+                        <div class="alerta recomendacion">
+                            <strong><i class="fas fa-info-circle"></i> Sin datos suficientes</strong>
+                            <p style="margin-top: 5px;">Ingrese datos de rendimiento para obtener análisis.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Renglones con bajo rendimiento -->
+                <div class="renglones-container">
+                    <h3 style="color: var(--amarillo-mostaza); margin: 25px 0 15px 0;">
+                        <i class="fas fa-exclamation-triangle"></i> Renglones con Bajo Rendimiento
+                    </h3>
+                    
+                    <div id="contenedorRenglonesProblema">
+                        <div class="renglon-item">
+                            <div class="renglon-header">
+                                <span class="renglon-nombre">Mampostería de Bloque</span>
+                                <span style="color: var(--rojo);">65%</span>
+                            </div>
+                            <div class="rendimiento-renglon">
+                                <div class="barra-progreso">
+                                    <div class="progreso-fill progreso-deficiente" style="width: 65%;"></div>
+                                </div>
+                                <small>Por debajo del estándar (85%)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="renglon-item">
+                            <div class="renglon-header">
+                                <span class="renglon-nombre">Colado de Columnas</span>
+                                <span style="color: #f39c12;">72%</span>
+                            </div>
+                            <div class="rendimiento-renglon">
+                                <div class="barra-progreso">
+                                    <div class="progreso-fill progreso-regular" style="width: 72%;"></div>
+                                </div>
+                                <small>Rendimiento regular</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div style="display: flex; gap: 10px; margin-top: 25px; flex-wrap: wrap;">
+                    <button onclick="generarPlanAccion()" class="btn" style="background: linear-gradient(90deg, #e67e22, #d35400); flex: 1;">
+                        <i class="fas fa-clipboard-list"></i> Plan de Acción
+                    </button>
+                    <button onclick="enviarAlertaSupervisor()" class="btn" style="background: linear-gradient(90deg, #e74c3c, #c0392b); flex: 1;">
+                        <i class="fas fa-bell"></i> Alertar Supervisor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificaciones -->
+    <div class="notificaciones" id="notificaciones"></div>
+
+    <script>
+        // Variables globales
+        let registrosRendimiento = [];
+        let equiposEstándar = {};
+        let intervaloReloj;
+        
+        // Base de datos de rendimientos estándar por equipo y renglón
+        const rendimientosEstandar = {
+            "albanil-ayudante": {
+                "mamposteria_bloque": { 
+                    unidad: "m²", 
+                    estandar: 18, // m² por día de 8 horas
+                    min_aceptable: 15,
+                    max_optimo: 22,
+                    costo_hora: 60 // Q/hora (Albañil Q45 + Ayudante Q15)
+                },
+                "repello_muros": {
+                    unidad: "m²",
+                    estandar: 28,
+                    min_aceptable: 23,
+                    max_optimo: 32,
+                    costo_hora: 60
+                },
+                "instalacion_pisos": {
+                    unidad: "m²",
+                    estandar: 23,
+                    min_aceptable: 19,
+                    max_optimo: 27,
+                    costo_hora: 60
+                },
+                "pintura_muros": {
+                    unidad: "m²",
+                    estandar: 35,
+                    min_aceptable: 28,
+                    max_optimo: 40,
+                    costo_hora: 60
+                }
+            },
+            "maestro-ayudante": {
+                "colado_losa": {
+                    unidad: "m³",
+                    estandar: 18,
+                    min_aceptable: 15,
+                    max_optimo: 22,
+                    costo_hora: 80 // Maestro Q50 + Ayudante Q15 + Peón Q15
+                },
+                "colado_columnas": {
+                    unidad: "unidad",
+                    estandar: 3.5,
+                    min_aceptable: 2.8,
+                    max_optimo: 4.2,
+                    costo_hora: 80
+                },
+                "colado_vigas": {
+                    unidad: "ml",
+                    estandar: 9,
+                    min_aceptable: 7.5,
+                    max_optimo: 11,
+                    costo_hora: 80
+                }
+            },
+            "supervisor-equipo": {
+                "instalacion_ceramica": {
+                    unidad: "m²",
+                    estandar: 15,
+                    min_aceptable: 12,
+                    max_optimo: 18,
+                    costo_hora: 120 // Supervisor + 3 ayudantes
+                },
+                "carpinteria": {
+                    unidad: "unidad",
+                    estandar: 2.5,
+                    min_aceptable: 2,
+                    max_optimo: 3,
+                    costo_hora: 120
+                }
+            }
+        };
+        
+        // Inicializar cuando el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            iniciarReloj();
+            conectarConBaseDeDatos();
+            actualizarFecha();
+            popularFiltroProyectos();
+            cargarRegistrosDelDia();
+            inicializarEquiposEstandar();
+
+            document.getElementById('filtroProyecto')?.addEventListener('change', refrescarVista);
+            document.getElementById('filtroFecha')?.addEventListener('change', refrescarVista);
+        });
+
+        function refrescarVista() {
+            const tabla = document.getElementById('tablaRegistros');
+            if (tabla) tabla.innerHTML = '';
+            cargarRegistrosDelDia();
+        }
+
+        function getAdvancedDB() {
+            return window.AdvancedDB || null;
+        }
+
+        function conectarConBaseDeDatos() {
+            const db = getAdvancedDB();
+            if (!db) {
+                cargarDatosLocales();
+                return;
+            }
+
+            const MIGRATION_FLAG_KEY = 'ms_constructora_rendimiento_migrado_v1';
+            if (localStorage.getItem(MIGRATION_FLAG_KEY) === 'true') return;
+
+            // Migración: datos antiguos guardados fuera del prefijo ms_constructora_
+            const legacyRaw = localStorage.getItem('rendimientoPersonal');
+            if (!legacyRaw) return;
+
+            try {
+                const legacy = JSON.parse(legacyRaw) || {};
+                const registros = Array.isArray(legacy.registros) ? legacy.registros : [];
+                if (registros.length === 0) return;
+
+                const normalizeDate = (dateStr) => {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    if (Number.isNaN(d.getTime())) return String(dateStr);
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                };
+
+                const fingerprint = (r) => {
+                    const pid = String(r?.proyectoId || r?.proyecto || '').trim();
+                    const fecha = normalizeDate(r?.fecha);
+                    const equipo = String(r?.equipo || '').trim().toLowerCase();
+                    const renglon = String(r?.renglon || '').trim().toLowerCase();
+                    const cantidad = Number(r?.cantidad) || 0;
+                    const horas = Number(r?.horas) || 0;
+                    const trabajadores = Number(r?.trabajadores) || 0;
+                    const pct = Number(r?.porcentajeVsEstandar) || 0;
+                    return [pid, fecha, equipo, renglon, cantidad, horas, trabajadores, pct].join('|');
+                };
+
+                const existentes = db.get('rendimientos') || [];
+                const existentesSet = new Set(existentes.map(fingerprint));
+
+                registros.forEach(r => {
+                    const fp = fingerprint(r);
+                    if (existentesSet.has(fp)) return;
+
+                    db.insert('rendimientos', {
+                        proyectoId: r.proyectoId || r.proyecto || '',
+                        fecha: r.fecha || new Date().toISOString(),
+                        equipo: r.equipo,
+                        renglon: r.renglon,
+                        cantidad: Number(r.cantidad) || 0,
+                        horas: Number(r.horas) || 0,
+                        trabajadores: Number(r.trabajadores) || 1,
+                        rendimientoDiario: Number(r.rendimientoDiario) || 0,
+                        porcentajeVsEstandar: Number(r.porcentajeVsEstandar) || 0,
+                        productividad: Number(r.productividad) || 0,
+                        eficienciaCosto: Number(r.eficienciaCosto) || 0,
+                        estado: r.estado,
+                        observaciones: r.observaciones || ''
+                    });
+
+                    existentesSet.add(fp);
+                });
+
+                localStorage.setItem(MIGRATION_FLAG_KEY, 'true');
+            } catch (e) {
+                console.warn('No se pudo migrar rendimientoPersonal a AdvancedDB:', e);
+            }
+        }
+
+        function popularFiltroProyectos() {
+            const select = document.getElementById('filtroProyecto');
+            if (!select) return;
+
+            const db = getAdvancedDB();
+            if (!db) return;
+
+            const proyectos = db.get('proyectos') || [];
+            const currentValue = select.value;
+
+            const options = proyectos
+                .slice()
+                .sort((a, b) => String(a.nombre || a.codigo || '').localeCompare(String(b.nombre || b.codigo || ''), 'es'))
+                .map(p => `<option value="${p.id}">${p.nombre || p.codigo || 'Proyecto'}</option>`)
+                .join('');
+
+            select.innerHTML = '<option value="">-- Seleccionar proyecto --</option>' + options;
+            select.value = proyectos.some(p => p.id === currentValue) ? currentValue : '';
+        }
+        
+        // Función para el reloj en tiempo real
+        function iniciarReloj() {
+            function actualizarReloj() {
+                const ahora = new Date();
+                const opcionesFecha = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                };
+                
+                document.getElementById('fechaActual').textContent = 
+                    ahora.toLocaleDateString('es-GT', opcionesFecha);
+                document.getElementById('horaActual').textContent = 
+                    ahora.toLocaleTimeString('es-GT');
+            }
+            
+            actualizarReloj();
+            intervaloReloj = setInterval(actualizarReloj, 1000);
+        }
+        
+        function actualizarFecha() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('filtroFecha').value = hoy;
+        }
+        
+        function inicializarEquiposEstandar() {
+            // Cargar equipos estándar desde localStorage o valores por defecto
+            const equiposGuardados = localStorage.getItem('equiposEstandar');
+            if (equiposGuardados) {
+                equiposEstándar = JSON.parse(equiposGuardados);
+            } else {
+                equiposEstándar = rendimientosEstandar;
+            }
+        }
+        
+        // Función principal para calcular rendimiento
+        function calcularRendimiento() {
+            const equipo = document.getElementById('equipoTrabajo').value;
+            const renglon = document.getElementById('renglonTrabajo').value;
+            const cantidad = parseFloat(document.getElementById('cantidadRealizada').value);
+            const horas = parseFloat(document.getElementById('horasTrabajadas').value);
+            const trabajadores = parseInt(document.getElementById('numeroTrabajadores').value);
+            const proyectoId = document.getElementById('filtroProyecto')?.value || '';
+            
+            // Validaciones
+            if (!equipo || !renglon || !cantidad || !horas || !trabajadores) {
+                mostrarNotificacion('Complete todos los campos requeridos', 'error');
+                return;
+            }
+            
+            if (horas <= 0 || horas > 16) {
+                mostrarNotificacion('Las horas trabajadas deben ser entre 0.5 y 16', 'error');
+                return;
+            }
+            
+            // Obtener estándar para este equipo y renglón
+            const estandar = equiposEstándar[equipo] && equiposEstándar[equipo][renglon];
+            
+            if (!estandar) {
+                mostrarNotificacion('No se encontró estándar para esta combinación', 'error');
+                return;
+            }
+            
+            // Calcular rendimiento diario equivalente
+            const rendimientoDiario = (cantidad / horas) * 8;
+            
+            // Calcular porcentaje vs estándar
+            const porcentajeVsEstandar = (rendimientoDiario / estandar.estandar) * 100;
+            
+            // Calcular productividad (unidades por hora por trabajador)
+            const productividad = cantidad / (horas * trabajadores);
+            
+            // Calcular eficiencia de costo
+            const costoReal = horas * estandar.costo_hora;
+            const costoEstandar = (cantidad / estandar.estandar) * 8 * estandar.costo_hora;
+            const eficienciaCosto = costoEstandar > 0 ? (costoEstandar / costoReal) * 100 : 0;
+            
+            // Determinar estado del rendimiento
+            let estadoRendimiento = '';
+            let colorRendimiento = '';
+            
+            if (porcentajeVsEstandar >= 95) {
+                estadoRendimiento = 'ÓPTIMO';
+                colorRendimiento = 'var(--verde)';
+            } else if (porcentajeVsEstandar >= 80) {
+                estadoRendimiento = 'ACEPTABLE';
+                colorRendimiento = '#f39c12';
+            } else if (porcentajeVsEstandar >= 60) {
+                estadoRendimiento = 'REGULAR';
+                colorRendimiento = '#e67e22';
+            } else {
+                estadoRendimiento = 'DEFICIENTE';
+                colorRendimiento = 'var(--rojo)';
+            }
+            
+            // Actualizar indicadores
+            document.getElementById('indicadorRendimiento').textContent = `${porcentajeVsEstandar.toFixed(1)}%`;
+            document.getElementById('indicadorRendimiento').style.color = colorRendimiento;
+            document.getElementById('estadoRendimiento').textContent = estadoRendimiento;
+            document.getElementById('estadoRendimiento').style.color = colorRendimiento;
+            
+            document.getElementById('indicadorComparacion').textContent = `${porcentajeVsEstandar.toFixed(1)}%`;
+            document.getElementById('estadoComparacion').textContent = `vs. estándar (${estandar.estandar} ${estandar.unidad}/día)`;
+            
+            document.getElementById('indicadorProductividad').textContent = productividad.toFixed(2);
+            document.getElementById('indicadorEficiencia').textContent = `${eficienciaCosto.toFixed(1)}%`;
+            
+            // Crear registro
+            const registro = {
+                fecha: new Date().toISOString(),
+                equipo: equipo,
+                renglon: renglon,
+                cantidad: cantidad,
+                horas: horas,
+                trabajadores: trabajadores,
+                proyectoId: proyectoId,
+                rendimientoDiario: rendimientoDiario,
+                porcentajeVsEstandar: porcentajeVsEstandar,
+                productividad: productividad,
+                eficienciaCosto: eficienciaCosto,
+                estado: estadoRendimiento,
+                observaciones: document.getElementById('observaciones').value
+            };
+
+            const saved = guardarRegistro(registro);
+            cargarDatosDesdeDB();
+            
+            // Actualizar tabla
+            agregarRegistroATabla(saved || registro);
+            
+            // Generar análisis
+            generarAnalisis(registro);
+            
+            // Actualizar gráfica
+            actualizarGrafica();
+            
+            // Mostrar notificación
+            mostrarNotificacion(`Rendimiento calculado: ${porcentajeVsEstandar.toFixed(1)}% del estándar`, 'exito');
+
+            // Mantener respaldo local (equipos estándar / compatibilidad)
+            guardarRendimientoLocal();
+        }
+        
+        function agregarRegistroATabla(registro) {
+            const tabla = document.getElementById('tablaRegistros');
+            
+            // Obtener nombre del renglón
+            const renglonNombre = document.querySelector(`#renglonTrabajo option[value="${registro.renglon}"]`).textContent;
+            
+            // Obtener nombre del equipo
+            let equipoNombre = '';
+            switch(registro.equipo) {
+                case 'albanil-ayudante': equipoNombre = 'Albañil+Ayudante'; break;
+                case 'maestro-ayudante': equipoNombre = 'Maestro+Ayudante'; break;
+                case 'supervisor-equipo': equipoNombre = 'Supervisor+Equipo'; break;
+                default: equipoNombre = registro.equipo;
+            }
+            
+            // Determinar color según estado
+            let colorEstado = '';
+            switch(registro.estado) {
+                case 'ÓPTIMO': colorEstado = 'var(--verde)'; break;
+                case 'ACEPTABLE': colorEstado = '#f39c12'; break;
+                case 'REGULAR': colorEstado = '#e67e22'; break;
+                case 'DEFICIENTE': colorEstado = 'var(--rojo)'; break;
+            }
+            
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+                <td>${equipoNombre}</td>
+                <td>${renglonNombre.split('(')[0]}</td>
+                <td>${registro.cantidad.toFixed(1)}</td>
+                <td>${registro.porcentajeVsEstandar.toFixed(1)}%</td>
+                <td style="color: ${colorEstado}; font-weight: bold;">${registro.estado}</td>
+            `;
+            
+            tabla.insertBefore(fila, tabla.firstChild);
+            
+            // Limitar a 10 registros visibles
+            if (tabla.children.length > 10) {
+                tabla.removeChild(tabla.lastChild);
+            }
+        }
+        
+        function generarAnalisis(registro) {
+            const contenedor = document.getElementById('contenedorAlertas');
+            contenedor.innerHTML = '';
+            
+            // Análisis según el porcentaje de rendimiento
+            if (registro.porcentajeVsEstandar >= 95) {
+                contenedor.innerHTML += `
+                    <div class="alerta optimizacion">
+                        <strong><i class="fas fa-trophy"></i> RENDIMIENTO ÓPTIMO</strong>
+                        <p style="margin-top: 5px;">El equipo está trabajando al ${registro.porcentajeVsEstandar.toFixed(1)}% del estándar. 
+                        Mantener condiciones actuales y replicar en otros equipos.</p>
+                    </div>
+                `;
+            } else if (registro.porcentajeVsEstandar >= 80) {
+                contenedor.innerHTML += `
+                    <div class="alerta recomendacion">
+                        <strong><i class="fas fa-check-circle"></i> RENDIMIENTO ACEPTABLE</strong>
+                        <p style="margin-top: 5px;">El equipo está al ${registro.porcentajeVsEstandar.toFixed(1)}% del estándar. 
+                        Existe oportunidad de mejora del ${(100 - registro.porcentajeVsEstandar).toFixed(1)}%.</p>
+                    </div>
+                `;
+            } else if (registro.porcentajeVsEstandar >= 60) {
+                contenedor.innerHTML += `
+                    <div class="alerta">
+                        <strong><i class="fas fa-exclamation-triangle"></i> RENDIMIENTO REGULAR - REQUIERE ATENCIÓN</strong>
+                        <p style="margin-top: 5px;">El equipo está al ${registro.porcentajeVsEstandar.toFixed(1)}% del estándar. 
+                        Se recomienda:</p>
+                        <ul style="margin-top: 8px; padding-left: 20px;">
+                            <li>Revisar organización del trabajo</li>
+                            <li>Verificar disponibilidad de materiales</li>
+                            <li>Evaluar condiciones climáticas</li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                contenedor.innerHTML += `
+                    <div class="alerta">
+                        <strong><i class="fas fa-skull-crossbones"></i> RENDIMIENTO DEFICIENTE - ACCIÓN INMEDIATA</strong>
+                        <p style="margin-top: 5px;">CRÍTICO: El equipo está al ${registro.porcentajeVsEstandar.toFixed(1)}% del estándar.</p>
+                        <p><strong>Acciones recomendadas:</strong></p>
+                        <ul style="margin-top: 8px; padding-left: 20px;">
+                            <li>Supervisión inmediata del área</li>
+                            <li>Revisión de habilidades del equipo</li>
+                            <li>Verificar calidad de materiales</li>
+                            <li>Considerar cambio de personal</li>
+                            <li>Implementar horas extra si es necesario</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Análisis de eficiencia de costo
+            if (registro.eficienciaCosto < 80) {
+                contenedor.innerHTML += `
+                    <div class="alerta">
+                        <strong><i class="fas fa-money-bill-wave"></i> BAJA EFICIENCIA DE COSTO</strong>
+                        <p style="margin-top: 5px;">El costo por unidad es ${(100 - registro.eficienciaCosto).toFixed(1)}% más alto de lo esperado.</p>
+                        <p>Posibles causas: Tiempos muertos, retrabajos, personal inadecuado.</p>
+                    </div>
+                `;
+            }
+            
+            // Recomendaciones generales
+            if (registro.horas > 10) {
+                contenedor.innerHTML += `
+                    <div class="alerta recomendacion">
+                        <strong><i class="fas fa-clock"></i> HORAS EXTENDIDAS</strong>
+                        <p style="margin-top: 5px;">El equipo trabajó ${registro.horas} horas. Considerar que después de 10 horas, 
+                        el rendimiento puede disminuir hasta un 25%.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function actualizarGrafica() {
+            const grafica = document.getElementById('graficaRendimiento');
+            grafica.innerHTML = '';
+            
+            // Obtener últimos 5 registros
+            const ultimosRegistros = registrosRendimiento.slice(-5);
+            
+            if (ultimosRegistros.length === 0) return;
+            
+            // Calcular altura máxima
+            const maxRendimiento = Math.max(...ultimosRegistros.map(r => r.porcentajeVsEstandar), 100);
+            const alturaMaxima = 180; // px
+            
+            // Crear barras
+            ultimosRegistros.forEach((registro, index) => {
+                const altura = (registro.porcentajeVsEstandar / maxRendimiento) * alturaMaxima;
+                const anchoBarra = 40;
+                const separacion = 20;
+                const posicionX = 30 + (index * (anchoBarra + separacion));
+                
+                // Determinar color según estado
+                let color = '';
+                if (registro.porcentajeVsEstandar >= 95) color = 'var(--verde)';
+                else if (registro.porcentajeVsEstandar >= 80) color = '#f39c12';
+                else if (registro.porcentajeVsEstandar >= 60) color = '#e67e22';
+                else color = 'var(--rojo)';
+                
+                const barra = document.createElement('div');
+                barra.className = 'barra-rendimiento';
+                barra.style.left = `${posicionX}px`;
+                barra.style.height = `${altura}px`;
+                barra.style.backgroundColor = color;
+                barra.title = `${registro.porcentajeVsEstandar.toFixed(1)}%`;
+                
+                // Añadir etiqueta
+                const etiqueta = document.createElement('div');
+                etiqueta.style.position = 'absolute';
+                etiqueta.style.left = `${posicionX - 15}px`;
+                etiqueta.style.bottom = '-25px';
+                etiqueta.style.width = '70px';
+                etiqueta.style.textAlign = 'center';
+                etiqueta.style.fontSize = '12px';
+                etiqueta.style.color = '#aaa';
+                etiqueta.textContent = `Reg ${index + 1}`;
+                
+                grafica.appendChild(barra);
+                grafica.appendChild(etiqueta);
+            });
+            
+            // Línea de referencia (estándar 100%)
+            const lineaEstandar = document.createElement('div');
+            lineaEstandar.style.position = 'absolute';
+            lineaEstandar.style.left = '20px';
+            lineaEstandar.style.right = '20px';
+            lineaEstandar.style.top = `${alturaMaxima - (100 / maxRendimiento) * alturaMaxima}px`;
+            lineaEstandar.style.height = '2px';
+            lineaEstandar.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+            lineaEstandar.style.borderBottom = '1px dashed var(--amarillo-mostaza)';
+            
+            const etiquetaEstandar = document.createElement('div');
+            etiquetaEstandar.style.position = 'absolute';
+            etiquetaEstandar.style.left = '5px';
+            etiquetaEstandar.style.top = `${alturaMaxima - (100 / maxRendimiento) * alturaMaxima - 20}px`;
+            etiquetaEstandar.style.color = 'var(--amarillo-mostaza)';
+            etiquetaEstandar.style.fontSize = '12px';
+            etiquetaEstandar.textContent = 'Estándar 100%';
+            
+            grafica.appendChild(lineaEstandar);
+            grafica.appendChild(etiquetaEstandar);
+        }
+        
+        function seleccionarEquipo(tipoEquipo) {
+            // Remover selección anterior
+            document.querySelectorAll('.equipo-card').forEach(card => {
+                card.classList.remove('seleccionado');
+            });
+            
+            // Agregar selección actual
+            event.target.closest('.equipo-card').classList.add('seleccionado');
+            
+            // Rellenar formulario con datos del equipo
+            document.getElementById('equipoTrabajo').value = tipoEquipo;
+            
+            // Actualizar número de trabajadores según equipo
+            switch(tipoEquipo) {
+                case 'albanil-ayudante':
+                    document.getElementById('numeroTrabajadores').value = 2;
+                    break;
+                case 'maestro-ayudante':
+                    document.getElementById('numeroTrabajadores').value = 3;
+                    break;
+                case 'supervisor-equipo':
+                    document.getElementById('numeroTrabajadores').value = 4;
+                    break;
+            }
+            
+            mostrarNotificacion(`Equipo "${tipoEquipo}" seleccionado`, 'exito');
+        }
+        
+        // Funciones de gestión de datos
+        function cargarDatosLocales() {
+            const datosGuardados = localStorage.getItem('rendimientoPersonal');
+            if (datosGuardados) {
+                const datos = JSON.parse(datosGuardados);
+                registrosRendimiento = datos.registros || [];
+                equiposEstándar = datos.equiposEstandar || rendimientosEstandar;
+            }
+        }
+
+        function cargarDatosDesdeDB() {
+            const db = getAdvancedDB();
+            if (!db) {
+                cargarDatosLocales();
+                return;
+            }
+
+            registrosRendimiento = db.get('rendimientos') || [];
+        }
+
+        function guardarRegistro(registro) {
+            const db = getAdvancedDB();
+            if (!db) {
+                registrosRendimiento.push(registro);
+                guardarRendimientoLocal();
+                return registro;
+            }
+
+            return db.insert('rendimientos', {
+                proyectoId: registro.proyectoId || '',
+                fecha: registro.fecha,
+                equipo: registro.equipo,
+                renglon: registro.renglon,
+                cantidad: registro.cantidad,
+                horas: registro.horas,
+                trabajadores: registro.trabajadores,
+                rendimientoDiario: registro.rendimientoDiario,
+                porcentajeVsEstandar: registro.porcentajeVsEstandar,
+                productividad: registro.productividad,
+                eficienciaCosto: registro.eficienciaCosto,
+                estado: registro.estado,
+                observaciones: registro.observaciones
+            });
+        }
+        
+        function guardarRendimientoLocal() {
+            const datosRendimiento = {
+                registros: registrosRendimiento,
+                equiposEstandar: equiposEstándar,
+                fechaActualizacion: new Date().toISOString()
+            };
+            
+            localStorage.setItem('rendimientoPersonal', JSON.stringify(datosRendimiento));
+        }
+        
+        function cargarRegistrosDelDia() {
+            cargarDatosDesdeDB();
+
+            const hoy = new Date().toISOString().split('T')[0];
+            const proyectoSeleccionado = document.getElementById('filtroProyecto')?.value || '';
+            const fechaSeleccionada = document.getElementById('filtroFecha')?.value || '';
+            const fechaFiltro = fechaSeleccionada || hoy;
+            const registrosHoy = registrosRendimiento.filter(r => 
+                r.fecha.split('T')[0] === fechaFiltro && (!proyectoSeleccionado || (r.proyectoId || '') === proyectoSeleccionado)
+            );
+            
+            // Mostrar en tabla
+            registrosHoy.forEach(registro => {
+                agregarRegistroATabla(registro);
+            });
+            
+            if (registrosHoy.length > 0) {
+                // Usar el último registro para análisis
+                generarAnalisis(registrosHoy[registrosHoy.length - 1]);
+                actualizarGrafica();
+            }
+        }
+        
+        // Funciones de navegación
+        function cambiarSeccion(destino) {
+            if (destino === 'inicio') {
+                window.location.href = 'inicio.html';
+            } else if (destino === 'rrhh') {
+                window.location.href = 'rrhh.html';
+            }
+        }
+        
+        function salir() {
+            if (confirm('¿Está seguro que desea salir del sistema?')) {
+                window.location.href = 'inicio.html';
+            }
+        }
+        
+        // Funciones de sincronización e impresión
+        function guardarRendimiento() {
+            guardarRendimientoLocal();
+            mostrarNotificacion('Datos de rendimiento guardados localmente', 'exito');
+        }
+        
+        function sincronizarRendimiento() {
+            if (window.SyncService && typeof window.SyncService.syncNow === 'function') {
+                mostrarNotificacion('Iniciando sincronización...', 'exito');
+                window.SyncService.syncNow();
+                return;
+            }
+
+            mostrarNotificacion('Sincronización no disponible (SyncService no cargó)', 'error');
+        }
+        
+        function imprimirReporteRendimiento() {
+            const ventanaImpresion = window.open('', '_blank');
+            const proyecto = document.getElementById('filtroProyecto').value;
+            const fecha = document.getElementById('filtroFecha').value;
+            
+            // Filtrar registros por fecha si está seleccionada
+            const registrosFiltrados = fecha ? 
+                registrosRendimiento.filter(r => r.fecha.split('T')[0] === fecha) : 
+                registrosRendimiento.slice(-10);
+            
+            ventanaImpresion.document.write(`
+                <html>
+                <head>
+                    <title>Reporte de Rendimiento - M&S Constructora</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #001f3f; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; }
+                        .optimo { background-color: #d4edda; }
+                        .aceptable { background-color: #fff3cd; }
+                        .regular { background-color: #ffeaa7; }
+                        .deficiente { background-color: #f8d7da; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>CONSTRUCTORA WM/M&S</h1>
+                        <h2>Reporte de Rendimiento de Personal</h2>
+                        <p>Fecha: ${new Date().toLocaleDateString()} | Hora: ${new Date().toLocaleTimeString()}</p>
+                        <p>Proyecto: ${proyecto || 'Todos'} | Fecha análisis: ${fecha || 'Últimos registros'}</p>
+                    </div>
+                    
+                    <h3>Resumen de Rendimiento</h3>
+                    <table>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Renglón</th>
+                            <th>Cantidad</th>
+                            <th>Horas</th>
+                            <th>Rendimiento (%)</th>
+                            <th>Estado</th>
+                            <th>Productividad</th>
+                        </tr>
+                        ${registrosFiltrados.map(r => {
+                            let clase = '';
+                            if (r.estado === 'ÓPTIMO') clase = 'optimo';
+                            else if (r.estado === 'ACEPTABLE') clase = 'aceptable';
+                            else if (r.estado === 'REGULAR') clase = 'regular';
+                            else if (r.estado === 'DEFICIENTE') clase = 'deficiente';
+                            
+                            return `
+                                <tr class="${clase}">
+                                    <td>${r.equipo}</td>
+                                    <td>${r.renglon}</td>
+                                    <td>${r.cantidad.toFixed(2)}</td>
+                                    <td>${r.horas}</td>
+                                    <td>${r.porcentajeVsEstandar.toFixed(1)}%</td>
+                                    <td>${r.estado}</td>
+                                    <td>${r.productividad.toFixed(2)} u/h/pers</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </table>
+                    
+                    <div style="margin-top: 50px; text-align: center; font-size: 12px;">
+                        <p>Sistema de Control de Proyectos M&S - Vol 2.0</p>
+                        <p>Módulo de Rendimiento de Personal</p>
+                        <p>www.multiserviciosmys.com</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            ventanaImpresion.document.close();
+            ventanaImpresion.print();
+        }
+        
+        // Funciones de acción
+        function generarPlanAccion() {
+            const rendimientoActual = parseFloat(document.getElementById('indicadorRendimiento').textContent);
+            
+            if (rendimientoActual === 0) {
+                mostrarNotificacion('No hay datos de rendimiento para generar plan', 'error');
+                return;
+            }
+            
+            let plan = '';
+            
+            if (rendimientoActual >= 95) {
+                plan = `
+                    <strong>PLAN DE MANTENIMIENTO (Rendimiento Óptimo)</strong><br>
+                    1. Continuar con procedimientos actuales<br>
+                    2. Documentar mejores prácticas<br>
+                    3. Replicar en otros equipos<br>
+                    4. Reconocer desempeño del equipo
+                `;
+            } else if (rendimientoActual >= 80) {
+                plan = `
+                    <strong>PLAN DE MEJORA (Rendimiento Aceptable)</strong><br>
+                    1. Identificar cuellos de botella<br>
+                    2. Optimizar distribución de materiales<br>
+                    3. Revisar herramientas y equipos<br>
+                    4. Establecer metas de mejora del 10%
+                `;
+            } else if (rendimientoActual >= 60) {
+                plan = `
+                    <strong>PLAN CORRECTIVO (Rendimiento Regular)</strong><br>
+                    1. Supervisión directa inmediata<br>
+                    2. Evaluación de habilidades del equipo<br>
+                    3. Revisión de métodos de trabajo<br>
+                    4. Capacitación específica si es necesario<br>
+                    5. Establecer metas semanales de mejora
+                `;
+            } else {
+                plan = `
+                    <strong>PLAN DE ACCIÓN INMEDIATA (Rendimiento Deficiente)</strong><br>
+                    1. INTERVENCIÓN INMEDIATA del supervisor<br>
+                    2. Evaluación individual de cada trabajador<br>
+                    3. Posible reestructuración del equipo<br>
+                    4. Horas extra para recuperar retraso<br>
+                    5. Revisión diaria de avances<br>
+                    6. Reporte directo a gerencia
+                `;
+            }
+            
+            alert(`PLAN DE ACCIÓN GENERADO\n\n${plan}`);
+            mostrarNotificacion('Plan de acción generado exitosamente', 'exito');
+        }
+        
+        function enviarAlertaSupervisor() {
+            const rendimiento = document.getElementById('indicadorRendimiento').textContent;
+            const estado = document.getElementById('estadoRendimiento').textContent;
+            
+            const mensaje = `ALERTA: Rendimiento del equipo al ${rendimiento} (${estado}). Requiere atención inmediata.`;
+            
+            if (confirm(`¿Enviar alerta al supervisor?\n\nMensaje: ${mensaje}`)) {
+                // En una implementación real, aquí se enviaría por WhatsApp, email, etc.
+                mostrarNotificacion('Alerta enviada al supervisor', 'exito');
+            }
+        }
+        
+        // Funciones auxiliares
+        function mostrarNotificacion(mensaje, tipo) {
+            const notificaciones = document.getElementById('notificaciones');
+            const notificacion = document.createElement('div');
+            notificacion.className = `notificacion ${tipo}`;
+            notificacion.innerHTML = `
+                <strong>${tipo === 'exito' ? '✓' : '✗'}</strong>
+                ${mensaje}
+            `;
+            
+            notificaciones.appendChild(notificacion);
+            
+            setTimeout(() => {
+                notificacion.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

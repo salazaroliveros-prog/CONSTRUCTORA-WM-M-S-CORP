@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001326">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>SEGUIMIENTO - Sistema M&S</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script defer src="pwa.js"></script>
+    <script src="app.js"></script>
+    <script src="database.js"></script>
+    <script src="sync.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Estilos específicos para seguimiento.css */
+        .gantt-chart {
+            height: 400px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .alert-panel {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid #dc3545;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo-section">
+                        <div class="logo-text">CONSTRUCTORA WM/M&S</div>
+                        <div class="logo-slogan">EDIFICANDO EL FUTURO</div>
+                    </div>
+                    <div class="header-controls">
+                        <div class="real-time-clock" id="realTimeClock"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <div class="container">
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="inicio.html" class="nav-link"><i class="fas fa-home nav-icon"></i> INICIO</a></li>
+                    <li class="nav-item"><a href="proyectos.html" class="nav-link"><i class="fas fa-project-diagram nav-icon"></i> PROYECTOS</a></li>
+                    <li class="nav-item"><a href="presupuestos.html" class="nav-link"><i class="fas fa-calculator nav-icon"></i> PRESUPUESTOS</a></li>
+                    <li class="nav-item"><a href="seguimiento.html" class="nav-link active"><i class="fas fa-chart-line nav-icon"></i> SEGUIMIENTO</a></li>
+                    <li class="nav-item"><a href="compras.html" class="nav-link"><i class="fas fa-shopping-cart nav-icon"></i> COMPRAS</a></li>
+                    <li class="nav-item"><a href="rrhh.html" class="nav-link"><i class="fas fa-users nav-icon"></i> RR.HH.</a></li>
+                    <li class="nav-item"><a href="dashboard.html" class="nav-link"><i class="fas fa-tachometer-alt nav-icon"></i> DASHBOARD</a></li>
+                    <li class="nav-item"><a href="#" class="nav-link" onclick="App.logout()"><i class="fas fa-sign-out-alt nav-icon"></i> SALIR</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="app-hero">
+                <h1 class="app-title">SEGUIMIENTO Y CONTROL</h1>
+                <p class="app-slogan">Control físico y financiero de proyectos en ejecución</p>
+            </div>
+
+            <!-- Controles de filtro -->
+            <div class="main-controls">
+                <div class="control-card">
+                    <h3><i class="fas fa-filter"></i> FILTRAR PROYECTO</h3>
+                    <select class="form-control" id="projectFilter" aria-label="Filtrar proyecto" title="Filtrar proyecto">
+                        <option value="">Todos los proyectos</option>
+                    </select>
+                </div>
+                <div class="control-card">
+                    <h3><i class="fas fa-calendar"></i> RANGO DE FECHAS</h3>
+                    <input type="date" class="form-control" id="dateFrom" name="dateFrom" aria-label="Fecha desde" title="Fecha desde">
+                    <input type="date" class="form-control mt-2" id="dateTo" name="dateTo" aria-label="Fecha hasta" title="Fecha hasta">
+                </div>
+                <div class="control-card">
+                    <h3><i class="fas fa-chart-bar"></i> VISTA</h3>
+                    <select class="form-control" id="viewType" aria-label="Seleccionar tipo de vista" title="Seleccionar tipo de vista">
+                        <option value="overview">Vista General</option>
+                        <option value="detailed">Detallada por Proyecto</option>
+                        <option value="comparison">Comparativa</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Gráfico Gantt -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-project-diagram"></i> GRÁFICO GANTT - PROYECTOS ACTIVOS</h3>
+                    <button class="btn btn-sm btn-primary" onclick="actualizarGantt()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="gantt-chart">
+                        <canvas id="ganttChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas principales -->
+            <div class="comparison-grid">
+                <div class="metric-card">
+                    <h4><i class="fas fa-tachometer-alt"></i> AVANCE FÍSICO PROMEDIO</h4>
+                    <div class="metric-value" id="avgPhysicalProgress">0%</div>
+                    <div class="progress-bar mt-2">
+                        <div class="progress-fill" id="physicalProgressBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <h4><i class="fas fa-money-bill-wave"></i> AVANCE FINANCIERO PROMEDIO</h4>
+                    <div class="metric-value" id="avgFinancialProgress">0%</div>
+                    <div class="progress-bar mt-2">
+                        <div class="progress-fill" id="financialProgressBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <h4><i class="fas fa-balance-scale"></i> DESVIACIÓN PRESUPUESTARIA</h4>
+                    <div class="metric-value" id="budgetDeviation">GTQ 0.00</div>
+                    <div class="metric-trend" id="budgetTrend">0% vs presupuesto</div>
+                </div>
+            </div>
+
+            <!-- Alertas y notificaciones -->
+            <div class="alert-panel" id="alertsPanel" style="display: none;">
+                <h4><i class="fas fa-exclamation-triangle"></i> ALERTAS DETECTADAS</h4>
+                <div id="alertsList"></div>
+            </div>
+
+            <!-- Tabla detallada de seguimiento -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-table"></i> DETALLE DE SEGUIMIENTO POR PROYECTO</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="trackingTable">
+                            <thead>
+                                <tr>
+                                    <th>PROYECTO</th>
+                                    <th>AVANCE FÍSICO</th>
+                                    <th>AVANCE FINANCIERO</th>
+                                    <th>PRESUPUESTO</th>
+                                    <th>GASTO REAL</th>
+                                    <th>DESVIACIÓN</th>
+                                    <th>RUTA CRÍTICA</th>
+                                    <th>ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trackingTableBody">
+                                <!-- Se carga dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos comparativos -->
+            <div class="row mt-4">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title">COMPARATIVA FÍSICO VS FINANCIERO</h4>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="comparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title">ANÁLISIS DE DESVIACIONES</h4>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="deviationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sistema de seguimiento y control
+        class TrackingSystem {
+            constructor() {
+                this.projects = [];
+                this.transactions = [];
+                this.alerts = [];
+                this.charts = {};
+                this.currentProject = null;
+                this.dateRange = {
+                    from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+                    to: new Date()
+                };
+            }
+
+            async init() {
+                await this.loadData();
+                this.setupFilters();
+                try {
+                    this.renderGanttChart();
+                } catch (error) {
+                    console.error('Error renderizando Gantt:', error);
+                    this.renderGanttFallback(error);
+                }
+                this.renderMetrics();
+                this.renderTrackingTable();
+                this.renderCharts();
+                this.checkAlerts();
+            }
+
+            async loadData() {
+                this.projects = AdvancedDB.find('proyectos', { estado: 'activo' });
+                this.transactions = AdvancedDB.get('transacciones') || [];
+                this.alerts = AdvancedDB.get('alertas') || [];
+            }
+
+            setupFilters() {
+                const projectFilter = document.getElementById('projectFilter');
+                projectFilter.innerHTML = '<option value="">Todos los proyectos</option>';
+                this.projects.forEach(project => {
+                    projectFilter.innerHTML += `<option value="${project.id}">${project.codigo} - ${project.nombre}</option>`;
+                });
+
+                projectFilter.addEventListener('change', (e) => {
+                    this.currentProject = e.target.value;
+                    this.renderMetrics();
+                    this.renderTrackingTable();
+                    this.renderCharts();
+                });
+
+                document.getElementById('dateFrom').value = this.dateRange.from.toISOString().split('T')[0];
+                document.getElementById('dateTo').value = this.dateRange.to.toISOString().split('T')[0];
+
+                document.getElementById('dateFrom').addEventListener('change', (e) => {
+                    this.dateRange.from = new Date(e.target.value);
+                    this.updateData();
+                });
+
+                document.getElementById('dateTo').addEventListener('change', (e) => {
+                    this.dateRange.to = new Date(e.target.value);
+                    this.updateData();
+                });
+
+                document.getElementById('viewType').addEventListener('change', (e) => {
+                    this.updateView(e.target.value);
+                });
+            }
+
+            updateData() {
+                this.renderMetrics();
+                this.renderTrackingTable();
+                this.renderCharts();
+            }
+
+            updateView(viewType) {
+                // Implementar cambios de vista
+                console.log('Cambiando a vista:', viewType);
+            }
+
+            renderGanttChart() {
+                const ctx = document.getElementById('ganttChart').getContext('2d');
+
+                // Nota: la escala "time" de Chart.js requiere un date-adapter. Para evitar que el
+                // render falle (y deje la página "cargando"), usamos una vista robusta basada en duración.
+                const msPerDay = 24 * 60 * 60 * 1000;
+                const now = new Date();
+
+                const rows = this.projects.map(project => {
+                    const start = project.fechaInicio ? new Date(project.fechaInicio) : now;
+                    const end = project.fechaFin ? new Date(project.fechaFin) : new Date(start.getTime() + 30 * msPerDay);
+                    const durationDays = Math.max(1, Math.round((end - start) / msPerDay));
+                    const progressPct = Math.max(0, Math.min(100, Number(project.avanceFisico || 0)));
+                    return {
+                        id: project.id,
+                        codigo: project.codigo,
+                        nombre: project.nombre,
+                        start,
+                        end,
+                        durationDays,
+                        progressPct
+                    };
+                });
+
+                const labels = rows.map(r => r.codigo || r.nombre);
+                const durations = rows.map(r => r.durationDays);
+
+                if (this.charts.gantt) {
+                    this.charts.gantt.destroy();
+                }
+
+                this.charts.gantt = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Duración (días)',
+                            data: durations,
+                            backgroundColor: 'rgba(212, 175, 55, 0.6)',
+                            borderColor: 'rgb(212, 175, 55)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Días'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    autoSkip: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const r = rows[context.dataIndex];
+                                        if (!r) return '';
+                                        return [
+                                            `Proyecto: ${r.codigo || ''} ${r.nombre || ''}`.trim(),
+                                            `Inicio: ${r.start.toLocaleDateString()}`,
+                                            `Fin: ${r.end.toLocaleDateString()}`,
+                                            `Duración: ${r.durationDays} días`,
+                                            `Avance: ${r.progressPct.toFixed(1)}%`
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            renderGanttFallback(error) {
+                try {
+                    const container = document.querySelector('.gantt-chart');
+                    if (!container) return;
+
+                    const message = (error && error.message) ? error.message : String(error || '');
+                    container.innerHTML = `
+                        <div class="alert-panel" style="margin: 10px;">
+                            <strong>No se pudo cargar el gráfico.</strong><br>
+                            <small>Detalle: ${message}</small>
+                        </div>
+                    `;
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            renderMetrics() {
+                let totalPhysical = 0;
+                let totalFinancial = 0;
+                let totalBudget = 0;
+                let totalSpent = 0;
+                let projectCount = 0;
+
+                const filteredProjects = this.currentProject 
+                    ? this.projects.filter(p => p.id === this.currentProject)
+                    : this.projects;
+
+                filteredProjects.forEach(project => {
+                    totalPhysical += project.avanceFisico || 0;
+                    totalFinancial += project.avanceFinanciero || 0;
+                    totalBudget += project.presupuestoAprobado || 0;
+                    
+                    // Calcular gasto real del proyecto
+                    const projectTransactions = this.transactions.filter(t => 
+                        t.proyectoId === project.id && 
+                        t.tipo === 'gasto' &&
+                        new Date(t.fecha) >= this.dateRange.from &&
+                        new Date(t.fecha) <= this.dateRange.to
+                    );
+                    
+                    const projectSpent = projectTransactions.reduce((sum, t) => sum + (t.monto || 0), 0);
+                    totalSpent += projectSpent;
+                    projectCount++;
+                });
+
+                const avgPhysical = projectCount > 0 ? totalPhysical / projectCount : 0;
+                const avgFinancial = projectCount > 0 ? totalFinancial / projectCount : 0;
+                const budgetDeviation = totalBudget - totalSpent;
+
+                document.getElementById('avgPhysicalProgress').textContent = `${avgPhysical.toFixed(1)}%`;
+                document.getElementById('avgFinancialProgress').textContent = `${avgFinancial.toFixed(1)}%`;
+                document.getElementById('budgetDeviation').textContent = Utils.formatCurrency(budgetDeviation);
+                
+                document.getElementById('physicalProgressBar').style.width = `${avgPhysical}%`;
+                document.getElementById('financialProgressBar').style.width = `${avgFinancial}%`;
+                
+                const deviationPercent = totalBudget > 0 ? ((budgetDeviation / totalBudget) * 100).toFixed(1) : 0;
+                document.getElementById('budgetTrend').textContent = `${deviationPercent}% vs presupuesto`;
+                document.getElementById('budgetTrend').style.color = deviationPercent >= 0 ? '#28a745' : '#dc3545';
+            }
+
+            renderTrackingTable() {
+                const tbody = document.getElementById('trackingTableBody');
+                let html = '';
+
+                const filteredProjects = this.currentProject 
+                    ? this.projects.filter(p => p.id === this.currentProject)
+                    : this.projects;
+
+                filteredProjects.forEach(project => {
+                    // Calcular gasto real del proyecto
+                    const projectTransactions = this.transactions.filter(t => 
+                        t.proyectoId === project.id && 
+                        t.tipo === 'gasto' &&
+                        new Date(t.fecha) >= this.dateRange.from &&
+                        new Date(t.fecha) <= this.dateRange.to
+                    );
+                    
+                    const spent = projectTransactions.reduce((sum, t) => sum + (t.monto || 0), 0);
+                    const budget = project.presupuestoAprobado || 0;
+                    const deviation = budget - spent;
+                    const deviationPercent = budget > 0 ? ((deviation / budget) * 100).toFixed(1) : 0;
+                    
+                    // Determinar estado de ruta crítica
+                    const today = new Date();
+                    const endDate = project.fechaFin ? new Date(project.fechaFin) : null;
+                    const isCritical = endDate ? (endDate - today) / (1000 * 60 * 60 * 24) < 30 : false;
+                    
+                    html += `
+                        <tr>
+                            <td>
+                                <strong>${project.codigo}</strong><br>
+                                <small>${project.nombre}</small>
+                            </td>
+                            <td>
+                                <div class="progress-bar" style="height: 20px;">
+                                    <div class="progress-fill" style="width: ${project.avanceFisico || 0}%"></div>
+                                </div>
+                                <small>${project.avanceFisico || 0}%</small>
+                            </td>
+                            <td>
+                                <div class="progress-bar" style="height: 20px;">
+                                    <div class="progress-fill" style="width: ${project.avanceFinanciero || 0}%"></div>
+                                </div>
+                                <small>${project.avanceFinanciero || 0}%</small>
+                            </td>
+                            <td>${Utils.formatCurrency(budget)}</td>
+                            <td>${Utils.formatCurrency(spent)}</td>
+                            <td>
+                                <span style="color: ${deviation >= 0 ? '#28a745' : '#dc3545'}">
+                                    ${Utils.formatCurrency(deviation)}<br>
+                                    <small>(${deviationPercent}%)</small>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge ${isCritical ? 'badge-danger' : 'badge-success'}">
+                                    ${isCritical ? 'CRÍTICA' : 'NORMAL'}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="trackingSystem.viewProjectDetails('${project.id}')">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button class="btn btn-sm btn-info" onclick="trackingSystem.generateReport('${project.id}')">
+                                    <i class="fas fa-file-pdf"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html || '<tr><td colspan="8" class="text-center">No hay proyectos activos</td></tr>';
+            }
+
+            renderCharts() {
+                this.renderComparisonChart();
+                this.renderDeviationChart();
+            }
+
+            renderComparisonChart() {
+                const ctx = document.getElementById('comparisonChart').getContext('2d');
+                
+                const filteredProjects = this.currentProject 
+                    ? this.projects.filter(p => p.id === this.currentProject)
+                    : this.projects.slice(0, 5); // Mostrar solo 5 proyectos
+
+                const labels = filteredProjects.map(p => p.codigo);
+                const physicalData = filteredProjects.map(p => p.avanceFisico || 0);
+                const financialData = filteredProjects.map(p => p.avanceFinanciero || 0);
+
+                if (this.charts.comparison) {
+                    this.charts.comparison.destroy();
+                }
+
+                this.charts.comparison = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Avance Físico',
+                                data: physicalData,
+                                backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                                borderColor: 'rgb(40, 167, 69)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Avance Financiero',
+                                data: financialData,
+                                backgroundColor: 'rgba(23, 162, 184, 0.6)',
+                                borderColor: 'rgb(23, 162, 184)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Porcentaje (%)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            renderDeviationChart() {
+                const ctx = document.getElementById('deviationChart').getContext('2d');
+                
+                const filteredProjects = this.currentProject 
+                    ? this.projects.filter(p => p.id === this.currentProject)
+                    : this.projects.slice(0, 5);
+
+                const labels = filteredProjects.map(p => p.codigo);
+                const deviations = filteredProjects.map(project => {
+                    const projectTransactions = this.transactions.filter(t => 
+                        t.proyectoId === project.id && 
+                        t.tipo === 'gasto' &&
+                        new Date(t.fecha) >= this.dateRange.from &&
+                        new Date(t.fecha) <= this.dateRange.to
+                    );
+                    
+                    const spent = projectTransactions.reduce((sum, t) => sum + (t.monto || 0), 0);
+                    const budget = project.presupuestoAprobado || 0;
+                    return budget > 0 ? ((budget - spent) / budget * 100) : 0;
+                });
+
+                const colors = deviations.map(d => d >= 0 ? '#28a745' : '#dc3545');
+
+                if (this.charts.deviation) {
+                    this.charts.deviation.destroy();
+                }
+
+                this.charts.deviation = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Desviación Presupuestaria (%)',
+                            data: deviations,
+                            backgroundColor: colors,
+                            borderColor: colors.map(c => c.replace('0.6', '1')),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Desviación (%)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            checkAlerts() {
+                const criticalAlerts = this.alerts.filter(alert => 
+                    alert.estado === 'pendiente' && 
+                    alert.prioridad === 'critica'
+                );
+
+                if (criticalAlerts.length > 0) {
+                    document.getElementById('alertsPanel').style.display = 'block';
+                    const alertsList = document.getElementById('alertsList');
+                    
+                    let html = '';
+                    criticalAlerts.slice(0, 3).forEach(alert => {
+                        html += `
+                            <div class="alert alert-danger mt-2">
+                                <i class="fas fa-exclamation-circle"></i>
+                                ${alert.mensaje}
+                            </div>
+                        `;
+                    });
+                    
+                    alertsList.innerHTML = html;
+                }
+            }
+
+            viewProjectDetails(projectId) {
+                // Navegar a vista detallada del proyecto
+                window.location.href = `proyectos.html?view=details&id=${projectId}`;
+            }
+
+            generateReport(projectId) {
+                const project = this.projects.find(p => p.id === projectId);
+                if (!project) return;
+
+                const reportData = {
+                    proyecto: project,
+                    metricas: this.calculateProjectMetrics(projectId),
+                    fecha: new Date().toLocaleDateString('es-GT')
+                };
+
+                Utils.generatePDF(reportData, `Reporte_Seguimiento_${project.codigo}`);
+                Utils.showNotification('Reporte generado exitosamente', 'success');
+            }
+
+            calculateProjectMetrics(projectId) {
+                const project = this.projects.find(p => p.id === projectId);
+                if (!project) return {};
+
+                const projectTransactions = this.transactions.filter(t => 
+                    t.proyectoId === projectId &&
+                    new Date(t.fecha) >= this.dateRange.from &&
+                    new Date(t.fecha) <= this.dateRange.to
+                );
+
+                const ingresos = projectTransactions
+                    .filter(t => t.tipo === 'ingreso')
+                    .reduce((sum, t) => sum + (t.monto || 0), 0);
+
+                const gastos = projectTransactions
+                    .filter(t => t.tipo === 'gasto')
+                    .reduce((sum, t) => sum + (t.monto || 0), 0);
+
+                const budget = project.presupuestoAprobado || 0;
+                const deviation = budget - gastos;
+                const efficiency = budget > 0 ? (gastos / budget * 100) : 0;
+
+                return {
+                    ingresos: ingresos,
+                    gastos: gastos,
+                    presupuesto: budget,
+                    desviacion: deviation,
+                    eficiencia: efficiency,
+                    avanceFisico: project.avanceFisico || 0,
+                    avanceFinanciero: project.avanceFinanciero || 0
+                };
+            }
+
+            actualizarGantt() {
+                try {
+                    if (this.charts.gantt) {
+                        this.charts.gantt.destroy();
+                        this.charts.gantt = null;
+                    }
+                    this.renderGanttChart();
+                    Utils.showNotification('Gráfico Gantt actualizado', 'success');
+                } catch (error) {
+                    console.error('Error actualizando Gantt:', error);
+                    if (window.Utils && typeof Utils.showNotification === 'function') {
+                        Utils.showNotification('No se pudo actualizar el gráfico', 'error');
+                    }
+                }
+            }
+        }
+
+        // Inicializar sistema de seguimiento
+        const trackingSystem = new TrackingSystem();
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                if (window.Utils && typeof Utils.showLoading === 'function') {
+                    Utils.showLoading('Cargando sistema de seguimiento...');
+                }
+
+                await trackingSystem.init();
+            } catch (error) {
+                console.error('Error inicializando seguimiento:', error);
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Error al cargar Seguimiento. Revisa consola (F12).', 'error');
+                } else {
+                    alert('Error al cargar Seguimiento. Revisa consola (F12).');
+                }
+            } finally {
+                if (window.Utils && typeof Utils.hideLoading === 'function') {
+                    Utils.hideLoading();
+                }
+            }
+        });
+
+        // Función global para actualizar desde botones
+        window.actualizarGantt = () => trackingSystem.actualizarGantt();
+    </script>
+</body>
+</html>

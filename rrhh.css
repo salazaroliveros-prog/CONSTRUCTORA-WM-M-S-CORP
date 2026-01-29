@@ -1,0 +1,9 @@
+/* RRHH page styles.
+   Kept minimal to avoid 404 on deploy; base UI comes from styles.css. */
+
+@import url('./styles.css');
+
+/* Small tweaks for RRHH if needed */
+body {
+  min-height: 100vh;
+}

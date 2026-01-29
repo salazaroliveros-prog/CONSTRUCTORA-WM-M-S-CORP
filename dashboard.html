@@ -1,0 +1,2739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001326">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>M&S - Dashboard Central</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="pwa.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="database.js"></script>
+    <style>
+        :root {
+            --azul-marino: #001f3f;
+            --amarillo-mostaza: #FFD700;
+            --gris-oscuro: #333333;
+            --gris-claro: #f4f4f4;
+            --verde: #2ecc71;
+            --rojo: #e74c3c;
+            --naranja: #e67e22;
+            --azul: #3498db;
+            --morado: #9b59b6;
+            --turquesa: #1abc9c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a1929 0%, #001f3f 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Encabezado con efecto especial */
+        .header {
+            background: linear-gradient(90deg, var(--azul-marino) 0%, #002851 100%);
+            color: var(--amarillo-mostaza);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--amarillo-mostaza);
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, var(--amarillo-mostaza) 0%, #ffed4e 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--azul-marino);
+            font-size: 1.8rem;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
+        }
+        
+        .titulo {
+            font-size: 1.6rem;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+            letter-spacing: 1px;
+        }
+        
+        .eslogan {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 3px;
+            font-style: italic;
+        }
+        
+        .reloj-fecha {
+            text-align: right;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .live-badge {
+            margin-top: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+        }
+
+        .live-badge .sync-pill {
+            display: none;
+            margin-left: 6px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            border: 1px solid rgba(231, 76, 60, 0.55);
+            color: rgba(255, 255, 255, 0.95);
+            background: rgba(231, 76, 60, 0.35);
+        }
+
+        .live-badge.sync-error .sync-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .live-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(46, 204, 113, 0.9);
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+
+        .live-badge.sync-error .dot {
+            background: rgba(231, 76, 60, 0.95);
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+        }
+
+        .live-badge.sync-offline .dot {
+            background: rgba(241, 196, 15, 0.95);
+            box-shadow: 0 0 10px rgba(241, 196, 15, 0.6);
+        }
+
+        .live-badge.updating .dot {
+            background: rgba(52, 152, 219, 0.9);
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.6);
+            animation: livePulse 1s ease-in-out infinite;
+        }
+
+        @keyframes livePulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+        
+        /* Filtros superiores */
+        .filtros-dashboard {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 1400px;
+            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .filtro-grupo {
+            position: relative;
+        }
+        
+        .filtro-grupo label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--amarillo-mostaza);
+            font-size: 0.9rem;
+        }
+        
+        .filtro-grupo select,
+        .filtro-grupo input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(52, 152, 219, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .filtro-grupo select:focus,
+        .filtro-grupo input:focus {
+            border-color: var(--amarillo-mostaza);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            outline: none;
+        }
+        
+        /* Botones de acción rápida */
+        .botones-rapidos {
+            max-width: 1400px;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .btn-rapido {
+            padding: 18px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.9), rgba(41, 128, 185, 0.9));
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-rapido:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn-rapido i {
+            font-size: 2rem;
+        }
+        
+        /* Colores para diferentes herramientas */
+        .btn-inicio { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .btn-proyectos { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .btn-presupuestos { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .btn-seguimiento { background: linear-gradient(135deg, #e67e22, #d35400); }
+        .btn-compras { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .btn-rrhh { background: linear-gradient(135deg, #1abc9c, #16a085); }
+        .btn-rendimiento { background: linear-gradient(135deg, #34495e, #2c3e50); }
+        .btn-salir { background: linear-gradient(135deg, #7f8c8d, #95a5a6); }
+        
+        /* Contenedor principal de gráficas */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .seccion-titulo {
+            color: var(--amarillo-mostaza);
+            border-left: 5px solid var(--amarillo-mostaza);
+            padding-left: 15px;
+            margin: 30px 0 20px 0;
+            font-size: 1.8rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Grid de gráficas */
+        .grid-graficas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 1300px) {
+            .grid-graficas {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Tarjetas de gráficas */
+        .grafica-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .grafica-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+        
+        .grafica-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .grafica-titulo {
+            font-size: 1.3rem;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .grafica-valor {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, var(--amarillo-mostaza), #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .grafica-container {
+            height: 300px;
+            position: relative;
+            margin-top: 20px;
+        }
+        
+        /* Gráfica Gantt interactiva */
+        .gantt-container {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            height: 350px;
+            overflow-x: auto;
+            position: relative;
+        }
+        
+        .gantt-bar {
+            height: 40px;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .gantt-bar:hover {
+            transform: scaleY(1.1);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+        }
+        
+        .gantt-bar.completado {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+        }
+        
+        .gantt-bar.atrasado {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+        
+        .gantt-bar .progreso {
+            height: 100%;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .gantt-bar .nombre {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+        
+        .gantt-bar .porcentaje {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+        }
+        
+        /* KPI Cards */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--amarillo-mostaza), #ffed4e);
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--amarillo-mostaza);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        .kpi-icono {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--amarillo-mostaza);
+        }
+        
+        .kpi-titulo {
+            font-size: 1rem;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+        
+        .kpi-valor {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .kpi-tendencia {
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .tendencia-positiva {
+            color: var(--verde);
+        }
+        
+        .tendencia-negativa {
+            color: var(--rojo);
+        }
+        
+        /* Alertas y notificaciones */
+        .alertas-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            border-left: 5px solid var(--naranja);
+        }
+        
+        .alerta-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .alerta-item:last-child {
+            border-bottom: none;
+        }
+        
+        .alerta-icono {
+            font-size: 1.5rem;
+            min-width: 40px;
+        }
+        
+        .alerta-critica .alerta-icono { color: var(--rojo); }
+        .alerta-advertencia .alerta-icono { color: var(--naranja); }
+        .alerta-informativa .alerta-icono { color: var(--azul); }
+        
+        /* Tabla de proyectos */
+        .tabla-proyectos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .tabla-proyectos th {
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            color: var(--amarillo-mostaza);
+            padding: 18px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid var(--amarillo-mostaza);
+        }
+        
+        .tabla-proyectos td {
+            padding: 15px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tabla-proyectos tr:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .estado-proyecto {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .estado-activo { background: rgba(46, 204, 113, 0.2); color: var(--verde); }
+        .estado-en-curso { background: rgba(52, 152, 219, 0.2); color: var(--azul); }
+        .estado-atrasado { background: rgba(231, 76, 60, 0.2); color: var(--rojo); }
+        .estado-finalizado { background: rgba(155, 89, 182, 0.2); color: var(--morado); }
+        
+        /* Barra de progreso */
+        .barra-progreso {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .progreso-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1s ease;
+        }
+        
+        .progreso-verde { background: linear-gradient(90deg, var(--verde), #2ecc71); }
+        .progreso-azul { background: linear-gradient(90deg, var(--azul), #3498db); }
+        .progreso-naranja { background: linear-gradient(90deg, var(--naranja), #e67e22); }
+        .progreso-rojo { background: linear-gradient(90deg, var(--rojo), #e74c3c); }
+        
+        /* Menú flotante */
+        .menu-flotante {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+        
+        .btn-menu-principal {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--amarillo-mostaza), #ffed4e);
+            border: none;
+            color: var(--azul-marino);
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-menu-principal:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+        }
+        
+        .submenu {
+            position: absolute;
+            bottom: 85px;
+            right: 0;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .menu-flotante:hover .submenu {
+            display: flex;
+        }
+        
+        .btn-submenu {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.4rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .grid-graficas {
+                grid-template-columns: 1fr;
+            }
+            
+            .botones-rapidos {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .kpi-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filtros-dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .reloj-fecha {
+                text-align: center;
+            }
+        }
+        
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        /* Estilos para modo impresión */
+        @media print {
+            .btn-rapido, .menu-flotante, .filtros-dashboard {
+                display: none !important;
+            }
+            
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            
+            .grafica-card {
+                break-inside: avoid;
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Encabezado -->
+    <header class="header">
+        <div class="logo-container">
+            <div class="logo">M&S</div>
+            <div>
+                <div class="titulo">CONSTRUCTORA WM/M&S - DASHBOARD CENTRAL</div>
+                <div class="eslogan">EDIFICANDO EL FUTURO - Control Total de Proyectos</div>
+            </div>
+        </div>
+        <div class="reloj-fecha">
+            <div id="fechaActual"></div>
+            <div id="horaActual"></div>
+            <div id="liveUpdateBadge" class="live-badge" title="Sincronización en vivo">
+                <span class="dot" aria-hidden="true"></span>
+                <span class="text">Listo</span>
+                <span class="sync-pill" aria-label="Error de sincronización">SYNC ERROR</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filtros principales -->
+    <div class="filtros-dashboard">
+        <div class="filtro-grupo">
+            <label for="filtroProyecto"><i class="fas fa-project-diagram"></i> Seleccionar Proyecto</label>
+            <select id="filtroProyecto">
+                <option value="">Todos los proyectos</option>
+                <option value="proyecto1">Residencial Las Lomas (Q. 2,500,000)</option>
+                <option value="proyecto2">Edificio Comercial Centro (Q. 8,750,000)</option>
+                <option value="proyecto3">Planta Industrial Norte (Q. 12,300,000)</option>
+                <option value="proyecto4">Puente Carretero Sur (Q. 15,800,000)</option>
+                <option value="proyecto5">Hospital Regional Este (Q. 25,000,000)</option>
+            </select>
+        </div>
+        
+        <div class="filtro-grupo">
+            <label for="filtroFechaInicio"><i class="fas fa-calendar-alt"></i> Rango de Fechas</label>
+            <input type="date" id="filtroFechaInicio" value="" aria-label="Fecha de inicio" title="Fecha de inicio">
+        </div>
+        
+        <div class="filtro-grupo">
+            <label for="filtroFechaFin"><i class="fas fa-calendar-alt"></i> al</label>
+            <input type="date" id="filtroFechaFin" value="" aria-label="Fecha de fin" title="Fecha de fin">
+        </div>
+        
+        <div class="filtro-grupo">
+            <label for="filtroTipo"><i class="fas fa-filter"></i> Tipo de Visualización</label>
+            <select id="filtroTipo">
+                <option value="resumen">Resumen Ejecutivo</option>
+                <option value="detallado">Detallado por Proyecto</option>
+                <option value="comparativo">Comparativo entre Proyectos</option>
+                <option value="tendencias">Análisis de Tendencias</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Botones de acceso rápido -->
+    <div class="botones-rapidos">
+        <a href="inicio.html" class="btn-rapido btn-inicio">
+            <i class="fas fa-home"></i>
+            <span>INICIO</span>
+        </a>
+        <a href="proyectos.html" class="btn-rapido btn-proyectos">
+            <i class="fas fa-hard-hat"></i>
+            <span>PROYECTOS</span>
+        </a>
+        <a href="presupuestos.html" class="btn-rapido btn-presupuestos">
+            <i class="fas fa-calculator"></i>
+            <span>PRESUPUESTOS</span>
+        </a>
+        <a href="seguimiento.html" class="btn-rapido btn-seguimiento">
+            <i class="fas fa-chart-line"></i>
+            <span>SEGUIMIENTO</span>
+        </a>
+        <a href="compras.html" class="btn-rapido btn-compras">
+            <i class="fas fa-shopping-cart"></i>
+            <span>COMPRAS</span>
+        </a>
+        <a href="rrhh.html" class="btn-rapido btn-rrhh">
+            <i class="fas fa-users-cog"></i>
+            <span>RR.HH.</span>
+        </a>
+        <a href="rendimiento.html" class="btn-rapido btn-rendimiento">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>RENDIMIENTO</span>
+        </a>
+        <a href="#" onclick="salir()" class="btn-rapido btn-salir">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>SALIR</span>
+        </a>
+    </div>
+
+    <!-- Contenedor principal del dashboard -->
+    <div class="dashboard-container">
+        <!-- Sección 1: KPI's Principales -->
+        <h2 class="seccion-titulo"><i class="fas fa-chart-pie"></i> INDICADORES CLAVE (KPI's)</h2>
+        <div class="kpi-container">
+            <div class="kpi-card fade-in">
+                <div class="kpi-icono"><i class="fas fa-money-bill-wave"></i></div>
+                <div class="kpi-titulo">INGRESOS TOTALES</div>
+                <div class="kpi-valor">Q. 48,350,000</div>
+                <div class="kpi-tendencia tendencia-positiva">
+                    <i class="fas fa-arrow-up"></i> 12.5% vs mes anterior
+                </div>
+            </div>
+            
+            <div class="kpi-card fade-in">
+                <div class="kpi-icono"><i class="fas fa-coins"></i></div>
+                <div class="kpi-titulo">UTILIDAD NETA</div>
+                <div class="kpi-valor">Q. 7,250,000</div>
+                <div class="kpi-tendencia tendencia-positiva">
+                    <i class="fas fa-arrow-up"></i> 8.3% vs mes anterior
+                </div>
+            </div>
+            
+            <div class="kpi-card fade-in">
+                <div class="kpi-icono"><i class="fas fa-calendar-check"></i></div>
+                <div class="kpi-titulo">AVANCE FÍSICO PROMEDIO</div>
+                <div class="kpi-valor">78.5%</div>
+                <div class="kpi-tendencia tendencia-positiva">
+                    <i class="fas fa-arrow-up"></i> 2.1% vs semana anterior
+                </div>
+            </div>
+            
+            <div class="kpi-card fade-in">
+                <div class="kpi-icono"><i class="fas fa-chart-line"></i></div>
+                <div class="kpi-titulo">AVANCE FINANCIERO</div>
+                <div class="kpi-valor">82.3%</div>
+                <div class="kpi-tendencia tendencia-negativa">
+                    <i class="fas fa-arrow-down"></i> 1.2% vs semana anterior
+                </div>
+            </div>
+            
+            <div class="kpi-card fade-in">
+                <div class="kpi-icono"><i class="fas fa-user-clock"></i></div>
+                <div class="kpi-titulo">RENDIMIENTO PERSONAL</div>
+                <div class="kpi-valor">85.7%</div>
+                <div class="kpi-tendencia tendencia-positiva">
+                    <i class="fas fa-arrow-up"></i> 3.5% vs semana anterior
+                </div>
+            </div>
+            
+            <div class="kpi-card fade-in">
+                <div class="kpi-icono"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="kpi-titulo">PROYECTOS CON RIESGO</div>
+                <div class="kpi-valor">2</div>
+                <div class="kpi-tendencia tendencia-negativa">
+                    <i class="fas fa-arrow-up"></i> 1 proyecto más
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 2: Gráfica Gantt Interactiva -->
+        <h2 class="seccion-titulo"><i class="fas fa-project-diagram"></i> GRÁFICA GANTT - AVANCE DE PROYECTOS</h2>
+        <div class="gantt-container fade-in">
+            <div class="gantt-bar completado" style="width: 90%;">
+                <div class="progreso" style="width: 90%;"></div>
+                <div class="nombre">Residencial Las Lomas</div>
+                <div class="porcentaje">90%</div>
+            </div>
+            
+            <div class="gantt-bar" style="width: 85%;">
+                <div class="progreso" style="width: 85%;"></div>
+                <div class="nombre">Edificio Comercial Centro</div>
+                <div class="porcentaje">85%</div>
+            </div>
+            
+            <div class="gantt-bar" style="width: 65%;">
+                <div class="progreso" style="width: 65%;"></div>
+                <div class="nombre">Planta Industrial Norte</div>
+                <div class="porcentaje">65%</div>
+            </div>
+            
+            <div class="gantt-bar atrasado" style="width: 45%;">
+                <div class="progreso" style="width: 45%;"></div>
+                <div class="nombre">Puente Carretero Sur</div>
+                <div class="porcentaje">45% (Atrasado)</div>
+            </div>
+            
+            <div class="gantt-bar" style="width: 30%;">
+                <div class="progreso" style="width: 30%;"></div>
+                <div class="nombre">Hospital Regional Este</div>
+                <div class="porcentaje">30%</div>
+            </div>
+        </div>
+
+        <!-- Sección 3: Gráficas principales (10 gráficas como mínimo) -->
+        <h2 class="seccion-titulo"><i class="fas fa-chart-bar"></i> ANÁLISIS FINANCIERO Y FÍSICO</h2>
+        <div class="grid-graficas">
+            <!-- Gráfica 1: Ingresos vs Gastos -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">INGRESOS vs GASTOS POR PROYECTO</div>
+                    <div class="grafica-valor">Q. 48.3M / Q. 41.1M</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaIngresosGastos"></canvas>
+                </div>
+            </div>
+            
+            <!-- Gráfica 2: Utilidades por proyecto -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">UTILIDADES POR PROYECTO</div>
+                    <div class="grafica-valor">+15.2%</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaUtilidades"></canvas>
+                </div>
+            </div>
+            
+            <!-- Gráfica 3: Avance físico vs financiero -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">AVANCE FÍSICO vs FINANCIERO</div>
+                    <div class="grafica-valor">78.5% / 82.3%</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaAvanceComparativo"></canvas>
+                </div>
+            </div>
+            
+            <!-- Gráfica 4: Distribución de costos -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">DISTRIBUCIÓN DE COSTOS</div>
+                    <div class="grafica-valor">100%</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaDistribucionCostos"></canvas>
+                </div>
+            </div>
+            
+            <!-- Gráfica 5: Rendimiento de personal -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">RENDIMIENTO DE EQUIPOS</div>
+                    <div class="grafica-valor">85.7%</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaRendimientoPersonal"></canvas>
+                </div>
+            </div>
+            
+            <!-- Gráfica 6: Control de materiales -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">CONTROL DE MATERIALES - STOCK vs USADO</div>
+                    <div class="grafica-valor">68% / 32%</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaControlMateriales"></canvas>
+                </div>
+            </div>
+            
+            <!-- Gráfica 7: Tendencias mensuales -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">TENDENCIAS MENSUALES</div>
+                    <div class="grafica-valor">+8.3%</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaTendencias"></canvas>
+                </div>
+            </div>
+            
+            <!-- Gráfica 8: Análisis de riesgos -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">ANÁLISIS DE RIESGOS POR PROYECTO</div>
+                    <div class="grafica-valor">2 ALTO / 3 MEDIO</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaRiesgos"></canvas>
+                </div>
+            </div>
+            
+            <!-- Gráfica 9: Cumplimiento de cronograma -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">CUMPLIMIENTO DE CRONOGRAMA</div>
+                    <div class="grafica-valor">72.5%</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaCronograma"></canvas>
+                </div>
+            </div>
+            
+            <!-- Gráfica 10: Eficiencia por departamento -->
+            <div class="grafica-card fade-in">
+                <div class="grafica-header">
+                    <div class="grafica-titulo">EFICIENCIA POR DEPARTAMENTO</div>
+                    <div class="grafica-valor">88.3%</div>
+                </div>
+                <div class="grafica-container">
+                    <canvas id="graficaEficienciaDepartamentos"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 4: Alertas y notificaciones -->
+        <h2 class="seccion-titulo"><i class="fas fa-bell"></i> ALERTAS Y NOTIFICACIONES CRÍTICAS</h2>
+        <div class="alertas-container fade-in">
+            <div class="alerta-item alerta-critica">
+                <div class="alerta-icono"><i class="fas fa-exclamation-circle"></i></div>
+                <div>
+                    <strong>RIESGO ALTO: Puente Carretero Sur - Atraso del 15%</strong>
+                    <p>El proyecto presenta un atraso significativo en la etapa de cimentación. Se requiere intervención inmediata del equipo directivo.</p>
+                    <small><i class="fas fa-clock"></i> Última actualización: Hoy 10:30 AM</small>
+                </div>
+            </div>
+            
+            <div class="alerta-item alerta-advertencia">
+                <div class="alerta-icono"><i class="fas fa-exclamation-triangle"></i></div>
+                <div>
+                    <strong>ADVERTENCIA: Sobrecosto en materiales - Planta Industrial Norte</strong>
+                    <p>El gasto en acero estructural supera en 12% lo presupuestado. Revisar proveedores y cantidades.</p>
+                    <small><i class="fas fa-clock"></i> Última actualización: Ayer 3:45 PM</small>
+                </div>
+            </div>
+            
+            <div class="alerta-item alerta-informativa">
+                <div class="alerta-icono"><i class="fas fa-info-circle"></i></div>
+                <div>
+                    <strong>INFORMACIÓN: Reunión de seguimiento programada</strong>
+                    <p>Reunión ejecutiva de seguimiento programada para el viernes 15 de noviembre, 9:00 AM en sala de juntas principal.</p>
+                    <small><i class="fas fa-clock"></i> Programada: Viernes 15 Nov, 9:00 AM</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 5: Tabla de proyectos detallada -->
+        <h2 class="seccion-titulo"><i class="fas fa-table"></i> ESTADO DETALLADO DE PROYECTOS</h2>
+        <table class="tabla-proyectos fade-in">
+            <thead>
+                <tr>
+                    <th>PROYECTO</th>
+                    <th>PRESUPUESTO</th>
+                    <th>GASTO ACTUAL</th>
+                    <th>AVANCE FÍSICO</th>
+                    <th>AVANCE FINANCIERO</th>
+                    <th>FECHA FINAL</th>
+                    <th>ESTADO</th>
+                    <th>RIESGO</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Residencial Las Lomas</strong><br><small>15 viviendas - Zona 10</small></td>
+                    <td>Q. 2,500,000</td>
+                    <td>Q. 2,150,000</td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-verde" style="width: 90%;"></div>
+                        </div>
+                        90%
+                    </td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-azul" style="width: 86%;"></div>
+                        </div>
+                        86%
+                    </td>
+                    <td>15 Dic 2024</td>
+                    <td><span class="estado-proyecto estado-en-curso">EN CURSO</span></td>
+                    <td><span style="color: var(--verde);">BAJO</span></td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Edificio Comercial Centro</strong><br><small>8 niveles - Centro Histórico</small></td>
+                    <td>Q. 8,750,000</td>
+                    <td>Q. 7,200,000</td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-verde" style="width: 85%;"></div>
+                        </div>
+                        85%
+                    </td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-azul" style="width: 82%;"></div>
+                        </div>
+                        82%
+                    </td>
+                    <td>30 Nov 2024</td>
+                    <td><span class="estado-proyecto estado-en-curso">EN CURSO</span></td>
+                    <td><span style="color: #f39c12;">MEDIO</span></td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Planta Industrial Norte</strong><br><small>5,000 m² - Zona Industrial</small></td>
+                    <td>Q. 12,300,000</td>
+                    <td>Q. 9,800,000</td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-naranja" style="width: 65%;"></div>
+                        </div>
+                        65%
+                    </td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-azul" style="width: 80%;"></div>
+                        </div>
+                        80%
+                    </td>
+                    <td>15 Ene 2025</td>
+                    <td><span class="estado-proyecto estado-en-curso">EN CURSO</span></td>
+                    <td><span style="color: var(--rojo);">ALTO</span></td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Puente Carretero Sur</strong><br><small>150m luz - Carretera CA-1</small></td>
+                    <td>Q. 15,800,000</td>
+                    <td>Q. 12,500,000</td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-rojo" style="width: 45%;"></div>
+                        </div>
+                        45%
+                    </td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-azul" style="width: 79%;"></div>
+                        </div>
+                        79%
+                    </td>
+                    <td>30 Oct 2024</td>
+                    <td><span class="estado-proyecto estado-atrasado">ATRASADO</span></td>
+                    <td><span style="color: var(--rojo); font-weight: bold;">CRÍTICO</span></td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Hospital Regional Este</strong><br><small>200 camas - Departamento</small></td>
+                    <td>Q. 25,000,000</td>
+                    <td>Q. 8,450,000</td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-azul" style="width: 30%;"></div>
+                        </div>
+                        30%
+                    </td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="progreso-fill progreso-azul" style="width: 34%;"></div>
+                        </div>
+                        34%
+                    </td>
+                    <td>30 Jun 2025</td>
+                    <td><span class="estado-proyecto estado-activo">INICIADO</span></td>
+                    <td><span style="color: var(--verde);">BAJO</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Menú flotante -->
+    <div class="menu-flotante">
+        <div class="submenu">
+            <button class="btn-submenu" style="background: var(--verde);" onclick="exportarPDF()" title="Exportar a PDF">
+                <i class="fas fa-file-pdf"></i>
+            </button>
+            <button class="btn-submenu" style="background: var(--azul);" onclick="actualizarDashboard()" title="Actualizar Datos">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="btn-submenu" style="background: var(--morado);" onclick="imprimirDashboard()" title="Imprimir Reporte">
+                <i class="fas fa-print"></i>
+            </button>
+        </div>
+        <button class="btn-menu-principal" title="Menú Principal">
+            <i class="fas fa-cog"></i>
+        </button>
+    </div>
+
+    <script>
+        // Variables globales
+        let charts = {};
+        let intervaloReloj;
+        let datosDashboard = {};
+        
+        // Inicializar cuando el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            iniciarReloj();
+            cargarDatosDashboard();
+            inicializarGraficas();
+            configurarFiltros();
+            actualizarFechaFiltros();
+            configurarActualizacionEnVivo();
+            startSyncMetaWatcher();
+
+            // Marcar carga inicial
+            marcarActualizacionLive('Carga inicial');
+            
+            // Animación de entrada
+            document.querySelectorAll('.fade-in').forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+
+        let liveRefreshTimer = null;
+        let liveBadgeInterval = null;
+        let lastLiveUpdateAt = null;
+        let lastSyncMeta = null;
+        let syncMetaInterval = null;
+
+        function formatAge(seconds) {
+            const s = Math.max(0, Math.floor(seconds));
+            if (s < 60) return `hace ${s}s`;
+            const m = Math.floor(s / 60);
+            if (m < 60) return `hace ${m}m`;
+            const h = Math.floor(m / 60);
+            return `hace ${h}h`;
+        }
+
+        function getLiveBadge() {
+            return document.getElementById('liveUpdateBadge');
+        }
+
+        function setLiveBadge(updating, text, title) {
+            const el = getLiveBadge();
+            if (!el) return;
+            el.classList.toggle('updating', Boolean(updating));
+            const txt = el.querySelector('.text');
+            if (txt && typeof text === 'string') txt.textContent = text;
+            if (title) el.title = title;
+        }
+
+        function buildBadgeTitle() {
+            const parts = [];
+
+            if (lastLiveUpdateAt) {
+                parts.push(`UI: actualizado ${lastLiveUpdateAt.toLocaleTimeString('es-GT')}`);
+            } else {
+                parts.push('UI: sin actualización aún');
+            }
+
+            const meta = lastSyncMeta;
+            if (!meta) {
+                parts.push('Sync: sin datos');
+            } else {
+                const state = String(meta.state || 'idle').toUpperCase();
+                const at = meta.at ? new Date(meta.at) : null;
+                const when = at && !Number.isNaN(at.getTime()) ? at.toLocaleString('es-GT') : (meta.at || '');
+                const msg = meta.message ? ` - ${meta.message}` : '';
+                parts.push(`Sync: ${state}${msg}${when ? ` (${when})` : ''}`);
+            }
+
+            return parts.join(' | ');
+        }
+
+        function applySyncMetaToBadge() {
+            const el = getLiveBadge();
+            if (!el) return;
+
+            const meta = lastSyncMeta;
+            const isOffline = typeof navigator !== 'undefined' && navigator && navigator.onLine === false;
+            const isError = meta && meta.state === 'error';
+
+            el.classList.toggle('sync-error', Boolean(isError));
+            el.classList.toggle('sync-offline', Boolean(!isError && isOffline));
+            el.title = buildBadgeTitle();
+
+            // Si hay error, mantener el texto de "Actualizado..." y solo mostrar el chip.
+            // Si NO hay error y aún no hay actualizaciones, mostrar "Listo".
+            const txt = el.querySelector('.text');
+            if (txt && !lastLiveUpdateAt && !el.classList.contains('updating')) {
+                txt.textContent = 'Listo';
+            }
+        }
+
+        function readLastSyncMetaFromStorage() {
+            try {
+                const raw = localStorage.getItem('ms_constructora_sync_last_meta_v1');
+                if (!raw) return null;
+                return JSON.parse(raw) || null;
+            } catch {
+                return null;
+            }
+        }
+
+        function startSyncMetaWatcher() {
+            if (syncMetaInterval) return;
+
+            const tick = () => {
+                const meta = readLastSyncMetaFromStorage();
+
+                // Solo actualizar si cambió algo
+                const before = JSON.stringify(lastSyncMeta);
+                const after = JSON.stringify(meta);
+                if (before !== after) {
+                    lastSyncMeta = meta;
+                }
+
+                applySyncMetaToBadge();
+            };
+
+            tick();
+            syncMetaInterval = setInterval(tick, 3000);
+
+            window.addEventListener('online', () => applySyncMetaToBadge());
+            window.addEventListener('offline', () => applySyncMetaToBadge());
+        }
+
+        function marcarActualizacionLive(reason) {
+            lastLiveUpdateAt = new Date();
+            const t = lastLiveUpdateAt.toLocaleTimeString('es-GT');
+            setLiveBadge(false, 'Actualizado', `${reason || 'Actualizado'} - ${t}`);
+            applySyncMetaToBadge();
+
+            if (liveBadgeInterval) return;
+            liveBadgeInterval = setInterval(() => {
+                if (!lastLiveUpdateAt) return;
+                const now = new Date();
+                const age = (now.getTime() - lastLiveUpdateAt.getTime()) / 1000;
+                setLiveBadge(false, `Actualizado ${formatAge(age)}`);
+                applySyncMetaToBadge();
+            }, 1000);
+        }
+
+        function configurarActualizacionEnVivo() {
+            const db = window.AdvancedDB;
+            if (!db || typeof db.on !== 'function') return;
+
+            const watchedCollections = new Set([
+                'proyectos',
+                'transacciones',
+                'presupuestos',
+                'materiales',
+                'trabajadores',
+                'asistencias',
+                'alertas',
+                'compras',
+                'rendimientos'
+            ]);
+
+            const scheduleRefresh = () => {
+                if (liveRefreshTimer) clearTimeout(liveRefreshTimer);
+                setLiveBadge(true, 'Actualizando…', 'Actualizando dashboard');
+                liveRefreshTimer = setTimeout(() => {
+                    cargarDatosDashboard();
+                    inicializarGraficas();
+                    marcarActualizacionLive('Actualización en vivo');
+                }, 250);
+            };
+
+            const handlePayload = (payload) => {
+                const col = payload?.collection;
+                if (col && !watchedCollections.has(col)) return;
+                scheduleRefresh();
+            };
+
+            db.on('insert', handlePayload);
+            db.on('update', handlePayload);
+            db.on('delete', handlePayload);
+            db.on('change', handlePayload);
+            db.on('clear', handlePayload);
+            db.on('restore', scheduleRefresh);
+            db.on('clearAll', scheduleRefresh);
+        }
+        
+        // Función para el reloj en tiempo real
+        function iniciarReloj() {
+            function actualizarReloj() {
+                const ahora = new Date();
+                const opcionesFecha = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                };
+                
+                document.getElementById('fechaActual').textContent = 
+                    ahora.toLocaleDateString('es-GT', opcionesFecha);
+                document.getElementById('horaActual').textContent = 
+                    ahora.toLocaleTimeString('es-GT');
+            }
+            
+            actualizarReloj();
+            intervaloReloj = setInterval(actualizarReloj, 1000);
+        }
+        
+        function actualizarFechaFiltros() {
+            const hoy = new Date();
+            const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            
+            document.getElementById('filtroFechaInicio').value = 
+                inicioMes.toISOString().split('T')[0];
+            document.getElementById('filtroFechaFin').value = 
+                hoy.toISOString().split('T')[0];
+        }
+        
+        function formatMoneyGTQ(value) {
+            const safe = Number.isFinite(value) ? value : 0;
+            return safe.toLocaleString('es-GT', { style: 'currency', currency: 'GTQ', maximumFractionDigits: 0 });
+        }
+
+        function formatCompactGTQ(value) {
+            const safe = Number.isFinite(value) ? value : 0;
+            const abs = Math.abs(safe);
+            if (abs >= 1_000_000_000) return `Q. ${(safe / 1_000_000_000).toFixed(1)}B`;
+            if (abs >= 1_000_000) return `Q. ${(safe / 1_000_000).toFixed(1)}M`;
+            if (abs >= 1_000) return `Q. ${(safe / 1_000).toFixed(1)}K`;
+            return `Q. ${safe.toFixed(0)}`;
+        }
+
+        function clamp(n, min, max) {
+            return Math.min(max, Math.max(min, n));
+        }
+
+        function monthKey(dateStr) {
+            const d = parseISODateOrNull(dateStr);
+            if (!d) return null;
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            return `${y}-${m}`;
+        }
+
+        function lastNMonthKeys(n) {
+            const keys = [];
+            const base = new Date();
+            base.setDate(1);
+            for (let i = n - 1; i >= 0; i--) {
+                const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                keys.push(`${y}-${m}`);
+            }
+            return keys;
+        }
+
+        function labelFromMonthKey(key) {
+            const [y, m] = key.split('-');
+            const d = new Date(Number(y), Number(m) - 1, 1);
+            return d.toLocaleDateString('es-GT', { month: 'short' }).replace('.', '');
+        }
+
+        function buildColors(count) {
+            const palette = [
+                'rgba(52, 152, 219, 0.8)',
+                'rgba(46, 204, 113, 0.8)',
+                'rgba(230, 126, 34, 0.8)',
+                'rgba(155, 89, 182, 0.8)',
+                'rgba(231, 76, 60, 0.8)',
+                'rgba(26, 188, 156, 0.8)',
+                'rgba(255, 215, 0, 0.8)'
+            ];
+            return Array.from({ length: count }, (_, i) => palette[i % palette.length]);
+        }
+
+        function updateKPIsAndHeaders() {
+            if (!datosDashboard || !Array.isArray(datosDashboard.proyectos)) return;
+
+            const proyectos = datosDashboard.proyectos;
+            const ingresos = Number(datosDashboard.ingresosTotales) || 0;
+            const gastos = Number(datosDashboard.gastosTotales) || 0;
+            const utilidad = Number(datosDashboard.utilidadNeta) || 0;
+            const avanceFisico = proyectos.length
+                ? proyectos.reduce((s, p) => s + (Number(p.avanceFisico) || 0), 0) / proyectos.length
+                : 0;
+            const avanceFinanciero = proyectos.length
+                ? proyectos.reduce((s, p) => s + (Number(p.avanceFinanciero) || 0), 0) / proyectos.length
+                : 0;
+
+            // KPI cards: actualizar por texto de título
+            document.querySelectorAll('.kpi-card').forEach(card => {
+                const titleEl = card.querySelector('.kpi-titulo');
+                const valueEl = card.querySelector('.kpi-valor');
+                if (!titleEl || !valueEl) return;
+                const title = (titleEl.textContent || '').trim().toUpperCase();
+
+                if (title.includes('INGRESOS')) valueEl.textContent = formatMoneyGTQ(ingresos);
+                if (title.includes('UTILIDAD')) valueEl.textContent = formatMoneyGTQ(utilidad);
+                if (title.includes('AVANCE FÍSICO')) valueEl.textContent = `${avanceFisico.toFixed(1)}%`;
+                if (title.includes('AVANCE FINANCIERO')) valueEl.textContent = `${avanceFinanciero.toFixed(1)}%`;
+                if (title.includes('PROYECTOS CON RIESGO')) valueEl.textContent = String(datosDashboard.riesgoCount ?? 0);
+                if (title.includes('RENDIMIENTO PERSONAL')) valueEl.textContent = `${(datosDashboard.rendimientoPromedio ?? 0).toFixed(1)}%`;
+            });
+
+            // Headers de gráficas (los números arriba a la derecha)
+            const headerCards = document.querySelectorAll('.grafica-card');
+            headerCards.forEach(card => {
+                const titleEl = card.querySelector('.grafica-titulo');
+                const valueEl = card.querySelector('.grafica-valor');
+                if (!titleEl || !valueEl) return;
+                const title = (titleEl.textContent || '').trim().toUpperCase();
+
+                if (title.includes('INGRESOS') && title.includes('GASTOS')) {
+                    valueEl.textContent = `${formatCompactGTQ(ingresos)} / ${formatCompactGTQ(gastos)}`;
+                }
+                if (title.includes('AVANCE FÍSICO') && title.includes('FINANCIERO')) {
+                    valueEl.textContent = `${avanceFisico.toFixed(1)}% / ${avanceFinanciero.toFixed(1)}%`;
+                }
+                if (title.includes('RENDIMIENTO') && title.includes('EQUIPOS')) {
+                    valueEl.textContent = `${(datosDashboard.rendimientoPromedio ?? 0).toFixed(1)}%`;
+                }
+            });
+        }
+
+        function riesgoLabelFromScore(score) {
+            const s = Number(score) || 0;
+            if (s >= 8) return { label: 'CRÍTICO', color: 'var(--rojo)', weight: 'bold' };
+            if (s >= 4) return { label: 'ALTO', color: 'var(--rojo)' };
+            if (s >= 2) return { label: 'MEDIO', color: '#f39c12' };
+            return { label: 'BAJO', color: 'var(--verde)' };
+        }
+
+        function estadoLabel(estadoRaw, avanceFisico) {
+            const estado = String(estadoRaw || '').toLowerCase();
+            const af = Number(avanceFisico) || 0;
+            if (estado === 'completado' || af >= 100) return { text: 'COMPLETADO', cls: 'estado-activo' };
+            if (estado === 'activo') return { text: 'EN CURSO', cls: 'estado-en-curso' };
+            if (estado === 'espera') return { text: 'INICIADO', cls: 'estado-activo' };
+            if (estado === 'cancelado') return { text: 'CANCELADO', cls: 'estado-atrasado' };
+            // fallback
+            if (af >= 80) return { text: 'EN CURSO', cls: 'estado-en-curso' };
+            return { text: 'INICIADO', cls: 'estado-activo' };
+        }
+
+        function renderGantt() {
+            const container = document.querySelector('.gantt-container');
+            if (!container) return;
+
+            const proyectos = (datosDashboard.proyectos || []).slice(0, 8);
+            if (!proyectos.length) return;
+
+            container.innerHTML = proyectos.map(p => {
+                const avance = clamp(Number(p.avanceFisico) || 0, 0, 100);
+                const riskScore = (datosDashboard.riesgos?.scorePorProyecto && p.id)
+                    ? (datosDashboard.riesgos.scorePorProyecto.get(p.id) || 0)
+                    : 0;
+                const r = riesgoLabelFromScore(riskScore);
+                const e = estadoLabel(p.estado, avance);
+
+                const isAtrasado = r.label === 'ALTO' || r.label === 'CRÍTICO' || e.text === 'CANCELADO';
+                const isCompletado = e.text === 'COMPLETADO' || avance >= 90;
+
+                const barClass = [
+                    'gantt-bar',
+                    isCompletado ? 'completado' : '',
+                    isAtrasado ? 'atrasado' : ''
+                ].filter(Boolean).join(' ');
+
+                const pctLabel = isAtrasado ? `${avance.toFixed(0)}% (${r.label})` : `${avance.toFixed(0)}%`;
+
+                return `
+                    <div class="${barClass}" style="width: ${avance}%;">
+                        <div class="progreso" style="width: ${avance}%;"></div>
+                        <div class="nombre">${p.nombre}</div>
+                        <div class="porcentaje">${pctLabel}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTablaProyectos() {
+            const tbody = document.querySelector('.tabla-proyectos tbody');
+            if (!tbody) return;
+
+            const proyectos = (datosDashboard.proyectos || []).slice(0, 10);
+            if (!proyectos.length) return;
+
+            function formatDateShort(value) {
+                const d = parseISODateOrNull(value);
+                if (!d) return '—';
+                return d.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '');
+            }
+
+            tbody.innerHTML = proyectos.map(p => {
+                const af = clamp(Number(p.avanceFisico) || 0, 0, 100);
+                const afin = clamp(Number(p.avanceFinanciero) || 0, 0, 100);
+                const e = estadoLabel(p.estado, af);
+
+                const riskScore = (datosDashboard.riesgos?.scorePorProyecto && p.id)
+                    ? (datosDashboard.riesgos.scorePorProyecto.get(p.id) || 0)
+                    : 0;
+                const r = riesgoLabelFromScore(riskScore);
+
+                return `
+                    <tr>
+                        <td><strong>${p.nombre}</strong><br><small>${p.ubicacion || p.tipologia || ''}</small></td>
+                        <td>${formatMoneyGTQ(Number(p.presupuesto) || 0)}</td>
+                        <td>${formatMoneyGTQ(Number(p.gasto) || 0)}</td>
+                        <td>
+                            <div class="barra-progreso">
+                                <div class="progreso-fill progreso-verde" style="width: ${af}%;"></div>
+                            </div>
+                            ${af.toFixed(0)}%
+                        </td>
+                        <td>
+                            <div class="barra-progreso">
+                                <div class="progreso-fill progreso-azul" style="width: ${afin}%;"></div>
+                            </div>
+                            ${afin.toFixed(0)}%
+                        </td>
+                        <td>${formatDateShort(p.fechaFinEstimada)}</td>
+                        <td><span class="estado-proyecto ${e.cls}">${e.text}</span></td>
+                        <td><span style="color: ${r.color}; ${r.weight ? `font-weight: ${r.weight};` : ''}">${r.label}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderAlertas() {
+            const container = document.querySelector('.alertas-container');
+            if (!container) return;
+
+            const db = window.AdvancedDB;
+            if (!db) return;
+
+            const filtroProyectoId = document.getElementById('filtroProyecto')?.value || '';
+            const fechaInicio = parseISODateOrNull(document.getElementById('filtroFechaInicio')?.value);
+            const fechaFin = parseISODateOrNull(document.getElementById('filtroFechaFin')?.value);
+
+            function inRangeLocal(dateStr) {
+                const d = parseISODateOrNull(dateStr);
+                if (!d) return true;
+                if (fechaInicio && d < fechaInicio) return false;
+                if (fechaFin && d > fechaFin) return false;
+                return true;
+            }
+
+            const alertasAll = db.get('alertas') || [];
+            const proyectosById = new Map((db.get('proyectos') || []).map(p => [p.id, p]));
+            const prioRank = { critica: 4, alta: 3, media: 2, baja: 1 };
+
+            const items = alertasAll
+                .filter(a => !filtroProyectoId || a.proyectoId === filtroProyectoId)
+                .filter(a => inRangeLocal(a.fechaVencimiento || a.createdAt || a.fechaRecordatorio))
+                .sort((a, b) => (prioRank[String(b.prioridad || '').toLowerCase()] || 0) - (prioRank[String(a.prioridad || '').toLowerCase()] || 0))
+                .slice(0, 3);
+
+            if (!items.length) return;
+
+            function uiType(a) {
+                const pr = String(a.prioridad || '').toLowerCase();
+                if (pr === 'critica' || pr === 'alta') return { cls: 'alerta-critica', icon: 'exclamation-circle' };
+                if (pr === 'media') return { cls: 'alerta-advertencia', icon: 'exclamation-triangle' };
+                return { cls: 'alerta-informativa', icon: 'info-circle' };
+            }
+
+            container.innerHTML = items.map(a => {
+                const p = a.proyectoId ? proyectosById.get(a.proyectoId) : null;
+                const title = [
+                    String(a.prioridad || '').toUpperCase(),
+                    p?.nombre ? `: ${p.nombre}` : '',
+                    a.tipo ? ` - ${a.tipo}` : ''
+                ].join('');
+                const msg = a.mensaje || a.accionRequerida || 'Alerta registrada';
+                const stamp = a.createdAt ? new Date(a.createdAt).toLocaleString('es-GT') : '—';
+                const t = uiType(a);
+                return `
+                    <div class="alerta-item ${t.cls}">
+                        <div class="alerta-icono"><i class="fas fa-${t.icon}"></i></div>
+                        <div>
+                            <strong>${title}</strong>
+                            <p>${msg}</p>
+                            <small><i class="fas fa-clock"></i> Última actualización: ${stamp}</small>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDashboardUI() {
+            renderGantt();
+            renderTablaProyectos();
+            renderAlertas();
+        }
+
+        function parseISODateOrNull(value) {
+            if (!value) return null;
+            const d = new Date(value);
+            return Number.isNaN(d.getTime()) ? null : d;
+        }
+
+        function popularFiltroProyectos(proyectos) {
+            const select = document.getElementById('filtroProyecto');
+            if (!select) return;
+
+            // Solo reconstruir si tenemos proyectos reales
+            if (!Array.isArray(proyectos) || proyectos.length === 0) return;
+
+            const currentValue = select.value;
+
+            const estadoKey = (p) => String(p?.estado || '').trim().toLowerCase();
+            const estadoLabel = (key) => {
+                switch (key) {
+                    case 'activo': return 'Activos';
+                    case 'espera': return 'En espera';
+                    case 'completado': return 'Completados';
+                    case 'cancelado': return 'Cancelados';
+                    default: return 'Sin estado';
+                }
+            };
+
+            const groupsOrder = ['activo', 'espera', 'completado', 'cancelado', '__none__'];
+            const grouped = new Map(groupsOrder.map(k => [k, []]));
+
+            proyectos.forEach(p => {
+                const keyRaw = estadoKey(p);
+                const key = keyRaw ? keyRaw : '__none__';
+                if (!grouped.has(key)) grouped.set(key, []);
+                grouped.get(key).push(p);
+            });
+
+            const renderOption = (p) => {
+                const presupuesto = Number(p.presupuestoAprobado) || 0;
+                const nombre = p.nombre || p.codigo || 'Proyecto';
+                const estado = estadoKey(p);
+                const tag = estado ? ` - ${estado.toUpperCase()}` : '';
+                const label = `${nombre}${tag} (${formatMoneyGTQ(presupuesto)})`;
+                return `<option value="${p.id}">${label}</option>`;
+            };
+
+            const renderedGroups = groupsOrder
+                .filter(k => (grouped.get(k) || []).length > 0)
+                .map(k => {
+                    const items = (grouped.get(k) || [])
+                        .slice()
+                        .sort((a, b) => String(a.nombre || a.codigo || '').localeCompare(String(b.nombre || b.codigo || ''), 'es'));
+                    const label = estadoLabel(k === '__none__' ? '' : k);
+                    return `<optgroup label="${label}">${items.map(renderOption).join('')}</optgroup>`;
+                })
+                .join('');
+
+            select.innerHTML = '<option value="">Todos los proyectos</option>' + renderedGroups;
+            select.value = proyectos.some(p => p.id === currentValue) ? currentValue : '';
+        }
+
+        function cargarDatosDashboard() {
+            const db = window.AdvancedDB;
+
+            // Fallback: datos demo si la BD no está disponible
+            if (!db) {
+                datosDashboard = {
+                    proyectos: [
+                        { nombre: 'Residencial Las Lomas', ubicacion: 'Zona 10', presupuesto: 2500000, ingreso: 2500000, gasto: 2150000, avanceFisico: 90, avanceFinanciero: 86, estado: 'activo', fechaFinEstimada: '2024-12-15' },
+                        { nombre: 'Edificio Comercial Centro', ubicacion: 'Centro Histórico', presupuesto: 8750000, ingreso: 8750000, gasto: 7200000, avanceFisico: 85, avanceFinanciero: 82, estado: 'activo', fechaFinEstimada: '2024-11-30' },
+                        { nombre: 'Planta Industrial Norte', ubicacion: 'Zona Industrial', presupuesto: 12300000, ingreso: 12300000, gasto: 9800000, avanceFisico: 65, avanceFinanciero: 80, estado: 'activo', fechaFinEstimada: '2025-01-15' },
+                        { nombre: 'Puente Carretero Sur', ubicacion: 'Carretera CA-1', presupuesto: 15800000, ingreso: 15800000, gasto: 12500000, avanceFisico: 45, avanceFinanciero: 79, estado: 'activo', fechaFinEstimada: '2024-10-30' },
+                        { nombre: 'Hospital Regional Este', ubicacion: 'Departamento', presupuesto: 25000000, ingreso: 25000000, gasto: 8450000, avanceFisico: 30, avanceFinanciero: 34, estado: 'espera', fechaFinEstimada: '2025-06-30' }
+                    ],
+                    ingresosTotales: 48350000,
+                    gastosTotales: 41100000,
+                    utilidadNeta: 7250000,
+                    riesgoCount: 2,
+                    rendimientoPromedio: 85.7,
+                    _source: 'demo'
+                };
+                updateKPIsAndHeaders();
+                renderDashboardUI();
+                return;
+            }
+
+            const proyectosAll = db.get('proyectos') || [];
+            const transaccionesAll = db.get('transacciones') || [];
+            const presupuestosAll = db.get('presupuestos') || [];
+            const materialesAll = db.get('materiales') || [];
+            const trabajadoresAll = db.get('trabajadores') || [];
+            const asistenciasAll = db.get('asistencias') || [];
+            const alertasAll = db.get('alertas') || [];
+            const comprasAll = db.get('compras') || [];
+            const rendimientosAll = db.get('rendimientos') || [];
+
+            // Sincronizar selector con proyectos reales
+            popularFiltroProyectos(proyectosAll);
+
+            const filtroProyectoId = document.getElementById('filtroProyecto')?.value || '';
+            const fechaInicio = parseISODateOrNull(document.getElementById('filtroFechaInicio')?.value);
+            const fechaFin = parseISODateOrNull(document.getElementById('filtroFechaFin')?.value);
+
+            const proyectos = (filtroProyectoId
+                ? proyectosAll.filter(p => p.id === filtroProyectoId)
+                : proyectosAll
+            ).slice(0, 10);
+
+            // Si no hay datos reales, usar demo para evitar gráficas vacías
+            if (proyectos.length === 0) {
+                datosDashboard = {
+                    proyectos: [
+                        { nombre: 'Residencial Las Lomas', ubicacion: 'Zona 10', presupuesto: 2500000, ingreso: 2500000, gasto: 2150000, avanceFisico: 90, avanceFinanciero: 86, estado: 'activo', fechaFinEstimada: '2024-12-15' },
+                        { nombre: 'Edificio Comercial Centro', ubicacion: 'Centro Histórico', presupuesto: 8750000, ingreso: 8750000, gasto: 7200000, avanceFisico: 85, avanceFinanciero: 82, estado: 'activo', fechaFinEstimada: '2024-11-30' },
+                        { nombre: 'Planta Industrial Norte', ubicacion: 'Zona Industrial', presupuesto: 12300000, ingreso: 12300000, gasto: 9800000, avanceFisico: 65, avanceFinanciero: 80, estado: 'activo', fechaFinEstimada: '2025-01-15' },
+                        { nombre: 'Puente Carretero Sur', ubicacion: 'Carretera CA-1', presupuesto: 15800000, ingreso: 15800000, gasto: 12500000, avanceFisico: 45, avanceFinanciero: 79, estado: 'activo', fechaFinEstimada: '2024-10-30' },
+                        { nombre: 'Hospital Regional Este', ubicacion: 'Departamento', presupuesto: 25000000, ingreso: 25000000, gasto: 8450000, avanceFisico: 30, avanceFinanciero: 34, estado: 'espera', fechaFinEstimada: '2025-06-30' }
+                    ],
+                    ingresosTotales: 48350000,
+                    gastosTotales: 41100000,
+                    utilidadNeta: 7250000,
+                    riesgoCount: 2,
+                    rendimientoPromedio: 85.7,
+                    _source: 'demo-empty'
+                };
+                updateKPIsAndHeaders();
+                renderDashboardUI();
+                return;
+            }
+
+            function inRange(dateStr) {
+                const d = parseISODateOrNull(dateStr);
+                if (!d) return true;
+                if (fechaInicio && d < fechaInicio) return false;
+                if (fechaFin && d > fechaFin) return false;
+                return true;
+            }
+
+            const transacciones = transaccionesAll.filter(t => inRange(t.fecha));
+
+            const proyectosDashboard = proyectos.map(p => {
+                const tx = transacciones.filter(t => t.proyectoId === p.id);
+
+                const ingreso = tx
+                    .filter(t => t.tipo === 'ingreso')
+                    .reduce((sum, t) => sum + (Number(t.monto) || 0), 0);
+
+                const gasto = tx
+                    .filter(t => t.tipo === 'gasto')
+                    .reduce((sum, t) => sum + (Number(t.monto) || 0), 0);
+
+                const presupuestosProyecto = presupuestosAll
+                    .filter(b => b.proyectoId === p.id)
+                    .map(b => Number(b.total) || 0);
+
+                const presupuesto = Number(p.presupuestoAprobado) || Math.max(0, ...presupuestosProyecto);
+
+                return {
+                    id: p.id,
+                    nombre: p.nombre || p.codigo || 'Proyecto',
+                    ubicacion: p.ubicacion || '',
+                    tipologia: p.tipologia || '',
+                    estado: p.estado || '',
+                    fechaFinEstimada: p.fechaFinEstimada || null,
+                    presupuesto,
+                    ingreso,
+                    gasto,
+                    utilidad: ingreso - gasto,
+                    avanceFisico: Number(p.avanceFisico) || 0,
+                    avanceFinanciero: Number(p.avanceFinanciero) || 0
+                };
+            });
+
+            const ingresosTotales = proyectosDashboard.reduce((sum, p) => sum + (Number(p.ingreso) || 0), 0);
+            const gastosTotales = proyectosDashboard.reduce((sum, p) => sum + (Number(p.gasto) || 0), 0);
+            const utilidadNeta = ingresosTotales - gastosTotales;
+
+            // Riesgo: basado en alertas por proyecto (ponderado por prioridad)
+            const pesoPrioridad = { baja: 1, media: 2, alta: 4, critica: 6 };
+            const alertas = alertasAll.filter(a => inRange(a.fechaVencimiento || a.createdAt || a.fechaRecordatorio));
+            const riesgoPorProyecto = new Map();
+            alertas.forEach(a => {
+                const pid = a.proyectoId;
+                if (!pid) return;
+                const prio = String(a.prioridad || '').toLowerCase();
+                const w = pesoPrioridad[prio] || 1;
+                riesgoPorProyecto.set(pid, (riesgoPorProyecto.get(pid) || 0) + w);
+            });
+            const riesgoCount = proyectosDashboard.filter(p => (riesgoPorProyecto.get(p.id) || 0) >= 4).length;
+
+            // Rendimiento: preferir registros reales de rendimiento (porcentajeVsEstandar) y hacer fallback a asistencias.
+            const rendimientos = rendimientosAll
+                .filter(r => inRange(r.fecha))
+                .filter(r => !filtroProyectoId || r.proyectoId === filtroProyectoId);
+
+            const rendimientosPct = rendimientos
+                .map(r => Number(r.porcentajeVsEstandar))
+                .filter(v => Number.isFinite(v));
+
+            let rendimientoPromedio = 0;
+            if (rendimientosPct.length) {
+                rendimientoPromedio = clamp(
+                    rendimientosPct.reduce((s, v) => s + v, 0) / rendimientosPct.length,
+                    0,
+                    200
+                );
+            } else {
+                const asistencias = asistenciasAll.filter(a => inRange(a.fecha));
+                const horas = asistencias
+                    .filter(a => !filtroProyectoId || a.proyectoId === filtroProyectoId)
+                    .map(a => Number(a.horasTrabajadas) || 0);
+                rendimientoPromedio = horas.length
+                    ? clamp((horas.reduce((s, h) => s + h, 0) / horas.length) / 8 * 100, 0, 120)
+                    : 0;
+            }
+
+            // Costos: distribución por categoría (transacciones gasto)
+            const gastos = transacciones.filter(t => t.tipo === 'gasto');
+            const dist = { materiales: 0, mano: 0, equipos: 0, subcontratos: 0, administrativo: 0 };
+            gastos.forEach(t => {
+                const cat = String(t.categoria || '').toLowerCase();
+                const m = Number(t.monto) || 0;
+                if (cat.includes('material') || cat.includes('compra')) dist.materiales += m;
+                else if (cat.includes('planilla') || cat.includes('mano')) dist.mano += m;
+                else if (cat.includes('equipo')) dist.equipos += m;
+                else if (cat.includes('subcontr')) dist.subcontratos += m;
+                else dist.administrativo += m;
+            });
+
+            // Materiales: ratios de stock
+            const materiales = materialesAll
+                .filter(m => m && (m.estado || 'activo') !== 'inactivo')
+                .slice(0, 10);
+            const stockMateriales = materiales.map(m => {
+                const min = Number(m.stockMinimo) || 0;
+                const actual = Number(m.stockActual) || 0;
+                const ratio = min > 0 ? (actual / min) * 100 : (actual > 0 ? 100 : 0);
+                return {
+                    nombre: m.nombre || m.codigo || 'Material',
+                    ratio: clamp(ratio, 0, 150)
+                };
+            });
+
+            // Tendencias: ingresos y utilidad mensual
+            const monthKeys = lastNMonthKeys(11);
+            const ingresosPorMes = Object.fromEntries(monthKeys.map(k => [k, 0]));
+            const gastosPorMes = Object.fromEntries(monthKeys.map(k => [k, 0]));
+            transacciones.forEach(t => {
+                if (filtroProyectoId && t.proyectoId !== filtroProyectoId) return;
+                const k = monthKey(t.fecha);
+                if (!k || !(k in ingresosPorMes)) return;
+                const m = Number(t.monto) || 0;
+                if (t.tipo === 'ingreso') ingresosPorMes[k] += m;
+                if (t.tipo === 'gasto') gastosPorMes[k] += m;
+            });
+            const utilidadPorMes = Object.fromEntries(monthKeys.map(k => [k, ingresosPorMes[k] - gastosPorMes[k]]));
+            const margenUtilidadPctPorMes = monthKeys.map(k => {
+                const ing = ingresosPorMes[k];
+                if (ing <= 0) return 0;
+                return clamp((utilidadPorMes[k] / ing) * 100, -100, 100);
+            });
+
+            // Eficiencia por departamento (proxy por actividad)
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            function isRecent(dateStr) {
+                const d = parseISODateOrNull(dateStr);
+                return d ? d >= thirtyDaysAgo : false;
+            }
+            const txRecent = transaccionesAll.filter(t => isRecent(t.fecha));
+            const comprasRecent = comprasAll.filter(c => isRecent(c.fechaSolicitud || c.createdAt));
+            const asistRecent = asistenciasAll.filter(a => isRecent(a.fecha));
+            const presRecent = presupuestosAll.filter(p => isRecent(p.createdAt || p.updatedAt));
+
+            const actividad = {
+                'Construcción': clamp(asistRecent.length, 0, 200),
+                'Compras': clamp(comprasRecent.length + txRecent.filter(t => String(t.categoria || '').toLowerCase().includes('material')).length, 0, 200),
+                'RRHH': clamp(trabajadoresAll.length + asistRecent.length, 0, 200),
+                'Ingeniería': clamp(presRecent.length, 0, 200),
+                'Administración': clamp(txRecent.length, 0, 200),
+                'Supervisión': clamp(proyectosAll.filter(p => isRecent(p.updatedAt || p.createdAt)).length, 0, 200)
+            };
+            const maxAct = Math.max(1, ...Object.values(actividad));
+            const eficienciaDepto = Object.fromEntries(Object.entries(actividad).map(([k, v]) => [k, Math.round((v / maxAct) * 100)]));
+
+            datosDashboard = {
+                proyectos: proyectosDashboard,
+                ingresosTotales,
+                gastosTotales,
+                utilidadNeta,
+                transacciones,
+                costoDistribucion: dist,
+                stockMateriales,
+                tendencias: {
+                    monthKeys,
+                    ingresosPorMes,
+                    utilidadPorMes,
+                    margenUtilidadPctPorMes
+                },
+                riesgos: {
+                    scorePorProyecto: riesgoPorProyecto
+                },
+                riesgoCount,
+                rendimientoPromedio,
+                eficienciaDepto,
+                _source: 'AdvancedDB'
+            };
+
+            updateKPIsAndHeaders();
+            renderDashboardUI();
+        }
+        
+        function inicializarGraficas() {
+            // Destruir gráficas existentes
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            
+            // Configuración común para gráficas
+            const colores = {
+                azul: 'rgba(52, 152, 219, 0.8)',
+                verde: 'rgba(46, 204, 113, 0.8)',
+                rojo: 'rgba(231, 76, 60, 0.8)',
+                naranja: 'rgba(230, 126, 34, 0.8)',
+                morado: 'rgba(155, 89, 182, 0.8)',
+                amarillo: 'rgba(255, 215, 0, 0.8)',
+                turquesa: 'rgba(26, 188, 156, 0.8)'
+            };
+            
+            const opcionesComunes = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: 'white' }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: 'white' }
+                    },
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: 'white' }
+                    }
+                }
+            };
+            
+            const proyectos = (datosDashboard.proyectos || []).slice(0, 10);
+            const labelsProyectos = proyectos.map(p => (p.nombre || '').toString().slice(0, 18) || 'Proyecto');
+            const colorsForProjects = buildColors(labelsProyectos.length);
+
+            // 1. Gráfica de Ingresos vs Gastos
+            const ctx1 = document.getElementById('graficaIngresosGastos').getContext('2d');
+            charts.ingresosGastos = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labelsProyectos,
+                    datasets: [
+                        {
+                            label: 'Ingresos',
+                            data: proyectos.map(p => Number(p.ingreso) || 0),
+                            backgroundColor: colores.verde,
+                            borderColor: colores.verde,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Gastos',
+                            data: proyectos.map(p => Number(p.gasto) || 0),
+                            backgroundColor: colores.rojo,
+                            borderColor: colores.rojo,
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    ...opcionesComunes,
+                    plugins: {
+                        ...opcionesComunes.plugins,
+                        title: {
+                            display: true,
+                            text: 'Comparativa por Proyecto',
+                            color: 'white'
+                        }
+                    }
+                }
+            });
+            
+            // 2. Gráfica de Utilidades
+            const ctx2 = document.getElementById('graficaUtilidades').getContext('2d');
+            charts.utilidades = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsProyectos,
+                    datasets: [{
+                        data: proyectos.map(p => Math.max(0, Number(p.utilidad) || 0)),
+                        backgroundColor: colorsForProjects,
+                        borderWidth: 2,
+                        borderColor: 'rgba(255, 255, 255, 0.3)'
+                    }]
+                },
+                options: {
+                    ...opcionesComunes,
+                    plugins: {
+                        ...opcionesComunes.plugins,
+                        title: {
+                            display: true,
+                            text: 'Distribución de Utilidades',
+                            color: 'white'
+                        }
+                    }
+                }
+            });
+            
+            // 3. Gráfica de Avance Comparativo
+            const ctx3 = document.getElementById('graficaAvanceComparativo').getContext('2d');
+            charts.avanceComparativo = new Chart(ctx3, {
+                type: 'radar',
+                data: {
+                    labels: labelsProyectos,
+                    datasets: [
+                        {
+                            label: 'Avance Físico',
+                            data: proyectos.map(p => Number(p.avanceFisico) || 0),
+                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            borderColor: colores.azul,
+                            borderWidth: 2,
+                            pointBackgroundColor: colores.azul
+                        },
+                        {
+                            label: 'Avance Financiero',
+                            data: proyectos.map(p => Number(p.avanceFinanciero) || 0),
+                            backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                            borderColor: colores.verde,
+                            borderWidth: 2,
+                            pointBackgroundColor: colores.verde
+                        }
+                    ]
+                },
+                options: {
+                    ...opcionesComunes,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: { color: 'white' },
+                            ticks: {
+                                backdropColor: 'transparent',
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 4. Gráfica de Distribución de Costos
+            const ctx4 = document.getElementById('graficaDistribucionCostos').getContext('2d');
+            const dist = datosDashboard.costoDistribucion;
+            const distLabels = ['Materiales', 'Mano de Obra', 'Equipos', 'Subcontratos', 'Administrativo'];
+            const distData = dist
+                ? [dist.materiales, dist.mano, dist.equipos, dist.subcontratos, dist.administrativo]
+                : [45, 25, 15, 10, 5];
+            charts.distribucionCostos = new Chart(ctx4, {
+                type: 'pie',
+                data: {
+                    labels: distLabels,
+                    datasets: [{
+                        data: distData,
+                        backgroundColor: [
+                            colores.azul,
+                            colores.verde,
+                            colores.naranja,
+                            colores.morado,
+                            colores.rojo
+                        ],
+                        borderWidth: 2,
+                        borderColor: 'rgba(255, 255, 255, 0.3)'
+                    }]
+                },
+                options: {
+                    ...opcionesComunes,
+                    plugins: {
+                        ...opcionesComunes.plugins,
+                        title: {
+                            display: true,
+                            text: 'Porcentaje de Costos Totales',
+                            color: 'white'
+                        }
+                    }
+                }
+            });
+            
+            // 5. Gráfica de Rendimiento de Personal
+            const ctx5 = document.getElementById('graficaRendimientoPersonal').getContext('2d');
+            const asistencias = (datosDashboard.transacciones && Array.isArray(datosDashboard.transacciones)) ? [] : [];
+            // Nota: rendimiento detallado por equipo se calcula por asistencias reales si existen.
+            const db = window.AdvancedDB;
+            let rendimientoLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct'];
+            let rendimientoDatasets = [
+                { label: 'Rendimiento Albañiles', data: [78, 82, 85, 83, 86, 88, 85, 87, 89, 92], color: colores.azul },
+                { label: 'Rendimiento Maestros', data: [85, 87, 89, 88, 90, 92, 91, 93, 94, 95], color: colores.verde },
+                { label: 'Rendimiento Ayudantes', data: [65, 68, 72, 70, 75, 78, 76, 79, 82, 85], color: colores.naranja }
+            ];
+
+            if (db) {
+                const rendimientosAll = db.get('rendimientos') || [];
+                const trabajadoresAll = db.get('trabajadores') || [];
+                const asistenciasAll = db.get('asistencias') || [];
+                const filtroProyectoId = document.getElementById('filtroProyecto')?.value || '';
+                const fechaInicio = parseISODateOrNull(document.getElementById('filtroFechaInicio')?.value);
+                const fechaFin = parseISODateOrNull(document.getElementById('filtroFechaFin')?.value);
+
+                function inRangeLocal(dateStr) {
+                    const d = parseISODateOrNull(dateStr);
+                    if (!d) return true;
+                    if (fechaInicio && d < fechaInicio) return false;
+                    if (fechaFin && d > fechaFin) return false;
+                    return true;
+                }
+
+                const trabajadoresById = new Map(trabajadoresAll.map(t => [t.id, t]));
+                const monthKeys = lastNMonthKeys(10);
+                rendimientoLabels = monthKeys.map(labelFromMonthKey);
+
+                const grupos = {
+                    albaniles: { match: /albañ|alban/i, label: 'Rendimiento Albañiles', color: colores.azul },
+                    maestros: { match: /maestro|capataz|oficial/i, label: 'Rendimiento Maestros', color: colores.verde },
+                    ayudantes: { match: /ayudante|pe[oó]n/i, label: 'Rendimiento Ayudantes', color: colores.naranja }
+                };
+
+                const accum = {};
+                Object.keys(grupos).forEach(k => {
+                    accum[k] = Object.fromEntries(monthKeys.map(mk => [mk, { sum: 0, count: 0 }]));
+                });
+
+                // 1) Preferir rendimientos reales por equipo
+                const rendimientosFiltrados = rendimientosAll
+                    .filter(r => inRangeLocal(r.fecha))
+                    .filter(r => !filtroProyectoId || r.proyectoId === filtroProyectoId);
+
+                rendimientosFiltrados.forEach(r => {
+                    const mk = monthKey(r.fecha);
+                    if (!mk || !(mk in accum.albaniles)) return;
+
+                    const equipo = String(r.equipo || '').toLowerCase();
+                    const pct = Number(r.porcentajeVsEstandar);
+                    if (!Number.isFinite(pct)) return;
+
+                    const gk = Object.keys(grupos).find(k => grupos[k].match.test(equipo));
+                    if (!gk) return;
+                    accum[gk][mk].sum += clamp(pct, 0, 200);
+                    accum[gk][mk].count += 1;
+                });
+
+                const hasAny = Object.keys(grupos).some(gk =>
+                    monthKeys.some(mk => accum[gk][mk].count > 0)
+                );
+
+                if (hasAny) {
+                    rendimientoDatasets = Object.keys(grupos).map(gk => {
+                        const g = grupos[gk];
+                        const data = monthKeys.map(mk => {
+                            const a = accum[gk][mk];
+                            return a.count ? Math.round((a.sum / a.count) * 10) / 10 : 0;
+                        });
+                        return { label: g.label, data, color: g.color };
+                    });
+                } else {
+                    // 2) Fallback a asistencias si no hay rendimientos capturados
+                    asistenciasAll
+                        .filter(a => inRangeLocal(a.fecha))
+                        .filter(a => !filtroProyectoId || a.proyectoId === filtroProyectoId)
+                        .forEach(a => {
+                            const mk = monthKey(a.fecha);
+                            if (!mk || !(mk in accum.albaniles)) return;
+                            const t = trabajadoresById.get(a.trabajadorId);
+                            const puesto = String(t?.puesto || '').toLowerCase();
+                            const horas = Number(a.horasTrabajadas) || 0;
+
+                            const rendimiento = clamp((horas / 8) * 100, 0, 150);
+                            const gk = Object.keys(grupos).find(k => grupos[k].match.test(puesto));
+                            if (!gk) return;
+                            accum[gk][mk].sum += rendimiento;
+                            accum[gk][mk].count += 1;
+                        });
+
+                    const hasAnyFallback = Object.keys(grupos).some(gk =>
+                        monthKeys.some(mk => accum[gk][mk].count > 0)
+                    );
+                    if (hasAnyFallback) {
+                        rendimientoDatasets = Object.keys(grupos).map(gk => {
+                            const g = grupos[gk];
+                            const data = monthKeys.map(mk => {
+                                const a = accum[gk][mk];
+                                return a.count ? Math.round((a.sum / a.count) * 10) / 10 : 0;
+                            });
+                            return { label: g.label, data, color: g.color };
+                        });
+                    }
+                }
+            }
+
+            charts.rendimientoPersonal = new Chart(ctx5, {
+                type: 'line',
+                data: {
+                    labels: rendimientoLabels,
+                    datasets: rendimientoDatasets.map(ds => ({
+                        label: ds.label,
+                        data: ds.data,
+                        borderColor: ds.color,
+                        backgroundColor: ds.color.replace('0.8', '0.1'),
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    }))
+                },
+                options: {
+                    ...opcionesComunes,
+                    plugins: {
+                        ...opcionesComunes.plugins,
+                        title: {
+                            display: true,
+                            text: 'Evolución del Rendimiento (%)',
+                            color: 'white'
+                        }
+                    }
+                }
+            });
+            
+            // 6. Gráfica de Control de Materiales
+            const ctx6 = document.getElementById('graficaControlMateriales').getContext('2d');
+            const stock = Array.isArray(datosDashboard.stockMateriales) ? datosDashboard.stockMateriales.slice(0, 6) : [];
+            const matLabels = stock.length ? stock.map(m => (m.nombre || '').toString().slice(0, 14)) : ['Cemento', 'Acero', 'Bloque', 'Arena', 'Grava', 'Madera'];
+            const matData = stock.length ? stock.map(m => Number(m.ratio) || 0) : [85, 92, 78, 90, 88, 75];
+            charts.controlMateriales = new Chart(ctx6, {
+                type: 'polarArea',
+                data: {
+                    labels: matLabels,
+                    datasets: [{
+                        data: matData,
+                        backgroundColor: buildColors(matLabels.length).map(c => c.replace('0.8', '0.7')),
+                        borderWidth: 2,
+                        borderColor: 'rgba(255, 255, 255, 0.3)'
+                    }]
+                },
+                options: {
+                    ...opcionesComunes,
+                    plugins: {
+                        ...opcionesComunes.plugins,
+                        title: {
+                            display: true,
+                            text: 'Nivel de Stock vs Planificado (%)',
+                            color: 'white'
+                        }
+                    }
+                }
+            });
+            
+            // 7. Gráfica de Tendencias
+            const ctx7 = document.getElementById('graficaTendencias').getContext('2d');
+            const tendencias = datosDashboard.tendencias;
+            const monthKeys = tendencias?.monthKeys || lastNMonthKeys(11);
+            const trendLabels = monthKeys.map(labelFromMonthKey);
+            const ingresosSerie = tendencias?.ingresosPorMes
+                ? monthKeys.map(k => (tendencias.ingresosPorMes[k] || 0) / 1_000_000)
+                : [3.2, 3.5, 3.8, 4.1, 4.3, 4.5, 4.2, 4.6, 4.8, 5.2, 5.5];
+            const margenSerie = tendencias?.margenUtilidadPctPorMes
+                ? tendencias.margenUtilidadPctPorMes
+                : [12, 13, 14, 15, 16, 15, 14, 15, 16, 17, 18];
+            charts.tendencias = new Chart(ctx7, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [
+                        {
+                            label: 'Ingresos (Millones Q)',
+                            data: ingresosSerie,
+                            borderColor: colores.verde,
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Utilidad (%)',
+                            data: margenSerie,
+                            borderColor: colores.amarillo,
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    ...opcionesComunes,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Ingresos (Millones Q)',
+                                color: 'white'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Utilidad (%)',
+                                color: 'white'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 8. Gráfica de Riesgos
+            const ctx8 = document.getElementById('graficaRiesgos').getContext('2d');
+            const riesgosMap = datosDashboard.riesgos?.scorePorProyecto;
+            const riskLabels = labelsProyectos;
+            let riskTecnico = [2, 5, 7, 9, 3];
+            let riskFin = [3, 4, 6, 8, 2];
+            let riskCrono = [1, 3, 5, 9, 2];
+
+            if (riesgosMap && proyectos.length) {
+                const db = window.AdvancedDB;
+                const alertasAll = db ? (db.get('alertas') || []) : [];
+                const filtroProyectoId = document.getElementById('filtroProyecto')?.value || '';
+
+                function classify(a) {
+                    const text = `${a.tipo || ''} ${a.mensaje || ''} ${a.accionRequerida || ''}`.toLowerCase();
+                    const prio = String(a.prioridad || '').toLowerCase();
+                    const w = ({ baja: 1, media: 2, alta: 3, critica: 4 }[prio] || 1);
+                    if (text.includes('cron') || text.includes('atras') || text.includes('plazo')) return { bucket: 'crono', w };
+                    if (text.includes('costo') || text.includes('financ') || text.includes('sobrec')) return { bucket: 'fin', w };
+                    return { bucket: 'tec', w };
+                }
+
+                const byProject = new Map();
+                proyectos.forEach(p => byProject.set(p.id, { tec: 0, fin: 0, crono: 0 }));
+                alertasAll
+                    .filter(a => !filtroProyectoId || a.proyectoId === filtroProyectoId)
+                    .forEach(a => {
+                        if (!a.proyectoId || !byProject.has(a.proyectoId)) return;
+                        const { bucket, w } = classify(a);
+                        byProject.get(a.proyectoId)[bucket] += w;
+                    });
+
+                riskTecnico = proyectos.map(p => byProject.get(p.id)?.tec || 0);
+                riskFin = proyectos.map(p => byProject.get(p.id)?.fin || 0);
+                riskCrono = proyectos.map(p => byProject.get(p.id)?.crono || 0);
+            }
+
+            charts.riesgos = new Chart(ctx8, {
+                type: 'bar',
+                data: {
+                    labels: riskLabels,
+                    datasets: [
+                        {
+                            label: 'Riesgo Técnico',
+                            data: riskTecnico,
+                            backgroundColor: colores.naranja,
+                            borderColor: colores.naranja,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Riesgo Financiero',
+                            data: riskFin,
+                            backgroundColor: colores.rojo,
+                            borderColor: colores.rojo,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Riesgo Cronológico',
+                            data: riskCrono,
+                            backgroundColor: colores.morado,
+                            borderColor: colores.morado,
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    ...opcionesComunes,
+                    plugins: {
+                        ...opcionesComunes.plugins,
+                        title: {
+                            display: true,
+                            text: 'Nivel de Riesgo por Dimensión (1-10)',
+                            color: 'white'
+                        }
+                    }
+                }
+            });
+            
+            // 9. Gráfica de Cumplimiento de Cronograma
+            const ctx9 = document.getElementById('graficaCronograma').getContext('2d');
+            charts.cronograma = new Chart(ctx9, {
+                type: 'bar',
+                data: {
+                    labels: labelsProyectos,
+                    datasets: [
+                        {
+                            label: 'Planificado',
+                            data: proyectos.map(() => 100),
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Real',
+                            data: proyectos.map(p => Number(p.avanceFisico) || 0),
+                            backgroundColor: colores.azul,
+                            borderColor: colores.azul,
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    ...opcionesComunes,
+                    indexAxis: 'y',
+                    plugins: {
+                        ...opcionesComunes.plugins,
+                        title: {
+                            display: true,
+                            text: 'Cumplimiento de Cronograma (%)',
+                            color: 'white'
+                        }
+                    }
+                }
+            });
+            
+            // 10. Gráfica de Eficiencia por Departamento
+            const ctx10 = document.getElementById('graficaEficienciaDepartamentos').getContext('2d');
+            const eficiencia = datosDashboard.eficienciaDepto;
+            const deptLabels = ['Construcción', 'Compras', 'RRHH', 'Ingeniería', 'Administración', 'Supervisión'];
+            const deptData = eficiencia
+                ? deptLabels.map(l => Number(eficiencia[l]) || 0)
+                : [92, 88, 85, 90, 87, 94];
+            charts.eficienciaDepartamentos = new Chart(ctx10, {
+                type: 'bar',
+                data: {
+                    labels: deptLabels,
+                    datasets: [{
+                        label: 'Eficiencia (%)',
+                        data: deptData,
+                        backgroundColor: [
+                            colores.verde,
+                            colores.azul,
+                            colores.morado,
+                            colores.naranja,
+                            colores.turquesa,
+                            colores.amarillo
+                        ],
+                        borderWidth: 2,
+                        borderColor: 'rgba(255, 255, 255, 0.3)'
+                    }]
+                },
+                options: {
+                    ...opcionesComunes,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
+                        }
+                    },
+                    plugins: {
+                        ...opcionesComunes.plugins,
+                        title: {
+                            display: true,
+                            text: 'Eficiencia Operativa por Departamento',
+                            color: 'white'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function configurarFiltros() {
+            // Configurar eventos de filtros
+            document.getElementById('filtroProyecto').addEventListener('change', actualizarDashboard);
+            document.getElementById('filtroFechaInicio').addEventListener('change', actualizarDashboard);
+            document.getElementById('filtroFechaFin').addEventListener('change', actualizarDashboard);
+            document.getElementById('filtroTipo').addEventListener('change', actualizarDashboard);
+        }
+        
+        function actualizarDashboard() {
+            const proyecto = document.getElementById('filtroProyecto').value;
+            const tipo = document.getElementById('filtroTipo').value;
+            
+            // Mostrar mensaje de actualización
+            mostrarNotificacion('Actualizando dashboard...', 'info');
+            
+            // Cargar datos reales (AdvancedDB) y actualizar gráficas
+            setTimeout(() => {
+                cargarDatosDashboard();
+                inicializarGraficas();
+                mostrarNotificacion('Dashboard actualizado correctamente', 'success');
+            }, 250);
+        }
+        
+        // Funciones de utilidad
+        function mostrarNotificacion(mensaje, tipo) {
+            // Crear notificación temporal
+            const notificacion = document.createElement('div');
+            notificacion.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                padding: 15px 20px;
+                background: ${tipo === 'success' ? 'rgba(46, 204, 113, 0.9)' : 'rgba(52, 152, 219, 0.9)'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            notificacion.innerHTML = `
+                <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                ${mensaje}
+            `;
+            
+            document.body.appendChild(notificacion);
+            
+            setTimeout(() => {
+                notificacion.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notificacion.remove(), 300);
+            }, 3000);
+        }
+        
+        // Funciones de acción
+        function exportarPDF() {
+            mostrarNotificacion('Generando reporte PDF ejecutivo...', 'info');
+            
+            setTimeout(() => {
+                // En una implementación real, usaría una librería como jsPDF
+                const ventana = window.open('', '_blank');
+                const fecha = new Date().toLocaleDateString();
+                const hora = new Date().toLocaleTimeString();
+                
+                ventana.document.write(`
+                    <html>
+                    <head>
+                        <title>Reporte Ejecutivo M&S Constructora</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #001f3f; padding-bottom: 20px; }
+                            h1 { color: #001f3f; }
+                            .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0; }
+                            .kpi-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; }
+                            .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            .table th, .table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                            .table th { background-color: #f2f2f2; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>CONSTRUCTORA WM/M&S</h1>
+                            <h2>Reporte Ejecutivo - Dashboard Central</h2>
+                            <p>Fecha: ${fecha} | Hora: ${hora}</p>
+                            <p>Generado automáticamente por el Sistema de Control de Proyectos M&S</p>
+                        </div>
+                        
+                        <h3>Resumen Ejecutivo</h3>
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <h4>Ingresos Totales</h4>
+                                <p style="font-size: 24px; font-weight: bold; color: #27ae60;">Q. 48,350,000</p>
+                            </div>
+                            <div class="kpi-card">
+                                <h4>Utilidad Neta</h4>
+                                <p style="font-size: 24px; font-weight: bold; color: #2ecc71;">Q. 7,250,000</p>
+                            </div>
+                            <div class="kpi-card">
+                                <h4>Avance Promedio</h4>
+                                <p style="font-size: 24px; font-weight: bold; color: #3498db;">78.5%</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Estado de Proyectos</h3>
+                        <table class="table">
+                            <tr>
+                                <th>Proyecto</th>
+                                <th>Presupuesto</th>
+                                <th>Gasto</th>
+                                <th>Avance Físico</th>
+                                <th>Avance Financiero</th>
+                                <th>Estado</th>
+                            </tr>
+                            <tr>
+                                <td>Residencial Las Lomas</td>
+                                <td>Q. 2,500,000</td>
+                                <td>Q. 2,150,000</td>
+                                <td>90%</td>
+                                <td>86%</td>
+                                <td>En Curso</td>
+                            </tr>
+                            <tr>
+                                <td>Edificio Comercial Centro</td>
+                                <td>Q. 8,750,000</td>
+                                <td>Q. 7,200,000</td>
+                                <td>85%</td>
+                                <td>82%</td>
+                                <td>En Curso</td>
+                            </tr>
+                            <tr>
+                                <td>Planta Industrial Norte</td>
+                                <td>Q. 12,300,000</td>
+                                <td>Q. 9,800,000</td>
+                                <td>65%</td>
+                                <td>80%</td>
+                                <td>En Curso</td>
+                            </tr>
+                            <tr>
+                                <td>Puente Carretero Sur</td>
+                                <td>Q. 15,800,000</td>
+                                <td>Q. 12,500,000</td>
+                                <td>45%</td>
+                                <td>79%</td>
+                                <td>Atrasado</td>
+                            </tr>
+                            <tr>
+                                <td>Hospital Regional Este</td>
+                                <td>Q. 25,000,000</td>
+                                <td>Q. 8,450,000</td>
+                                <td>30%</td>
+                                <td>34%</td>
+                                <td>Iniciado</td>
+                            </tr>
+                        </table>
+                        
+                        <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
+                            <p>Sistema de Control de Proyectos M&S - Vol 2.0</p>
+                            <p>www.multiserviciosmys.com | info@multiserviciosmys.com</p>
+                            <p>Documento generado automáticamente. No requiere firma.</p>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                
+                ventana.document.close();
+                ventana.print();
+                
+                mostrarNotificacion('Reporte PDF generado exitosamente', 'success');
+            }, 1500);
+        }
+        
+        function imprimirDashboard() {
+            window.print();
+        }
+        
+        function salir() {
+            if (confirm('¿Está seguro que desea salir del sistema?')) {
+                window.location.href = 'index.html';
+            }
+        }
+        
+        // Configurar eventos de las barras Gantt
+        document.querySelectorAll('.gantt-bar').forEach(bar => {
+            bar.addEventListener('click', function() {
+                const nombre = this.querySelector('.nombre').textContent;
+                const porcentaje = this.querySelector('.porcentaje').textContent;
+                
+                mostrarNotificacion(`Proyecto: ${nombre} - Avance: ${porcentaje}`, 'info');
+            });
+        });
+        
+        // Estilos CSS para animaciones de notificaciones
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# OS / Editor
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+
+# Local-only
+.env
+.env.*
+
+# Node (just in case)
+node_modules/
+
+# VS Code
+.vscode/

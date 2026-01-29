@@ -1,0 +1,2683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001326">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>PRESUPUESTOS - Sistema M&S</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <script defer src="pwa.js"></script>
+    <script src="app.js"></script>
+    <script src="database.js"></script>
+    <script src="sync.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="renglones-presupuestos.js"></script>
+    <style>
+        .app-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            padding-bottom: 80px;
+        }
+
+        .main-content {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Encabezado de la aplicación */
+        .app-hero {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border-radius: var(--border-radius);
+            border: 2px solid var(--accent-gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light), var(--accent-gold));
+            animation: shimmer 3s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            color: var(--accent-gold);
+            text-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .app-slogan {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        /* Controles principales */
+        .main-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-card {
+            background: rgba(var(--primary-dark-rgb), 0.7);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .control-title {
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Sección de presupuesto */
+        .budget-section {
+            background: rgba(var(--primary-dark-rgb), 0.7);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(var(--primary-dark-rgb), 0.9);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .section-title {
+            margin: 0;
+            color: var(--accent-gold);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .budget-content {
+            padding: 20px;
+        }
+
+        /* Tabla de renglones */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .items-table th {
+            background: rgba(212, 175, 55, 0.2);
+            color: var(--accent-gold);
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid var(--accent-gold);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .items-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            vertical-align: middle;
+        }
+
+        .items-table tbody tr:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .item-codigo {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .item-action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--accent-gold);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .item-action-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Desglose de materiales */
+        .materials-breakdown {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(var(--primary-dark-rgb), 0.5);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .materials-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .materials-table th {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--accent-gold);
+        }
+
+        .materials-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        /* Resumen financiero */
+        .financial-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            transition: all 0.3s;
+        }
+
+        .summary-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-3px);
+        }
+
+        .summary-title {
+            font-size: 1rem;
+            color: var(--accent-gold);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+            color: var(--text-light);
+        }
+
+        .summary-detail {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Gráficos */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .chart-title {
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        /* Botones de acción */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(var(--primary-dark-rgb), 0.5);
+            border-radius: var(--border-radius);
+        }
+
+        /* Modal de renglón */
+        .item-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: var(--primary-dark);
+            border: 2px solid var(--accent-gold);
+            border-radius: var(--border-radius);
+            max-width: 900px;
+            margin: 20px auto;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--secondary-dark));
+            padding: 20px;
+            border-bottom: 1px solid var(--accent-gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-title {
+            margin: 0;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            background: rgba(var(--primary-dark-rgb), 0.5);
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            position: sticky;
+            bottom: 0;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            opacity: 0.7;
+        }
+
+        .tab:hover {
+            opacity: 1;
+        }
+
+        .tab.active {
+            opacity: 1;
+            color: var(--accent-gold);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-gold);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 2rem;
+            }
+            
+            .main-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .financial-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .modal-content {
+                margin: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .financial-summary {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .btn {
+                width: 100%;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                width: 100%;
+                text-align: left;
+            }
+        }
+
+        /* Estilos para cantidades editables */
+        .editable-quantity {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quantity-input {
+            width: 80px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--accent-gold);
+            border-radius: 4px;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        .quantity-btn {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        /* Indicadores de precios */
+        .price-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .price-up {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+
+        .price-down {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+
+        .price-stable {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        /* Barra de progreso de importación */
+        .import-progress {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .import-export-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .hidden-file-input {
+            display: none;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+            border-radius: 5px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Encabezado de la aplicación -->
+        <header class="app-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo-section">
+                        <div class="logo-text">CONSTRUCTORA WM/M&S</div>
+                        <div class="logo-slogan">EDIFICANDO EL FUTURO</div>
+                    </div>
+                    <div class="header-controls">
+                        <div class="real-time-clock" id="realTimeClock"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navegación principal -->
+        <nav class="main-nav">
+            <div class="container">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="inicio.html" class="nav-link">
+                            <i class="fas fa-home nav-icon"></i> INICIO
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="proyectos.html" class="nav-link">
+                            <i class="fas fa-project-diagram nav-icon"></i> PROYECTOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="presupuestos.html" class="nav-link active">
+                            <i class="fas fa-calculator nav-icon"></i> PRESUPUESTOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="seguimiento.html" class="nav-link">
+                            <i class="fas fa-chart-line nav-icon"></i> SEGUIMIENTO
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="compras.html" class="nav-link">
+                            <i class="fas fa-shopping-cart nav-icon"></i> COMPRAS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="rrhh.html" class="nav-link">
+                            <i class="fas fa-users nav-icon"></i> RR.HH.
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="dashboard.html" class="nav-link">
+                            <i class="fas fa-tachometer-alt nav-icon"></i> DASHBOARD
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="App.logout()">
+                            <i class="fas fa-sign-out-alt nav-icon"></i> SALIR
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            <!-- Encabezado hero -->
+            <div class="app-hero">
+                <h1 class="app-title">SISTEMA DE PRESUPUESTOS</h1>
+                <p class="app-slogan">Cuantificación exacta y desglose de materiales por renglón</p>
+            </div>
+
+            <!-- Controles principales -->
+            <div class="main-controls">
+                <div class="control-card">
+                    <h3 class="control-title"><i class="fas fa-filter"></i> FILTRAR PROYECTO</h3>
+                    <label for="projectSelect" class="sr-only">Filtrar proyecto</label>
+                    <select class="form-control" id="projectSelect" onchange="cargarPresupuestoProyecto()" aria-label="Filtrar proyecto" title="Filtrar proyecto">
+                        <option value="">-- Seleccionar Proyecto --</option>
+                        <!-- Las opciones se cargan dinámicamente -->
+                    </select>
+                </div>
+
+                <div class="control-card">
+                    <h3 class="control-title"><i class="fas fa-layer-group"></i> TIPOLOGÍA</h3>
+                    <label for="tipologiaSelect" class="sr-only">Tipología</label>
+                    <select class="form-control" id="tipologiaSelect" onchange="cargarRenglonesTipologia()" aria-label="Tipología" title="Tipología">
+                        <option value="">-- Seleccionar Tipología --</option>
+                        <option value="RESIDENCIAL">RESIDENCIAL</option>
+                        <option value="COMERCIAL">COMERCIAL</option>
+                        <option value="INDUSTRIAL">INDUSTRIAL</option>
+                        <option value="CIVIL">CIVIL</option>
+                        <option value="PUBLICA">PÚBLICA</option>
+                    </select>
+                </div>
+
+                <div class="control-card">
+                    <h3 class="control-title"><i class="fas fa-cubes"></i> TIPO DE CUBIERTA</h3>
+                    <label for="cubiertaSelect" class="sr-only">Tipo de cubierta</label>
+                    <select class="form-control" id="cubiertaSelect" onchange="actualizarFactoresCubierta()" aria-label="Tipo de cubierta" title="Tipo de cubierta">
+                        <option value="">-- Seleccionar Cubierta --</option>
+                        <option value="losa_solida">Losa Sólida</option>
+                        <option value="losa_prefabricada">Losa Prefabricada</option>
+                        <option value="estructura_metalica">Estructura Metálica</option>
+                        <option value="pergola_madera">Pérgola de Madera</option>
+                        <option value="pergola_metal">Pérgola de Metal</option>
+                        <option value="otros">Otros</option>
+                    </select>
+                </div>
+
+                <div class="control-card">
+                    <h3 class="control-title"><i class="fas fa-download"></i> IMPORTAR/EXPORTAR</h3>
+                    <div class="import-export-controls">
+                        <input type="file" id="importFile" accept=".csv" class="hidden-file-input" 
+                               onchange="importarCSV(this.files[0])">
+                        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">
+                            <i class="fas fa-file-import"></i> CSV
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="exportarPresupuestoCSV()">
+                            <i class="fas fa-file-export"></i> CSV
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="actualizarPrecios()">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                    <div class="import-progress" id="importProgress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="text-center" id="progressText">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="cambiarTab('tab-renglones')">
+                    <i class="fas fa-list-ol"></i> RENGLONES DE TRABAJO
+                </button>
+                <button class="tab" onclick="cambiarTab('tab-materiales')">
+                    <i class="fas fa-boxes"></i> DESGLOSE DE MATERIALES
+                </button>
+                <button class="tab" onclick="cambiarTab('tab-resumen')">
+                    <i class="fas fa-chart-pie"></i> RESUMEN FINANCIERO
+                </button>
+                <button class="tab" onclick="cambiarTab('tab-graficos')">
+                    <i class="fas fa-chart-bar"></i> GRÁFICOS Y ANÁLISIS
+                </button>
+            </div>
+
+            <!-- Tab: Renglones de Trabajo -->
+            <div class="tab-content active" id="tab-renglones">
+                <div class="budget-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-tasks"></i> RENGLONES DE TRABAJO (Orden Cronológico)
+                        </h3>
+                        <div>
+                            <button class="btn btn-primary btn-sm" onclick="nuevoRenglon()">
+                                <i class="fas fa-plus"></i> NUEVO RENGLÓN
+                            </button>
+                            <button class="btn btn-success btn-sm" onclick="calcularTotales()">
+                                <i class="fas fa-calculator"></i> CALCULAR
+                            </button>
+                        </div>
+                    </div>
+                    <div class="budget-content">
+                        <div class="table-responsive">
+                            <table class="items-table" id="itemsTable">
+                                <thead>
+                                    <tr>
+                                        <th width="50">#</th>
+                                        <th width="100">CÓDIGO</th>
+                                        <th>DESCRIPCIÓN DEL RENGLÓN</th>
+                                        <th width="120">UNIDAD</th>
+                                        <th width="120">CANTIDAD</th>
+                                        <th width="150">PRECIO UNITARIO</th>
+                                        <th width="150">SUBTOTAL</th>
+                                        <th width="100">ACCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                    <!-- Se carga dinámicamente -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5"></td>
+                                        <td><strong>TOTAL:</strong></td>
+                                        <td id="totalPresupuesto">GTQ 0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Desglose de Materiales -->
+            <div class="tab-content" id="tab-materiales">
+                <div class="budget-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-box-open"></i> EXPLOSIÓN DE MATERIALES POR RENGLÓN
+                        </h3>
+                        <button class="btn btn-info btn-sm" onclick="generarDesgloseCompleto()">
+                            <i class="fas fa-file-pdf"></i> GENERAR INFORME
+                        </button>
+                    </div>
+                    <div class="budget-content">
+                        <div class="table-responsive">
+                            <table class="materials-table" id="materialsTable">
+                                <thead>
+                                    <tr>
+                                        <th>RENGLÓN</th>
+                                        <th>MATERIAL</th>
+                                        <th>UNIDAD</th>
+                                        <th>CANTIDAD</th>
+                                        <th>PRECIO UNITARIO</th>
+                                        <th>SUBTOTAL</th>
+                                        <th>PROVEEDOR</th>
+                                        <th>DISPONIBILIDAD</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="materialsTableBody">
+                                    <!-- Se carga dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Resumen Financiero -->
+            <div class="tab-content" id="tab-resumen">
+                <div class="financial-summary">
+                    <div class="summary-card">
+                        <div class="summary-title">COSTO DIRECTO</div>
+                        <div class="summary-value" id="costoDirecto">GTQ 0.00</div>
+                        <div class="summary-detail" id="porcentajeDirecto">0% del total</div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-title">COSTOS INDIRECTOS</div>
+                        <div class="summary-value" id="costosIndirectos">GTQ 0.00</div>
+                        <div class="summary-detail" id="porcentajeIndirecto">0% del total</div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-title">IMPUESTOS</div>
+                        <div class="summary-value" id="impuestos">GTQ 0.00</div>
+                        <div class="summary-detail">IVA 12% + Otros</div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-title">UTILIDAD</div>
+                        <div class="summary-value" id="utilidad">GTQ 0.00</div>
+                        <div class="summary-detail" id="porcentajeUtilidad">0% del total</div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-title">PRESUPUESTO TOTAL</div>
+                        <div class="summary-value" id="presupuestoTotal">GTQ 0.00</div>
+                        <div class="summary-detail" id="duracionTotal">0 días</div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-title">COSTO POR m²</div>
+                        <div class="summary-value" id="costoPorM2">GTQ 0.00</div>
+                        <div class="summary-detail">Área: <span id="areaConstruccion">0</span> m²</div>
+                    </div>
+                </div>
+
+                <div class="budget-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-file-invoice-dollar"></i> DESGLOSE COMPLETO APU (Análisis de Precios Unitarios)
+                        </h3>
+                    </div>
+                    <div class="budget-content">
+                        <div class="table-responsive">
+                            <table class="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>CONCEPTO</th>
+                                        <th>MONTO</th>
+                                        <th>PORCENTAJE</th>
+                                        <th>DESCRIPCIÓN</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="apuTableBody">
+                                    <!-- Se carga dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Gráficos y Análisis -->
+            <div class="tab-content" id="tab-graficos">
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h4 class="chart-title">DISTRIBUCIÓN DE COSTOS</h4>
+                        <canvas id="costDistributionChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h4 class="chart-title">EVOLUCIÓN DE PRECIOS</h4>
+                        <canvas id="priceEvolutionChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h4 class="chart-title">MATERIALES POR CATEGORÍA</h4>
+                        <canvas id="materialsByCategoryChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h4 class="chart-title">ANÁLISIS DE RENTABILIDAD</h4>
+                        <canvas id="profitabilityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="guardarPresupuesto()">
+                    <i class="fas fa-save"></i> GUARDAR PRESUPUESTO
+                </button>
+                <button class="btn btn-success" onclick="aprobarPresupuesto()">
+                    <i class="fas fa-check-circle"></i> APROBAR PRESUPUESTO
+                </button>
+                <button class="btn btn-info" onclick="generarInformeCompleto()">
+                    <i class="fas fa-file-pdf"></i> GENERAR INFORME PDF
+                </button>
+                <button class="btn btn-warning" onclick="imprimirPresupuesto()">
+                    <i class="fas fa-print"></i> IMPRIMIR
+                </button>
+                <button class="btn btn-secondary" onclick="SyncService.syncNow()">
+                    <i class="fas fa-sync-alt"></i> SINCRONIZAR
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Renglón -->
+    <div class="item-modal" id="itemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="itemModalTitle">NUEVO RENGLÓN DE TRABAJO</h3>
+                <button class="modal-close" onclick="cerrarItemModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="itemForm" onsubmit="guardarRenglon(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="item-codigo">Código *</label>
+                            <input type="text" class="form-control" id="item-codigo" 
+                                   placeholder="Ej: 01.01.01" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="item-descripcion">Descripción *</label>
+                            <input type="text" class="form-control" id="item-descripcion" 
+                                   placeholder="Descripción detallada del renglón" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="item-unidad">Unidad *</label>
+                            <select class="form-control" id="item-unidad" required>
+                                <option value="">Seleccionar unidad</option>
+                                <option value="m2">m² (Metro cuadrado)</option>
+                                <option value="m3">m³ (Metro cúbico)</option>
+                                <option value="ml">ml (Metro lineal)</option>
+                                <option value="unidad">Unidad</option>
+                                <option value="gl">Global</option>
+                                <option value="kg">Kilogramo</option>
+                                <option value="l">Litro</option>
+                                <option value="hr">Hora</option>
+                                <option value="dia">Día</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="item-cantidad">Cantidad *</label>
+                            <input type="number" class="form-control" id="item-cantidad" 
+                                   step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="item-precio-unitario">Precio Unitario (GTQ) *</label>
+                            <input type="number" class="form-control" id="item-precio-unitario" 
+                                   step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="item-categoria">Categoría *</label>
+                            <select class="form-control" id="item-categoria" required>
+                                <option value="">Seleccionar categoría</option>
+                                <option value="movimiento_tierras">Movimiento de Tierras</option>
+                                <option value="cimentacion">Cimentación</option>
+                                <option value="estructura">Estructura</option>
+                                <option value="mamposteria">Mampostería</option>
+                                <option value="cubiertas">Cubiertas</option>
+                                <option value="acabados">Acabados</option>
+                                <option value="instalaciones">Instalaciones</option>
+                                <option value="urbanizacion">Urbanización</option>
+                                <option value="indirectos">Costos Indirectos</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="item-especificaciones">Especificaciones Técnicas</label>
+                        <textarea class="form-control" id="item-especificaciones" 
+                                  rows="3" placeholder="Especificaciones técnicas, normas, calidad..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="item-rendimiento">Rendimiento (m²/día o unidad/día)</label>
+                        <input type="number" class="form-control" id="item-rendimiento" 
+                               step="0.01" min="0" placeholder="Rendimiento de mano de obra">
+                    </div>
+                    
+                    <!-- Desglose de materiales del renglón -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-boxes"></i> MATERIALES PARA ESTE RENGLÓN
+                        </h4>
+                        <div id="item-materials-container">
+                            <!-- Se generan dinámicamente -->
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="agregarMaterialRenglon()">
+                            <i class="fas fa-plus"></i> Agregar Material
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarItemModal()">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary" form="itemForm">
+                    <i class="fas fa-save"></i> Guardar Renglón
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let proyectos = [];
+        let renglones = [];
+        let materiales = [];
+        let presupuestoActual = null;
+        let renglonActual = null;
+        let tipologiaActual = '';
+        let cubiertaActual = '';
+        let factoresConstructivos = {};
+        let tabActual = 'tab-renglones';
+        let charts = {};
+
+        // Tasas/impuestos (mantener coherencia en toda la vista)
+        const IVA_RATE = 0.12;
+        const OTROS_IMPUESTOS_RATE = 0.05;
+        const IMPUESTO_TOTAL_RATE = IVA_RATE + OTROS_IMPUESTOS_RATE;
+
+        function toNumber(value, fallback = 0) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : fallback;
+        }
+
+        function roundMoney(value) {
+            const n = toNumber(value, 0);
+            return Math.round((n + Number.EPSILON) * 100) / 100;
+        }
+
+        function normalizarRenglon(renglon) {
+            if (!renglon || typeof renglon !== 'object') return null;
+            const cantidad = toNumber(renglon.cantidad, 0);
+            const precioUnitario = toNumber(renglon.precioUnitario, 0);
+            const subtotal = renglon.subtotal != null ? toNumber(renglon.subtotal, cantidad * precioUnitario) : (cantidad * precioUnitario);
+
+            return {
+                ...renglon,
+                cantidad: roundMoney(cantidad),
+                precioUnitario: roundMoney(precioUnitario),
+                subtotal: roundMoney(subtotal)
+            };
+        }
+
+        function normalizarRenglones(list) {
+            if (!Array.isArray(list)) return [];
+            return list
+                .map(normalizarRenglon)
+                .filter(Boolean);
+        }
+
+        function calcularTotalesNumericos() {
+            // Asegura que subtotales/cantidades/precios sean numéricos antes de sumar
+            renglones = normalizarRenglones(renglones);
+
+            const costoDirecto = roundMoney(renglones.reduce((sum, renglon) => sum + toNumber(renglon.subtotal, 0), 0));
+            const factorIndirectos = toNumber(factoresConstructivos.factorIndirectos, 0.18);
+            const costosIndirectos = roundMoney(costoDirecto * factorIndirectos);
+
+            const baseImponible = roundMoney(costoDirecto + costosIndirectos);
+            const impuestos = roundMoney(baseImponible * IMPUESTO_TOTAL_RATE);
+
+            const costoTotalSinUtilidad = roundMoney(baseImponible + impuestos);
+            const factorUtilidad = toNumber(factoresConstructivos.factorUtilidad, 0.15);
+            const utilidad = roundMoney(costoTotalSinUtilidad * factorUtilidad);
+
+            const presupuestoTotal = roundMoney(costoTotalSinUtilidad + utilidad);
+
+            return {
+                costoDirecto,
+                costosIndirectos,
+                impuestos,
+                utilidad,
+                presupuestoTotal
+            };
+        }
+
+        // Factores constructivos por tipología y cubierta
+        const factoresTipologia = {
+            'RESIDENCIAL': {
+                rendimientoManoObra: 1.0,
+                factorIndirectos: 0.18,
+                factorUtilidad: 0.15,
+                duracionFactor: 1.0
+            },
+            'COMERCIAL': {
+                rendimientoManoObra: 0.9,
+                factorIndirectos: 0.20,
+                factorUtilidad: 0.18,
+                duracionFactor: 1.2
+            },
+            'INDUSTRIAL': {
+                rendimientoManoObra: 0.85,
+                factorIndirectos: 0.22,
+                factorUtilidad: 0.20,
+                duracionFactor: 1.5
+            },
+            'CIVIL': {
+                rendimientoManoObra: 0.8,
+                factorIndirectos: 0.25,
+                factorUtilidad: 0.22,
+                duracionFactor: 2.0
+            },
+            'PUBLICA': {
+                rendimientoManoObra: 0.75,
+                factorIndirectos: 0.30,
+                factorUtilidad: 0.25,
+                duracionFactor: 2.5
+            }
+        };
+
+        // Nota: factoresCubierta, renglonesPredefinidos/renglonesPresupuestos,
+        // apusGuatemala y helpers se cargan desde renglones-presupuestos.js
+
+        // Inicializar aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            inicializarAplicacion();
+            inicializarGraficos();
+        });
+
+        // Función principal de inicialización
+        async function inicializarAplicacion() {
+            try {
+                // Mostrar loading
+                Utils.showLoading('Cargando sistema de presupuestos...');
+                
+                // Cargar proyectos
+                await cargarProyectos();
+                
+                // Cargar materiales
+                await cargarMateriales();
+                
+                // Ocultar loading
+                Utils.hideLoading();
+                
+            } catch (error) {
+                console.error('Error inicializando aplicación:', error);
+                Utils.hideLoading();
+                Utils.showNotification('Error al cargar datos', 'error');
+            }
+        }
+
+        // Cargar proyectos desde la base de datos
+        async function cargarProyectos() {
+            try {
+                proyectos = AdvancedDB.find('proyectos', { estado: { $in: ['espera', 'activo'] } });
+                
+                const selectProyecto = document.getElementById('projectSelect');
+                selectProyecto.innerHTML = '<option value="">-- Seleccionar Proyecto --</option>';
+                
+                proyectos.forEach(proyecto => {
+                    selectProyecto.innerHTML += `<option value="${proyecto.id}">${proyecto.codigo} - ${proyecto.nombre}</option>`;
+                });
+                
+            } catch (error) {
+                console.error('Error cargando proyectos:', error);
+                throw error;
+            }
+        }
+
+        // Cargar materiales
+        async function cargarMateriales() {
+            try {
+                materiales = AdvancedDB.get('materiales') || [];
+                
+                // Si no hay materiales, cargar algunos de ejemplo
+                if (materiales.length === 0) {
+                    materiales = [
+                        {
+                            id: 'mat-001',
+                            codigo: 'CEM-001',
+                            nombre: 'Cemento Portland Tipo I',
+                            descripcion: 'Cemento para uso general en construcción',
+                            unidad: 'saco',
+                            categoria: 'materiales_basicos',
+                            precioUnitario: 85.50,
+                            stockActual: 100,
+                            proveedorPrincipalId: 'prov-001'
+                        },
+                        {
+                            id: 'mat-002',
+                            codigo: 'ARE-001',
+                            nombre: 'Arena Fina',
+                            descripcion: 'Arena para mezclas de concreto y mortero',
+                            unidad: 'm3',
+                            categoria: 'materiales_basicos',
+                            precioUnitario: 250.00,
+                            stockActual: 50,
+                            proveedorPrincipalId: 'prov-001'
+                        },
+                        {
+                            id: 'mat-003',
+                            codigo: 'GRA-001',
+                            nombre: 'Grava 3/4"',
+                            descripcion: 'Grava para concreto estructural',
+                            unidad: 'm3',
+                            categoria: 'materiales_basicos',
+                            precioUnitario: 320.00,
+                            stockActual: 40,
+                            proveedorPrincipalId: 'prov-001'
+                        },
+                        {
+                            id: 'mat-004',
+                            codigo: 'ACE-001',
+                            nombre: 'Acero de Construcción #3',
+                            descripcion: 'Varilla corrugada de 3/8"',
+                            unidad: 'qq',
+                            categoria: 'materiales_estructurales',
+                            precioUnitario: 1250.00,
+                            stockActual: 20,
+                            proveedorPrincipalId: 'prov-002'
+                        },
+                        {
+                            id: 'mat-005',
+                            codigo: 'BLO-001',
+                            nombre: 'Bloque de Concreto 15x20x40',
+                            descripcion: 'Bloque estándar para mampostería',
+                            unidad: 'unidad',
+                            categoria: 'materiales_basicos',
+                            precioUnitario: 4.50,
+                            stockActual: 5000,
+                            proveedorPrincipalId: 'prov-001'
+                        }
+                    ];
+                    
+                    materiales.forEach(mat => AdvancedDB.insert('materiales', mat));
+                }
+                
+            } catch (error) {
+                console.error('Error cargando materiales:', error);
+            }
+        }
+
+        function obtenerUltimoPresupuestoProyecto(proyectoId) {
+            if (!proyectoId) return null;
+            try {
+                const list = AdvancedDB.find('presupuestos', { proyectoId }, { sort: { updatedAt: 'desc' }, limit: 1 });
+                return Array.isArray(list) && list.length > 0 ? list[0] : null;
+            } catch (e) {
+                console.error('Error obteniendo último presupuesto:', e);
+                return null;
+            }
+        }
+
+        function incrementarVersion(versionActual) {
+            const v = (versionActual || '').toString().trim();
+            const match = v.match(/^(\d+)(?:\.(\d+))?$/);
+            if (!match) return '1.0';
+            const major = Number(match[1]);
+            const minor = Number(match[2] || 0);
+            if (!Number.isFinite(major) || !Number.isFinite(minor)) return '1.0';
+            return `${major}.${minor + 1}`;
+        }
+
+        function obtenerAprobadorActual() {
+            // La app no expone un usuario formal; intentamos inferir algo útil.
+            try {
+                const token = localStorage.getItem('session_token');
+                if (token) return 'usuario';
+            } catch {}
+            return 'sistema';
+        }
+
+        function limpiarItemsDePresupuesto(presupuestoId) {
+            if (!presupuestoId) return;
+            try {
+                const all = AdvancedDB.get('presupuestos_items') || [];
+                const filtered = all.filter(it => it && it.presupuestoId !== presupuestoId);
+                AdvancedDB.set('presupuestos_items', filtered);
+            } catch (e) {
+                console.error('Error limpiando items de presupuesto:', e);
+            }
+        }
+
+        // Cargar presupuesto de un proyecto
+        function cargarPresupuestoProyecto() {
+            const proyectoId = document.getElementById('projectSelect').value;
+            if (!proyectoId) return;
+            
+            const proyecto = proyectos.find(p => p.id === proyectoId);
+            if (!proyecto) return;
+
+            // Preferir el último presupuesto guardado para el proyecto
+            const presupuesto = obtenerUltimoPresupuestoProyecto(proyectoId);
+            presupuestoActual = presupuesto;
+            
+            if (presupuesto) {
+                tipologiaActual = presupuesto.tipologia || proyecto.tipologia || tipologiaActual;
+                cubiertaActual = presupuesto.tipoCubierta || cubiertaActual;
+                if (tipologiaActual) document.getElementById('tipologiaSelect').value = tipologiaActual;
+                if (cubiertaActual) document.getElementById('cubiertaSelect').value = cubiertaActual;
+
+                renglones = normalizarRenglones(AdvancedDB.find('presupuestos_items', { proyectoId: proyectoId, presupuestoId: presupuesto.id }) || []);
+                mostrarRenglones();
+                calcularTotales();
+            } else {
+                // Si no hay presupuesto, intentar por tipología del proyecto
+                renglones = [];
+                if (proyecto.tipologia) {
+                    tipologiaActual = proyecto.tipologia;
+                    document.getElementById('tipologiaSelect').value = tipologiaActual;
+                    cargarRenglonesTipologia();
+                } else {
+                    mostrarRenglones();
+                    calcularTotales();
+                }
+            }
+            
+            // Actualizar área de construcción para cálculos
+            if (proyecto.areaConstruccion) {
+                document.getElementById('areaConstruccion').textContent = proyecto.areaConstruccion;
+            }
+        }
+
+        // Cargar renglones según tipología
+        function cargarRenglonesTipologia() {
+            tipologiaActual = document.getElementById('tipologiaSelect').value;
+            if (!tipologiaActual) return;
+
+            // Si no hay proyecto seleccionado, igual permitimos cargar renglones
+            const proyectoId = document.getElementById('projectSelect').value;
+            const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
+            const departamento = obtenerDepartamentoProyecto(proyecto);
+            cubiertaActual = document.getElementById('cubiertaSelect').value || cubiertaActual || 'losa_solida';
+            
+            // Obtener renglones predefinidos para la tipología (nuevo formato en renglones-presupuestos.js)
+            const renglonesBase = typeof obtenerRenglonesPorTipologia === 'function'
+                ? obtenerRenglonesPorTipologia(tipologiaActual)
+                : (renglonesPredefinidos[tipologiaActual] || []);
+            
+            // Convertir a formato interno
+            renglones = renglonesBase.map((base, index) => {
+                const calculo = typeof calcularCostoUnitario === 'function'
+                    ? calcularCostoUnitario(base.id, tipologiaActual, cubiertaActual, departamento, 1)
+                    : null;
+
+                const precioUnitario = (calculo && typeof calculo === 'object') ? (calculo.unitario || 0) : 0;
+
+                return {
+                    id: 'temp-' + Date.now() + '-' + index,
+                    baseRenglonId: base.id,
+                    codigo: generarCodigoRenglon(base),
+                    descripcion: base.nombre || base.descripcion || 'Renglón sin nombre',
+                    unidad: base.unidad || 'unidad',
+                    cantidad: 1,
+                    precioUnitario,
+                    subtotal: 1 * precioUnitario,
+                    categoria: obtenerCategoriaRenglon({ codigo: generarCodigoRenglon(base), descripcion: base.nombre || base.descripcion || '' }),
+                    proyectoId,
+                    tipologia: tipologiaActual,
+                    tipoCubierta: cubiertaActual,
+                    desglose: (calculo && typeof calculo === 'object') ? (calculo.desglose || null) : null
+                };
+            });
+
+            renglones = normalizarRenglones(renglones);
+            
+            mostrarRenglones();
+            calcularTotales();
+            
+            // Actualizar factores constructivos
+            factoresConstructivos = factoresTipologia[tipologiaActual] || {};
+        }
+
+        function generarCodigoRenglon(base) {
+            // Código simple y estable para UI/export
+            const idNum = Number(base && base.id);
+            if (Number.isFinite(idNum)) return `RG-${String(idNum).padStart(3, '0')}`;
+            return `RG-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+        }
+
+        function obtenerDepartamentoProyecto(proyecto) {
+            const ubicacion = (proyecto && proyecto.ubicacion) ? String(proyecto.ubicacion).toLowerCase() : '';
+            if (ubicacion.includes('quetzal')) return 'quetzaltenango';
+            if (ubicacion.includes('peten')) return 'peten';
+            if (ubicacion.includes('izabal')) return 'izabal';
+            return 'guatemala';
+        }
+
+        // Obtener categoría por código de renglón
+        function obtenerCategoriaPorCodigo(codigo) {
+            if (!codigo) return 'indirectos';
+            const primerGrupo = String(codigo).split('.')[0];
+            switch(primerGrupo) {
+                case '01': return 'movimiento_tierras';
+                case '02': return 'cimentacion';
+                case '03': return 'estructura';
+                case '04': return 'mamposteria';
+                case '05': return 'cubiertas';
+                case '06': return 'instalaciones';
+                case '07': return 'acabados';
+                case '08': return 'carpinteria';
+                case '09': return 'muebles';
+                case '10': return 'servicios';
+                case '11': return 'urbanizacion';
+                default: return 'indirectos';
+            }
+        }
+
+        function obtenerCategoriaRenglon(renglon) {
+            const codigo = renglon && renglon.codigo ? String(renglon.codigo) : '';
+            if (codigo.includes('.')) return obtenerCategoriaPorCodigo(codigo);
+
+            const texto = ((renglon && renglon.descripcion) ? String(renglon.descripcion) : '').toLowerCase();
+            if (texto.includes('cubierta') || texto.includes('losa') || texto.includes('teja') || texto.includes('lámina') || texto.includes('lamina')) return 'cubiertas';
+            if (texto.includes('instalación') || texto.includes('instalacion') || texto.includes('eléctr') || texto.includes('hidrosan') || texto.includes('sanitaria') || texto.includes('cctv') || texto.includes('hvac')) return 'instalaciones';
+            if (texto.includes('piso') || texto.includes('pintura') || texto.includes('repello') || texto.includes('acabado') || texto.includes('impermeabil')) return 'acabados';
+            if (texto.includes('carpinter') || texto.includes('herrajes') || texto.includes('vidrio')) return 'carpinteria';
+            if (texto.includes('urbaniz') || texto.includes('jardiner') || texto.includes('cercado') || texto.includes('anden') || texto.includes('gradas')) return 'urbanizacion';
+            if (texto.includes('cimient') || texto.includes('excav') || texto.includes('relleno') || texto.includes('compact')) return 'cimentacion';
+            if (texto.includes('movimiento') || texto.includes('desmonte') || texto.includes('destronque')) return 'movimiento_tierras';
+            if (texto.includes('mamposter') || texto.includes('muro') || texto.includes('bloque')) return 'mamposteria';
+            if (texto.includes('columna') || texto.includes('viga') || texto.includes('estructura') || texto.includes('metal')) return 'estructura';
+
+            return 'indirectos';
+        }
+
+        // Actualizar factores según tipo de cubierta
+        function actualizarFactoresCubierta() {
+            cubiertaActual = document.getElementById('cubiertaSelect').value;
+            if (!cubiertaActual) return;
+            
+            const proyectoId = document.getElementById('projectSelect').value;
+            const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
+            const departamento = obtenerDepartamentoProyecto(proyecto);
+            
+            // Recalcular costo unitario por renglón según cubierta/departamento
+            renglones.forEach(renglon => {
+                if (typeof calcularCostoUnitario === 'function' && renglon.baseRenglonId) {
+                    const calculo = calcularCostoUnitario(renglon.baseRenglonId, tipologiaActual, cubiertaActual, departamento, renglon.cantidad || 1);
+                    if (calculo && typeof calculo === 'object') {
+                        renglon.precioUnitario = Number(calculo.unitario || 0);
+                        renglon.desglose = calculo.desglose || null;
+                        renglon.tipoCubierta = cubiertaActual;
+                    }
+                }
+                renglon.subtotal = (Number(renglon.cantidad) || 0) * (Number(renglon.precioUnitario) || 0);
+            });
+            
+            mostrarRenglones();
+            calcularTotales();
+        }
+
+        // Mostrar renglones en la tabla
+        function mostrarRenglones() {
+            const tbody = document.getElementById('itemsTableBody');
+            
+            if (renglones.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center p-4">
+                            <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p>No hay renglones de trabajo</p>
+                            <button class="btn btn-primary btn-sm mt-2" onclick="cargarRenglonesTipologia()">
+                                <i class="fas fa-download"></i> Cargar renglones predefinidos
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            renglones.forEach((renglon, index) => {
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td class="item-codigo">${renglon.codigo}</td>
+                        <td>
+                            <div><strong>${renglon.descripcion}</strong></div>
+                            <small style="opacity: 0.7;">${renglon.categoria ? renglon.categoria.replace('_', ' ') : ''}</small>
+                        </td>
+                        <td>${renglon.unidad}</td>
+                        <td>
+                            <div class="editable-quantity">
+                                <button class="quantity-btn" onclick="cambiarCantidad(${index}, -1)">-</button>
+                                <input type="number" class="quantity-input" value="${renglon.cantidad}" 
+                                       step="0.01" min="0" onchange="actualizarCantidad(${index}, this.value)">
+                                <button class="quantity-btn" onclick="cambiarCantidad(${index}, 1)">+</button>
+                            </div>
+                        </td>
+                        <td>
+                            <div>${Utils.formatCurrency(renglon.precioUnitario)}</div>
+                            <button class="btn btn-link btn-sm p-0" onclick="actualizarPrecioUnitario(${index})" 
+                                    title="Actualizar precio según mercado">
+                                <i class="fas fa-sync-alt fa-xs"></i>
+                            </button>
+                        </td>
+                        <td><strong>${Utils.formatCurrency(renglon.subtotal)}</strong></td>
+                        <td>
+                            <div class="item-actions">
+                                <button class="item-action-btn" onclick="editarRenglon(${index})" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="item-action-btn" onclick="verDesgloseMateriales(${index})" title="Materiales">
+                                    <i class="fas fa-boxes"></i>
+                                </button>
+                                <button class="item-action-btn" onclick="eliminarRenglon(${index})" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // Cambiar cantidad de un renglón
+        function cambiarCantidad(index, delta) {
+            const renglon = renglones[index];
+            const nuevaCantidad = toNumber(renglon.cantidad, 0) + delta;
+            
+            if (nuevaCantidad < 0) return;
+            
+            renglon.cantidad = roundMoney(nuevaCantidad);
+            renglon.precioUnitario = roundMoney(toNumber(renglon.precioUnitario, 0));
+            renglon.subtotal = roundMoney(renglon.cantidad * renglon.precioUnitario);
+            
+            mostrarRenglones();
+            calcularTotales();
+        }
+
+        // Actualizar cantidad
+        function actualizarCantidad(index, valor) {
+            const cantidad = parseFloat(valor);
+            if (isNaN(cantidad) || cantidad < 0) return;
+            
+            const renglon = renglones[index];
+            renglon.cantidad = roundMoney(cantidad);
+            renglon.precioUnitario = roundMoney(toNumber(renglon.precioUnitario, 0));
+            renglon.subtotal = roundMoney(renglon.cantidad * renglon.precioUnitario);
+            
+            mostrarRenglones();
+            calcularTotales();
+        }
+
+        // Actualizar precio unitario
+        function actualizarPrecioUnitario(index) {
+            const renglon = renglones[index];
+            
+            // Simular actualización de precio según mercado
+            const variacion = (Math.random() * 0.1) - 0.05; // +/- 5%
+            const nuevoPrecio = toNumber(renglon.precioUnitario, 0) * (1 + variacion);
+            
+            renglon.precioUnitario = roundMoney(nuevoPrecio);
+            renglon.cantidad = roundMoney(toNumber(renglon.cantidad, 0));
+            renglon.subtotal = roundMoney(renglon.cantidad * renglon.precioUnitario);
+            
+            mostrarRenglones();
+            calcularTotales();
+            
+            Utils.showNotification(`Precio actualizado: ${variacion > 0 ? '+' : ''}${(variacion * 100).toFixed(1)}%`, 'info');
+        }
+
+        // Calcular totales del presupuesto
+        function calcularTotales() {
+            if (renglones.length === 0) {
+                document.getElementById('totalPresupuesto').textContent = Utils.formatCurrency(0);
+                actualizarResumenFinanciero(0, 0, 0, 0, 0);
+                return;
+            }
+
+            const totales = calcularTotalesNumericos();
+            
+            // Actualizar total en tabla
+            document.getElementById('totalPresupuesto').textContent = Utils.formatCurrency(totales.presupuestoTotal);
+            
+            // Actualizar resumen financiero
+            actualizarResumenFinanciero(totales.costoDirecto, totales.costosIndirectos, totales.impuestos, totales.utilidad, totales.presupuestoTotal);
+            
+            // Actualizar gráficos
+            actualizarGraficos(totales.costoDirecto, totales.costosIndirectos, totales.impuestos, totales.utilidad);
+        }
+
+        // Actualizar resumen financiero
+        function actualizarResumenFinanciero(costoDirecto, costosIndirectos, impuestos, utilidad, presupuestoTotal) {
+            costoDirecto = roundMoney(costoDirecto);
+            costosIndirectos = roundMoney(costosIndirectos);
+            impuestos = roundMoney(impuestos);
+            utilidad = roundMoney(utilidad);
+            presupuestoTotal = roundMoney(presupuestoTotal);
+
+            // Actualizar valores
+            document.getElementById('costoDirecto').textContent = Utils.formatCurrency(costoDirecto);
+            document.getElementById('costosIndirectos').textContent = Utils.formatCurrency(costosIndirectos);
+            document.getElementById('impuestos').textContent = Utils.formatCurrency(impuestos);
+            document.getElementById('utilidad').textContent = Utils.formatCurrency(utilidad);
+            document.getElementById('presupuestoTotal').textContent = Utils.formatCurrency(presupuestoTotal);
+            
+            // Calcular porcentajes
+            if (presupuestoTotal > 0) {
+                const porcentajeDirecto = ((costoDirecto / presupuestoTotal) * 100).toFixed(1);
+                const porcentajeIndirecto = ((costosIndirectos / presupuestoTotal) * 100).toFixed(1);
+                const porcentajeUtilidad = ((utilidad / presupuestoTotal) * 100).toFixed(1);
+                
+                document.getElementById('porcentajeDirecto').textContent = `${porcentajeDirecto}% del total`;
+                document.getElementById('porcentajeIndirecto').textContent = `${porcentajeIndirecto}% del total`;
+                document.getElementById('porcentajeUtilidad').textContent = `${porcentajeUtilidad}% del total`;
+            } else {
+                document.getElementById('porcentajeDirecto').textContent = '0% del total';
+                document.getElementById('porcentajeIndirecto').textContent = '0% del total';
+                document.getElementById('porcentajeUtilidad').textContent = '0% del total';
+                const costoPorM2El = document.getElementById('costoPorM2');
+                if (costoPorM2El) costoPorM2El.textContent = Utils.formatCurrency(0);
+                document.getElementById('duracionTotal').textContent = '0 días';
+            }
+            
+            // Calcular costo por m²
+            const areaElement = document.getElementById('areaConstruccion');
+            const area = parseFloat(areaElement.textContent) || 0;
+            
+            if (area > 0 && presupuestoTotal > 0) {
+                const costoPorM2 = presupuestoTotal / area;
+                document.getElementById('costoPorM2').textContent = Utils.formatCurrency(costoPorM2);
+            } else {
+                const costoPorM2El = document.getElementById('costoPorM2');
+                if (costoPorM2El) costoPorM2El.textContent = Utils.formatCurrency(0);
+            }
+            
+            // Calcular duración total
+            if (factoresConstructivos.duracionFactor && renglones.length > 0) {
+                const duracionBase = renglones.length * 2; // 2 días por renglón como base
+                const duracionTotal = duracionBase * factoresConstructivos.duracionFactor;
+                document.getElementById('duracionTotal').textContent = `${Math.ceil(duracionTotal)} días`;
+            } else {
+                document.getElementById('duracionTotal').textContent = '0 días';
+            }
+            
+            // Actualizar tabla APU
+            actualizarTablaAPU(costoDirecto, costosIndirectos, impuestos, utilidad, presupuestoTotal);
+        }
+
+        // Actualizar tabla APU
+        function actualizarTablaAPU(costoDirecto, costosIndirectos, impuestos, utilidad, presupuestoTotal) {
+            const tbody = document.getElementById('apuTableBody');
+
+            costoDirecto = roundMoney(costoDirecto);
+            costosIndirectos = roundMoney(costosIndirectos);
+            impuestos = roundMoney(impuestos);
+            utilidad = roundMoney(utilidad);
+            presupuestoTotal = roundMoney(presupuestoTotal);
+            
+            const conceptos = [
+                { concepto: 'COSTO DIRECTO', monto: costoDirecto, porcentaje: presupuestoTotal > 0 ? (costoDirecto / presupuestoTotal * 100).toFixed(1) : '0.0', descripcion: 'Materiales, mano de obra y equipo directo' },
+                { concepto: 'COSTOS INDIRECTOS', monto: costosIndirectos, porcentaje: presupuestoTotal > 0 ? (costosIndirectos / presupuestoTotal * 100).toFixed(1) : '0.0', descripcion: 'Administración, herramientas, seguros, etc.' },
+                { concepto: 'SUBTOTAL', monto: costoDirecto + costosIndirectos, porcentaje: presupuestoTotal > 0 ? ((costoDirecto + costosIndirectos) / presupuestoTotal * 100).toFixed(1) : '0.0', descripcion: 'Costo total de la obra' },
+                { concepto: `IMPUESTOS (${Math.round(IMPUESTO_TOTAL_RATE * 100)}%)`, monto: impuestos, porcentaje: presupuestoTotal > 0 ? (impuestos / presupuestoTotal * 100).toFixed(1) : '0.0', descripcion: `IVA ${Math.round(IVA_RATE * 100)}% + otros ${Math.round(OTROS_IMPUESTOS_RATE * 100)}%` },
+                { concepto: 'COSTO TOTAL', monto: costoDirecto + costosIndirectos + impuestos, porcentaje: presupuestoTotal > 0 ? ((costoDirecto + costosIndirectos + impuestos) / presupuestoTotal * 100).toFixed(1) : '0.0', descripcion: 'Costo real de ejecución' },
+                { concepto: 'UTILIDAD', monto: utilidad, porcentaje: presupuestoTotal > 0 ? (utilidad / presupuestoTotal * 100).toFixed(1) : '0.0', descripcion: 'Margen de ganancia del contratista' },
+                { concepto: 'PRESUPUESTO TOTAL', monto: presupuestoTotal, porcentaje: '100.0', descripcion: 'Precio final al cliente' }
+            ];
+            
+            let html = '';
+            conceptos.forEach(concepto => {
+                const esTotal = concepto.concepto === 'PRESUPUESTO TOTAL';
+                const rowClass = esTotal ? 'style="background: rgba(212, 175, 55, 0.1); font-weight: bold;"' : '';
+                
+                html += `
+                    <tr ${rowClass}>
+                        <td><strong>${concepto.concepto}</strong></td>
+                        <td>${Utils.formatCurrency(concepto.monto)}</td>
+                        <td>${concepto.porcentaje}%</td>
+                        <td><small style="opacity: 0.8;">${concepto.descripcion}</small></td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // Inicializar gráficos
+        function inicializarGraficos() {
+            // Gráfico de distribución de costos
+            const costCtx = document.getElementById('costDistributionChart').getContext('2d');
+            charts.costDistribution = new Chart(costCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Costo Directo', 'Costos Indirectos', 'Impuestos', 'Utilidad'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(40, 167, 69, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(23, 162, 184, 0.8)',
+                            'rgba(220, 53, 69, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(40, 167, 69)',
+                            'rgb(255, 193, 7)',
+                            'rgb(23, 162, 184)',
+                            'rgb(220, 53, 69)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#fff',
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${Utils.formatCurrency(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de evolución de precios
+            const priceCtx = document.getElementById('priceEvolutionChart').getContext('2d');
+            charts.priceEvolution = new Chart(priceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Índice de Precios',
+                        data: Array(12).fill(0).map(() => Math.random() * 50 + 50),
+                        borderColor: 'rgb(212, 175, 55)',
+                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                color: '#fff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#fff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de materiales por categoría
+            const materialsCtx = document.getElementById('materialsByCategoryChart').getContext('2d');
+            charts.materialsByCategory = new Chart(materialsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Materiales Básicos', 'Estructurales', 'Acabados', 'Instalaciones'],
+                    datasets: [{
+                        label: 'Cantidad (unidades)',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: 'rgba(212, 175, 55, 0.8)',
+                        borderColor: 'rgb(212, 175, 55)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#fff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#fff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de análisis de rentabilidad
+            const profitCtx = document.getElementById('profitabilityChart').getContext('2d');
+            charts.profitability = new Chart(profitCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Margen de Utilidad', 'Eficiencia Costos', 'Control Materiales', 'Rendimiento MO', 'Cumplimiento Plazos', 'Calidad'],
+                    datasets: [{
+                        label: 'Rentabilidad del Proyecto',
+                        data: [85, 78, 92, 65, 88, 95],
+                        backgroundColor: 'rgba(212, 175, 55, 0.2)',
+                        borderColor: 'rgb(212, 175, 55)',
+                        pointBackgroundColor: 'rgb(212, 175, 55)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(212, 175, 55)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            pointLabels: {
+                                color: '#fff'
+                            },
+                            ticks: {
+                                color: '#fff',
+                                backdropColor: 'transparent'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Actualizar gráficos
+        function actualizarGraficos(costoDirecto, costosIndirectos, impuestos, utilidad) {
+            // Actualizar gráfico de distribución de costos
+            if (charts.costDistribution) {
+                charts.costDistribution.data.datasets[0].data = [
+                    costoDirecto,
+                    costosIndirectos,
+                    impuestos,
+                    utilidad
+                ];
+                charts.costDistribution.update();
+            }
+        }
+
+        // Cambiar tab
+        function cambiarTab(tabId) {
+            // Remover clase active de todas las tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Activar tab seleccionada
+            document.querySelector(`button[onclick*="${tabId}"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            tabActual = tabId;
+            
+            // Si es la tab de materiales, generar el desglose
+            if (tabId === 'tab-materiales') {
+                generarDesgloseMateriales();
+            }
+        }
+
+        // Nuevo renglón
+        function nuevoRenglon() {
+            renglonActual = null;
+            document.getElementById('itemModalTitle').textContent = 'NUEVO RENGLÓN DE TRABAJO';
+            document.getElementById('itemForm').reset();
+            
+            // Limpiar contenedor de materiales
+            document.getElementById('item-materials-container').innerHTML = '';
+            
+            // Mostrar modal
+            document.getElementById('itemModal').style.display = 'block';
+        }
+
+        // Editar renglón
+        function editarRenglon(index) {
+            renglonActual = renglones[index];
+            document.getElementById('itemModalTitle').textContent = 'EDITAR RENGLÓN DE TRABAJO';
+            
+            // Llenar formulario
+            document.getElementById('item-codigo').value = renglonActual.codigo;
+            document.getElementById('item-descripcion').value = renglonActual.descripcion;
+            document.getElementById('item-unidad').value = renglonActual.unidad;
+            document.getElementById('item-cantidad').value = renglonActual.cantidad;
+            document.getElementById('item-precio-unitario').value = renglonActual.precioUnitario;
+            document.getElementById('item-categoria').value = renglonActual.categoria || '';
+            document.getElementById('item-especificaciones').value = renglonActual.especificaciones || '';
+            document.getElementById('item-rendimiento').value = renglonActual.rendimiento || '';
+
+            // Renderizar materiales existentes si los hay
+            document.getElementById('item-materials-container').innerHTML = '';
+            if (Array.isArray(renglonActual.materiales) && renglonActual.materiales.length > 0) {
+                renglonActual.materiales.forEach(m => agregarMaterialRenglon(m));
+            }
+            
+            // Mostrar modal
+            document.getElementById('itemModal').style.display = 'block';
+        }
+
+        // Agregar material a renglón
+        function agregarMaterialRenglon(materialInicial) {
+            const container = document.getElementById('item-materials-container');
+
+            const matInit = materialInicial && typeof materialInicial === 'object' ? materialInicial : null;
+            const initId = matInit && matInit.materialId ? String(matInit.materialId) : '';
+            const initCantidad = matInit && matInit.cantidad != null ? Number(matInit.cantidad) : 1;
+            
+            const materialHTML = `
+                <div class="form-grid" style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                    <div class="form-group">
+                        <label>Material</label>
+                        <select class="form-control mat-select" onchange="actualizarPrecioMaterial(this)">
+                            <option value="">Seleccionar material</option>
+                            ${materiales.map(mat => `
+                                <option value="${mat.id}" data-precio="${mat.precioUnitario}">
+                                    ${mat.codigo} - ${mat.nombre} (${Utils.formatCurrency(mat.precioUnitario)}/${mat.unidad})
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" class="form-control mat-cantidad" step="0.01" min="0" value="${initCantidad}" 
+                               onchange="calcularSubtotalMaterial(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Unidad</label>
+                        <input type="text" class="form-control mat-unidad" value="" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Unitario (GTQ)</label>
+                        <input type="number" class="form-control mat-precio" step="0.01" min="0" value="0" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Subtotal</label>
+                        <input type="number" class="form-control mat-subtotal" step="0.01" min="0" value="0" readonly>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.form-grid').remove()">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', materialHTML);
+
+            // Si viene material inicial, seleccionarlo y recalcular
+            if (initId) {
+                const row = container.lastElementChild;
+                const select = row ? row.querySelector('.mat-select') : null;
+                if (select) {
+                    select.value = initId;
+                    actualizarPrecioMaterial(select);
+                    const qtyInput = row.querySelector('.mat-cantidad');
+                    if (qtyInput) {
+                        qtyInput.value = initCantidad;
+                        calcularSubtotalMaterial(qtyInput);
+                    }
+                }
+            }
+        }
+
+        function leerMaterialesDelModal() {
+            const container = document.getElementById('item-materials-container');
+            const rows = container ? Array.from(container.querySelectorAll('.form-grid')) : [];
+            const proveedoresMap = construirMapaProveedores();
+
+            const list = [];
+            rows.forEach(row => {
+                const select = row.querySelector('.mat-select');
+                const materialId = select ? select.value : '';
+                if (!materialId) return;
+
+                const material = materiales.find(m => m.id === materialId);
+                if (!material) return;
+
+                const cantidad = Number((row.querySelector('.mat-cantidad') || {}).value) || 0;
+                const precioUnitario = Number((row.querySelector('.mat-precio') || {}).value) || Number(material.precioUnitario) || 0;
+                const subtotal = Number((row.querySelector('.mat-subtotal') || {}).value) || (cantidad * precioUnitario);
+                const proveedor = material.proveedorPrincipalId ? (proveedoresMap[material.proveedorPrincipalId] || '') : '';
+
+                list.push({
+                    materialId: material.id,
+                    codigo: material.codigo,
+                    nombre: material.nombre,
+                    unidad: material.unidad,
+                    cantidad,
+                    precioUnitario,
+                    subtotal,
+                    proveedorPrincipalId: material.proveedorPrincipalId || null,
+                    proveedorNombre: proveedor || null
+                });
+            });
+
+            return list;
+        }
+
+        // Actualizar precio de material seleccionado
+        function actualizarPrecioMaterial(select) {
+            const row = select.closest('.form-grid');
+            const materialId = select.value;
+            const material = materiales.find(m => m.id === materialId);
+            
+            if (material) {
+                const cantidadInput = row.querySelector('.mat-cantidad');
+                const unidadInput = row.querySelector('.mat-unidad');
+                const precioInput = row.querySelector('.mat-precio');
+
+                if (cantidadInput) cantidadInput.value = 1;
+                if (unidadInput) unidadInput.value = material.unidad;
+                if (precioInput) precioInput.value = material.precioUnitario;
+
+                if (cantidadInput) calcularSubtotalMaterial(cantidadInput);
+            }
+        }
+
+        // Calcular subtotal de material
+        function calcularSubtotalMaterial(input) {
+            const row = input.closest('.form-grid');
+            const cantidad = parseFloat(input.value) || 0;
+            const precio = parseFloat((row.querySelector('.mat-precio') || {}).value) || 0;
+            const subtotal = cantidad * precio;
+            
+            const subtotalInput = row.querySelector('.mat-subtotal');
+            if (subtotalInput) subtotalInput.value = subtotal.toFixed(2);
+        }
+
+        // Guardar renglón
+        function guardarRenglon(event) {
+            event.preventDefault();
+            
+            try {
+                const materialesRenglon = leerMaterialesDelModal();
+
+                // Recopilar datos del formulario
+                const datosRenglon = {
+                    codigo: document.getElementById('item-codigo').value,
+                    descripcion: document.getElementById('item-descripcion').value,
+                    unidad: document.getElementById('item-unidad').value,
+                    cantidad: parseFloat(document.getElementById('item-cantidad').value),
+                    precioUnitario: parseFloat(document.getElementById('item-precio-unitario').value),
+                    categoria: document.getElementById('item-categoria').value,
+                    especificaciones: document.getElementById('item-especificaciones').value,
+                    rendimiento: document.getElementById('item-rendimiento').value ? parseFloat(document.getElementById('item-rendimiento').value) : null,
+                    proyectoId: document.getElementById('projectSelect').value,
+                    materiales: materialesRenglon,
+                    subtotal: parseFloat(document.getElementById('item-cantidad').value) * parseFloat(document.getElementById('item-precio-unitario').value)
+                };
+                
+                // Validaciones
+                if (!datosRenglon.codigo || !datosRenglon.descripcion || !datosRenglon.unidad) {
+                    Utils.showNotification('Complete los campos obligatorios', 'warning');
+                    return;
+                }
+                
+                if (renglonActual) {
+                    // Actualizar renglón existente
+                    const index = renglones.findIndex(r => r.id === renglonActual.id);
+                    if (index !== -1) {
+                        renglones[index] = { ...renglones[index], ...datosRenglon };
+                    }
+                } else {
+                    // Crear nuevo renglón
+                    datosRenglon.id = 'renglon-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    renglones.push(datosRenglon);
+                }
+                
+                // Cerrar modal
+                cerrarItemModal();
+                
+                // Actualizar tabla y totales
+                mostrarRenglones();
+                calcularTotales();
+                
+                Utils.showNotification('Renglón guardado exitosamente', 'success');
+                
+            } catch (error) {
+                console.error('Error guardando renglón:', error);
+                Utils.showNotification('Error al guardar renglón: ' + error.message, 'error');
+            }
+        }
+
+        // Cerrar modal de renglón
+        function cerrarItemModal() {
+            document.getElementById('itemModal').style.display = 'none';
+            renglonActual = null;
+        }
+
+        // Eliminar renglón
+        function eliminarRenglon(index) {
+            Utils.confirm(
+                '¿Está seguro que desea eliminar este renglón?',
+                () => {
+                    renglones.splice(index, 1);
+                    mostrarRenglones();
+                    calcularTotales();
+                    Utils.showNotification('Renglón eliminado', 'success');
+                }
+            );
+        }
+
+        // Ver desglose de materiales de un renglón
+        function verDesgloseMateriales(index) {
+            const renglon = renglones[index];
+            
+            // En una implementación real, aquí se cargarían los materiales específicos del renglón
+            // Por ahora, mostramos un mensaje
+            Utils.showNotification(`Mostrando materiales para: ${renglon.descripcion}`, 'info');
+            
+            // Cambiar a tab de materiales
+            cambiarTab('tab-materiales');
+        }
+
+        function normalizarUnidad(unidad) {
+            const u = (unidad || '').toString().toLowerCase().trim();
+            if (u === 'm²' || u === 'm2') return 'm2';
+            if (u === 'm³' || u === 'm3') return 'm3';
+            if (u === 'ml') return 'ml';
+            if (u === 'kg') return 'kg';
+            if (u === 'l') return 'l';
+            if (u === 'unidad') return 'unidad';
+            return u;
+        }
+
+        function mapMaterialKeyToSearchTerms(key) {
+            const k = (key || '').toString().toLowerCase();
+            const mapping = {
+                cemento: ['cemento'],
+                arena: ['arena'],
+                grava: ['grava'],
+                acero: ['acero'],
+                formaleta: ['formaleta', 'encofrado'],
+                viguetas: ['vigueta'],
+                bloques_aligerantes: ['bloque'],
+                concreto_relleno: ['concreto'],
+                acero_estructura: ['acero', 'estructura'],
+                pernos_anclaje: ['perno', 'anclaje'],
+                pintura_anticorrosiva: ['anticorros', 'pintura'],
+                conectores: ['conector'],
+                madera_estructura: ['madera'],
+                tornillos_inoxidables: ['tornillo'],
+                sellador_madera: ['sellador'],
+                barniz: ['barniz'],
+                tubo_estructural: ['tubo'],
+                soldadura: ['soldadura'],
+                pintura_esmalte: ['esmalte', 'pintura'],
+                anclajes_quimicos: ['anclaje']
+            };
+            return mapping[k] || [k];
+        }
+
+        function encontrarMaterialPorClave(key) {
+            if (!Array.isArray(materiales) || materiales.length === 0) return null;
+            const terms = mapMaterialKeyToSearchTerms(key);
+            const lower = (s) => (s || '').toString().toLowerCase();
+
+            for (const term of terms) {
+                const found = materiales.find(m => lower(m.nombre).includes(term) || lower(m.codigo).includes(term));
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function construirMapaProveedores() {
+            try {
+                const provs = AdvancedDB.get('proveedores') || [];
+                const map = {};
+                provs.forEach(p => {
+                    if (p && p.id) map[p.id] = p.nombre || p.codigo || p.id;
+                });
+                return map;
+            } catch {
+                return {};
+            }
+        }
+
+        // Generar desglose de materiales
+        function generarDesgloseMateriales() {
+            const tbody = document.getElementById('materialsTableBody');
+            
+            if (renglones.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center p-4">
+                            <i class="fas fa-boxes fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p>No hay materiales para mostrar</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const proveedoresMap = construirMapaProveedores();
+
+            const proyectoId = document.getElementById('projectSelect').value;
+            const proyecto = proyectoId ? proyectos.find(p => p.id === proyectoId) : null;
+            const departamento = obtenerDepartamentoProyecto(proyecto);
+            const cubierta = document.getElementById('cubiertaSelect').value || cubiertaActual;
+            const factores = (typeof factoresCubierta !== 'undefined' && cubierta) ? (factoresCubierta[cubierta] || null) : null;
+
+            const materialesDesglose = [];
+
+            renglones.forEach(renglon => {
+                // Caso 0: el renglón ya tiene materiales capturados (modal)
+                if (Array.isArray(renglon.materiales) && renglon.materiales.length > 0) {
+                    renglon.materiales.forEach(m => {
+                        const matDb = encontrarMaterialPorClave(m.codigo) || materiales.find(mm => mm.id === m.materialId) || null;
+                        const precio = Number(m.precioUnitario) || (matDb ? (Number(matDb.precioUnitario) || 0) : 0);
+                        const cantidadReq = Number(m.cantidad) || 0;
+                        const subtotal = Number(m.subtotal) || (cantidadReq * precio);
+                        const proveedor = m.proveedorNombre || (matDb && matDb.proveedorPrincipalId ? (proveedoresMap[matDb.proveedorPrincipalId] || '') : '') || 'N/D';
+                        const disponibilidad = (matDb && Number(matDb.stockActual) > 0) ? 'Disponible' : 'Por pedido';
+
+                        materialesDesglose.push({
+                            renglon: renglon.descripcion,
+                            material: m.nombre || (matDb ? matDb.nombre : 'Material'),
+                            unidad: m.unidad || (matDb ? matDb.unidad : 'unidad'),
+                            cantidad: Number(cantidadReq.toFixed(2)),
+                            precioUnitario: precio,
+                            subtotal,
+                            proveedor,
+                            disponibilidad
+                        });
+                    });
+                    return;
+                }
+
+                const unidadNorm = normalizarUnidad(renglon.unidad);
+
+                // Caso 1: tenemos factores por m2 (lo más “materiales reales” que hoy tenemos)
+                if (factores && factores.materiales_por_m2 && unidadNorm === 'm2') {
+                    Object.entries(factores.materiales_por_m2).forEach(([key, qtyPerM2]) => {
+                        const mat = encontrarMaterialPorClave(key);
+                        const cantidadReq = (Number(renglon.cantidad) || 0) * (Number(qtyPerM2) || 0);
+
+                        const precio = mat ? (Number(mat.precioUnitario) || 0) : obtenerPrecioBaseMaterial(key, departamento);
+                        const subtotal = cantidadReq * precio;
+                        const proveedor = mat && mat.proveedorPrincipalId ? (proveedoresMap[mat.proveedorPrincipalId] || '') : '';
+                        const disponibilidad = (mat && Number(mat.stockActual) > 0) ? 'Disponible' : 'Por pedido';
+
+                        materialesDesglose.push({
+                            renglon: renglon.descripcion,
+                            material: mat ? mat.nombre : key,
+                            unidad: mat ? mat.unidad : 'unidad',
+                            cantidad: Number(cantidadReq.toFixed(2)),
+                            precioUnitario: precio,
+                            subtotal,
+                            proveedor: proveedor || 'N/D',
+                            disponibilidad
+                        });
+                    });
+                    return;
+                }
+
+                // Caso 2 (fallback): usar el componente “materiales” del desglose de costos
+                // y repartirlo de forma determinística entre materiales base disponibles.
+                const presupuestoMateriales = Number((renglon.desglose && renglon.desglose.materiales) ? renglon.desglose.materiales : 0);
+                const totalRenglon = (Number(renglon.cantidad) || 0) * (Number(renglon.precioUnitario) || 0);
+                const bolsaMateriales = presupuestoMateriales > 0 ? presupuestoMateriales : (totalRenglon * 0.55);
+
+                const candidatos = [
+                    encontrarMaterialPorClave('cemento'),
+                    encontrarMaterialPorClave('arena'),
+                    encontrarMaterialPorClave('grava'),
+                    encontrarMaterialPorClave('acero')
+                ].filter(Boolean);
+
+                // Si no hay materiales en BD, al menos mostramos una línea de costo-materiales
+                if (candidatos.length === 0) {
+                    materialesDesglose.push({
+                        renglon: renglon.descripcion,
+                        material: 'Materiales (estimado)',
+                        unidad: 'GTQ',
+                        cantidad: 1,
+                        precioUnitario: bolsaMateriales,
+                        subtotal: bolsaMateriales,
+                        proveedor: 'N/D',
+                        disponibilidad: 'N/D'
+                    });
+                    return;
+                }
+
+                const pesosBase = [0.35, 0.25, 0.20, 0.20];
+                const pesos = pesosBase.slice(0, candidatos.length);
+                const sumaPesos = pesos.reduce((s, w) => s + w, 0) || 1;
+
+                candidatos.forEach((mat, i) => {
+                    const peso = pesos[i] / sumaPesos;
+                    const subtotal = bolsaMateriales * peso;
+                    const precio = Number(mat.precioUnitario) || 0;
+                    const cantidadReq = precio > 0 ? (subtotal / precio) : 0;
+                    const proveedor = mat.proveedorPrincipalId ? (proveedoresMap[mat.proveedorPrincipalId] || '') : '';
+                    const disponibilidad = Number(mat.stockActual) > 0 ? 'Disponible' : 'Por pedido';
+
+                    materialesDesglose.push({
+                        renglon: renglon.descripcion,
+                        material: mat.nombre,
+                        unidad: mat.unidad,
+                        cantidad: Number(cantidadReq.toFixed(2)),
+                        precioUnitario: precio,
+                        subtotal,
+                        proveedor: proveedor || 'N/D',
+                        disponibilidad
+                    });
+                });
+            });
+            
+            let html = '';
+            materialesDesglose.forEach(mat => {
+                html += `
+                    <tr>
+                        <td><small>${mat.renglon.substring(0, 30)}...</small></td>
+                        <td>${mat.material}</td>
+                        <td>${mat.unidad}</td>
+                        <td>${mat.cantidad}</td>
+                        <td>${Utils.formatCurrency(mat.precioUnitario)}</td>
+                        <td><strong>${Utils.formatCurrency(mat.subtotal)}</strong></td>
+                        <td>${mat.proveedor}</td>
+                        <td>
+                            <span class="price-indicator ${mat.disponibilidad === 'Disponible' ? 'price-down' : 'price-up'}">
+                                ${mat.disponibilidad}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        function obtenerPrecioBaseMaterial(key, departamento) {
+            try {
+                if (typeof apusGuatemala === 'undefined') return 0;
+                const depto = (departamento || 'guatemala').toLowerCase();
+                const apu = apusGuatemala[depto] || apusGuatemala.guatemala;
+                if (!apu || !apu.materiales_base) return 0;
+                return Number(apu.materiales_base[key]) || 0;
+            } catch {
+                return 0;
+            }
+        }
+
+        // Generar desglose completo
+        function generarDesgloseCompleto() {
+            generarDesgloseMateriales();
+            Utils.showNotification('Desglose de materiales generado', 'success');
+        }
+
+        // Guardar presupuesto
+        async function guardarPresupuesto() {
+            try {
+                const proyectoId = document.getElementById('projectSelect').value;
+                if (!proyectoId) {
+                    Utils.showNotification('Seleccione un proyecto primero', 'warning');
+                    return;
+                }
+                
+                if (renglones.length === 0) {
+                    Utils.showNotification('Agregue renglones al presupuesto', 'warning');
+                    return;
+                }
+                
+                // Calcular totales (mismo criterio que el resumen)
+                calcularTotales();
+                const totales = calcularTotalesNumericos();
+                
+                const ultimo = obtenerUltimoPresupuestoProyecto(proyectoId);
+                const versionNueva = ultimo ? (ultimo.estado === 'aprobado' ? incrementarVersion(ultimo.version) : (ultimo.version || '1.0')) : '1.0';
+
+                // Crear objeto de presupuesto
+                const presupuesto = {
+                    proyectoId: proyectoId,
+                    version: versionNueva,
+                    tipologia: tipologiaActual,
+                    tipoCubierta: cubiertaActual,
+                    items: renglones,
+                    costoDirecto: totales.costoDirecto,
+                    costoIndirecto: totales.costosIndirectos,
+                    impuestos: totales.impuestos,
+                    utilidad: totales.utilidad,
+                    total: totales.presupuestoTotal,
+                    duracionEstimada: Number(document.getElementById('duracionTotal').textContent.replace(' días', '')) || 0,
+                    estado: 'borrador',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                // Guardar en base de datos (si existe borrador, actualizar; si no, crear nuevo)
+                let presupuestoGuardado = null;
+                if (ultimo && ultimo.estado === 'borrador') {
+                    presupuestoGuardado = AdvancedDB.update('presupuestos', ultimo.id, {
+                        version: versionNueva,
+                        tipologia: tipologiaActual,
+                        tipoCubierta: cubiertaActual,
+                        items: renglones,
+                        costoDirecto: totales.costoDirecto,
+                        costoIndirecto: totales.costosIndirectos,
+                        impuestos: totales.impuestos,
+                        utilidad: totales.utilidad,
+                        total: totales.presupuestoTotal,
+                        duracionEstimada: Number(document.getElementById('duracionTotal').textContent.replace(' días', '')) || 0,
+                        updatedAt: new Date().toISOString()
+                    });
+                } else {
+                    presupuestoGuardado = AdvancedDB.insert('presupuestos', presupuesto);
+                }
+
+                presupuestoActual = presupuestoGuardado;
+
+                // Reemplazar items del presupuesto (evita duplicados al re-guardar)
+                limpiarItemsDePresupuesto(presupuestoGuardado.id);
+                
+                // Guardar items individualmente
+                renglones.forEach(renglon => {
+                    AdvancedDB.insert('presupuestos_items', {
+                        ...renglon,
+                        presupuestoId: presupuestoGuardado.id,
+                        proyectoId: proyectoId,
+                        tipologia: tipologiaActual,
+                        tipoCubierta: cubiertaActual
+                    });
+                });
+                
+                Utils.showNotification('Presupuesto guardado exitosamente', 'success');
+                SyncService.syncNow();
+                
+            } catch (error) {
+                console.error('Error guardando presupuesto:', error);
+                Utils.showNotification('Error al guardar presupuesto', 'error');
+            }
+        }
+
+        // Aprobar presupuesto
+        function aprobarPresupuesto() {
+            Utils.confirm(
+                '¿Está seguro que desea aprobar este presupuesto? Esta acción no se puede deshacer.',
+                () => {
+                    const proyectoId = document.getElementById('projectSelect').value;
+                    if (!proyectoId) {
+                        Utils.showNotification('Seleccione un proyecto primero', 'warning');
+                        return;
+                    }
+
+                    if (!presupuestoActual || !presupuestoActual.id) {
+                        // Si aún no se ha guardado, guardamos primero para obtener ID.
+                        guardarPresupuesto().then(() => {
+                            aprobarPresupuesto();
+                        });
+                        return;
+                    }
+
+                    try {
+                        const aprobadoPor = obtenerAprobadorActual();
+                        const ahora = new Date().toISOString();
+                        presupuestoActual = AdvancedDB.update('presupuestos', presupuestoActual.id, {
+                            estado: 'aprobado',
+                            aprobadoPor,
+                            fechaAprobacion: ahora,
+                            updatedAt: ahora
+                        });
+
+                        // Persistir presupuesto aprobado en el proyecto
+                        AdvancedDB.update('proyectos', proyectoId, {
+                            presupuestoAprobado: Number(presupuestoActual.total) || 0,
+                            estado: 'activo'
+                        });
+
+                        Utils.showNotification(`Presupuesto aprobado (v${presupuestoActual.version})`, 'success');
+                        SyncService.syncNow();
+                    } catch (e) {
+                        console.error('Error aprobando presupuesto:', e);
+                        Utils.showNotification('Error al aprobar presupuesto', 'error');
+                    }
+                }
+            );
+        }
+
+        // Generar informe completo
+        function generarInformeCompleto() {
+            try {
+                const proyectoId = document.getElementById('projectSelect').value;
+                const proyecto = proyectos.find(p => p.id === proyectoId);
+                
+                if (!proyecto) {
+                    Utils.showNotification('Seleccione un proyecto primero', 'warning');
+                    return;
+                }
+                
+                const datosInforme = {
+                    proyecto: proyecto,
+                    presupuesto: {
+                        renglones: renglones,
+                        total: document.getElementById('presupuestoTotal').textContent,
+                        costoPorM2: document.getElementById('costoPorM2').textContent,
+                        duracion: document.getElementById('duracionTotal').textContent
+                    },
+                    fechaGeneracion: new Date().toLocaleDateString('es-GT'),
+                    horaGeneracion: new Date().toLocaleTimeString('es-GT')
+                };
+                
+                Utils.generatePDF(datosInforme, `Presupuesto_${proyecto.codigo}`);
+                Utils.showNotification('Informe PDF generado exitosamente', 'success');
+                
+            } catch (error) {
+                console.error('Error generando informe:', error);
+                Utils.showNotification('Error al generar informe', 'error');
+            }
+        }
+
+        // Imprimir presupuesto
+        function imprimirPresupuesto() {
+            // Aquí iría la lógica para imprimir
+            Utils.showNotification('Funcionalidad de impresión en desarrollo', 'info');
+        }
+
+        // Actualizar precios desde el mercado
+        function actualizarPrecios() {
+            Utils.showLoading('Actualizando precios del mercado...');
+            
+            // Simular actualización de precios
+            setTimeout(() => {
+                renglones.forEach(renglon => {
+                    const variacion = (Math.random() * 0.08) - 0.04; // +/- 4%
+                    renglon.precioUnitario = renglon.precioUnitario * (1 + variacion);
+                    renglon.subtotal = renglon.cantidad * renglon.precioUnitario;
+                });
+                
+                mostrarRenglones();
+                calcularTotales();
+                Utils.hideLoading();
+                Utils.showNotification('Precios actualizados según el mercado', 'success');
+            }, 1500);
+        }
+
+        // Importar CSV
+        function importarCSV(file) {
+            if (!file) return;
+            
+            Utils.showLoading('Importando datos...');
+            document.getElementById('importProgress').style.display = 'block';
+            
+            Utils.importFromCSV(file).then(data => {
+                // Procesar datos importados
+                let importedCount = 0;
+                const totalItems = data.length;
+                
+                data.forEach((item, index) => {
+                    setTimeout(() => {
+                        // Convertir datos del CSV a formato interno
+                        const renglon = {
+                            id: 'import-' + Date.now() + '-' + index,
+                            codigo: item.Código || item.codigo || '',
+                            descripcion: item.Descripción || item.descripcion || '',
+                            unidad: item.Unidad || item.unidad || '',
+                            cantidad: parseFloat(item.Cantidad || item.cantidad || 1),
+                            precioUnitario: parseFloat(item['Precio Unitario'] || item.precio_unitario || item.precio || 0),
+                            categoria: item.Categoría || item.categoria || '',
+                            proyectoId: document.getElementById('projectSelect').value
+                        };
+                        
+                        renglon.subtotal = renglon.cantidad * renglon.precioUnitario;
+                        renglones.push(renglon);
+                        importedCount++;
+                        
+                        // Actualizar progreso
+                        const progress = (importedCount / totalItems) * 100;
+                        document.getElementById('progressFill').style.width = progress + '%';
+                        document.getElementById('progressText').textContent = progress.toFixed(0) + '%';
+                        
+                        // Si terminó
+                        if (importedCount === totalItems) {
+                            setTimeout(() => {
+                                mostrarRenglones();
+                                calcularTotales();
+                                document.getElementById('importProgress').style.display = 'none';
+                                Utils.hideLoading();
+                                Utils.showNotification(`${importedCount} renglones importados exitosamente`, 'success');
+                            }, 500);
+                        }
+                    }, index * 100);
+                });
+                
+            }).catch(error => {
+                console.error('Error importando CSV:', error);
+                document.getElementById('importProgress').style.display = 'none';
+                Utils.hideLoading();
+                Utils.showNotification('Error al importar CSV', 'error');
+            });
+        }
+
+        // Exportar presupuesto a CSV
+        function exportarPresupuestoCSV() {
+            if (renglones.length === 0) {
+                Utils.showNotification('No hay datos para exportar', 'warning');
+                return;
+            }
+            
+            try {
+                const datosExportar = renglones.map(renglon => ({
+                    'Código': renglon.codigo,
+                    'Descripción': renglon.descripcion,
+                    'Unidad': renglon.unidad,
+                    'Cantidad': renglon.cantidad,
+                    'Precio Unitario (GTQ)': renglon.precioUnitario,
+                    'Subtotal (GTQ)': renglon.subtotal,
+                    'Categoría': renglon.categoria || ''
+                }));
+                
+                Utils.exportToCSV(datosExportar, `presupuesto_${tipologiaActual}_${new Date().toISOString().split('T')[0]}`);
+                Utils.showNotification('Presupuesto exportado exitosamente', 'success');
+                
+            } catch (error) {
+                console.error('Error exportando presupuesto:', error);
+                Utils.showNotification('Error al exportar presupuesto', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001326">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Sistema M&S - Constructora</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <script defer src="pwa.js"></script>
+    <style>
+        /* Estilos específicos para pantalla de bienvenida */
+        .welcome-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 40px;
+            z-index: 10;
+        }
+
+        .main-logo {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 2.5rem;
+            color: #D4AF37; /* Amarillo mostaza oscuro */
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5),
+                         0 0 20px rgba(212, 175, 55, 0.3),
+                         0 0 30px rgba(212, 175, 55, 0.1);
+            margin-bottom: 10px;
+        }
+
+        .slogan {
+            font-size: 1.5rem;
+            color: #D4AF37;
+            font-style: italic;
+            letter-spacing: 3px;
+        }
+
+        .login-form {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #D4AF37;
+            width: 90%;
+            max-width: 400px;
+            z-index: 10;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #D4AF37;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #D4AF37;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        .btn-acceder {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #D4AF37, #B8860B);
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-acceder:hover {
+            background: linear-gradient(45deg, #B8860B, #D4AF37);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .admin-options {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .btn-cambiar-password {
+            background: transparent;
+            border: 1px solid #D4AF37;
+            color: #D4AF37;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cambiar-password:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .password-change-form {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #D4AF37;
+            border-radius: 5px;
+        }
+
+        .version {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(212, 175, 55, 0.5);
+            font-size: 0.9rem;
+            z-index: 10;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: #D4AF37;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(212, 175, 55, 0.3);
+            border-top: 5px solid #D4AF37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-logo {
+                font-size: 2rem;
+            }
+            .slogan {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body class="dark-bg">
+    <div class="stars" id="stars"></div>
+    
+    <div class="welcome-container">
+        <div class="logo-container">
+            <div class="main-logo">SISTEMA M&S</div>
+            <div class="slogan">CONSTRUCTORA WM/M&S</div>
+            <div class="slogan" style="font-size: 1.2rem; margin-top: 10px;">EDIFICANDO EL FUTURO</div>
+        </div>
+
+        <div class="login-form">
+            <div class="form-group">
+                <label for="password">CONTRASEÑA DE ADMINISTRADOR</label>
+                <input type="password" id="password" placeholder="Ingrese la contraseña">
+                <div id="password-error" style="color: #ff4444; margin-top: 5px; display: none;">
+                    Contraseña incorrecta
+                </div>
+            </div>
+            
+            <button class="btn-acceder" onclick="verificarPassword()">
+                ACCEDER AL SISTEMA
+            </button>
+
+            <div class="admin-options">
+                <button class="btn-cambiar-password" onclick="toggleCambioPassword()">
+                    CAMBIAR CONTRASEÑA
+                </button>
+                
+                <div class="password-change-form" id="passwordChangeForm">
+                    <div class="form-group">
+                        <label>Contraseña Actual</label>
+                        <input type="password" id="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label>Nueva Contraseña</label>
+                        <input type="password" id="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Nueva Contraseña</label>
+                        <input type="password" id="confirm-password">
+                    </div>
+                    <button class="btn-acceder" onclick="cambiarPassword()">
+                        ACTUALIZAR CONTRASEÑA
+                    </button>
+                    <div id="password-change-error" style="color: #ff4444; margin-top: 10px; display: none;"></div>
+                    <div id="password-change-success" style="color: #44ff44; margin-top: 10px; display: none;">
+                        Contraseña actualizada correctamente
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="version">Versión 2.0 | Multiservicios M&S S.A.</div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>CARGANDO SISTEMA...</div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Generar estrellas animadas
+        function crearEstrellas() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 150;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Posición aleatoria
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const size = Math.random() * 3 + 1;
+                const delay = Math.random() * 2;
+                const duration = Math.random() * 1 + 1;
+                
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDelay = `${delay}s`;
+                star.style.animationDuration = `${duration}s`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Verificar contraseña
+        function verificarPassword() {
+            const password = document.getElementById('password').value;
+            const savedPassword = localStorage.getItem('admin_password') || 'admin123'; // Contraseña por defecto
+            
+            if (password === savedPassword) {
+                mostrarLoading();
+                setTimeout(() => {
+                    window.location.href = 'inicio.html';
+                }, 1500);
+            } else {
+                document.getElementById('password-error').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('password-error').style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Mostrar/ocultar formulario de cambio de contraseña
+        function toggleCambioPassword() {
+            const form = document.getElementById('passwordChangeForm');
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
+            
+            // Limpiar formulario
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            document.getElementById('password-change-error').style.display = 'none';
+            document.getElementById('password-change-success').style.display = 'none';
+        }
+
+        // Cambiar contraseña
+        function cambiarPassword() {
+            const current = document.getElementById('current-password').value;
+            const newPass = document.getElementById('new-password').value;
+            const confirm = document.getElementById('confirm-password').value;
+            const savedPassword = localStorage.getItem('admin_password') || 'admin123';
+            
+            const errorDiv = document.getElementById('password-change-error');
+            const successDiv = document.getElementById('password-change-success');
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            // Validaciones
+            if (current !== savedPassword) {
+                errorDiv.textContent = 'La contraseña actual es incorrecta';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            if (newPass.length < 4) {
+                errorDiv.textContent = 'La nueva contraseña debe tener al menos 4 caracteres';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            if (newPass !== confirm) {
+                errorDiv.textContent = 'Las contraseñas nuevas no coinciden';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            // Guardar nueva contraseña
+            localStorage.setItem('admin_password', newPass);
+            successDiv.style.display = 'block';
+            
+            // Ocultar formulario después de 2 segundos
+            setTimeout(() => {
+                document.getElementById('passwordChangeForm').style.display = 'none';
+            }, 2000);
+        }
+
+        // Mostrar pantalla de carga
+        function mostrarLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+
+        // Permitir acceso con Enter
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verificarPassword();
+            }
+        });
+
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            crearEstrellas();
+            
+            // Verificar si es primera vez y establecer contraseña por defecto
+            if (!localStorage.getItem('admin_password')) {
+                localStorage.setItem('admin_password', 'admin123');
+            }
+        });
+    </script>
+</body>
+</html>

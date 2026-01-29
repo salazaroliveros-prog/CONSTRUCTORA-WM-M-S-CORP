@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001326">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>INICIO - Sistema M&S</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script defer src="pwa.js"></script>
+    <script src="app.js"></script>
+    <script src="database.js"></script>
+    <script src="sync.js"></script>
+    <style>
+        .app-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            padding-bottom: 80px;
+        }
+
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        .main-content {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Encabezado de la aplicación */
+        .app-hero {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border-radius: var(--border-radius);
+            border: 2px solid var(--accent-gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light), var(--accent-gold));
+            animation: shimmer 3s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            color: var(--accent-gold);
+            text-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .app-slogan {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        /* Filtro de proyectos */
+        .project-filter-section {
+            background: rgba(var(--primary-dark-rgb), 0.7);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .filter-header h3 {
+            margin: 0;
+            color: var(--accent-gold);
+        }
+
+        .project-select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--accent-gold);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-light);
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .project-select option {
+            background: var(--primary-dark);
+            color: var(--text-light);
+        }
+
+        /* Botones principales */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .action-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border: 2px solid transparent;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            color: var(--text-light);
+            transition: all 0.3s;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .action-button:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-gold);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-button.ingreso {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(40, 167, 69, 0.1));
+        }
+
+        .action-button.gasto {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.2), rgba(220, 53, 69, 0.1));
+        }
+
+        .action-button.proyectos {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.2), rgba(23, 162, 184, 0.1));
+        }
+
+        .action-button.presupuesto {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
+        }
+
+        .action-button.dashboard {
+            background: linear-gradient(135deg, rgba(111, 66, 193, 0.2), rgba(111, 66, 193, 0.1));
+        }
+
+        .action-button.salir {
+            background: linear-gradient(135deg, rgba(108, 117, 125, 0.2), rgba(108, 117, 125, 0.1));
+        }
+
+        .button-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--accent-gold);
+        }
+
+        .button-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--accent-gold);
+        }
+
+        .button-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Formularios desplegables */
+        .form-container {
+            display: none;
+            background: rgba(var(--primary-dark-rgb), 0.9);
+            border: 2px solid var(--accent-gold);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-top: 20px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .form-title {
+            margin: 0;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+        }
+
+        .close-form {
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        /* Lista de transacciones recientes */
+        .recent-transactions {
+            background: rgba(var(--primary-dark-rgb), 0.7);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .transaction-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            gap: 15px;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            transition: background 0.3s;
+        }
+
+        .transaction-item:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .transaction-type {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .transaction-type.ingreso {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .transaction-type.gasto {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-desc {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .transaction-meta {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .transaction-amount.ingreso {
+            color: #28a745;
+        }
+
+        .transaction-amount.gasto {
+            color: #dc3545;
+        }
+
+        .transaction-date {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Resumen financiero */
+        .financial-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            transition: all 0.3s;
+        }
+
+        .summary-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-3px);
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+            color: var(--accent-gold);
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 2rem;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .transaction-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .financial-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-hero {
+                padding: 20px 15px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .form-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Encabezado de la aplicación -->
+        <header class="app-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo-section">
+                        <div class="logo-text">CONSTRUCTORA WM/M&S</div>
+                        <div class="logo-slogan">EDIFICANDO EL FUTURO</div>
+                    </div>
+                    <div class="header-controls">
+                        <div class="real-time-clock" id="realTimeClock"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navegación principal -->
+        <nav class="main-nav">
+            <div class="container">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="inicio.html" class="nav-link active">
+                            <i class="fas fa-home nav-icon"></i> INICIO
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="proyectos.html" class="nav-link">
+                            <i class="fas fa-project-diagram nav-icon"></i> PROYECTOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="presupuestos.html" class="nav-link">
+                            <i class="fas fa-calculator nav-icon"></i> PRESUPUESTOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="seguimiento.html" class="nav-link">
+                            <i class="fas fa-chart-line nav-icon"></i> SEGUIMIENTO
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="compras.html" class="nav-link">
+                            <i class="fas fa-shopping-cart nav-icon"></i> COMPRAS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="rrhh.html" class="nav-link">
+                            <i class="fas fa-users nav-icon"></i> RR.HH.
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="dashboard.html" class="nav-link">
+                            <i class="fas fa-tachometer-alt nav-icon"></i> DASHBOARD
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="App.logout()">
+                            <i class="fas fa-sign-out-alt nav-icon"></i> SALIR
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            <!-- Encabezado hero -->
+            <div class="app-hero">
+                <h1 class="app-title">SISTEMA DE CONTROL</h1>
+                <p class="app-slogan">Registro rápido de ingresos y gastos en campo</p>
+            </div>
+
+            <!-- Filtro de proyectos -->
+            <div class="project-filter-section">
+                <div class="filter-header">
+                    <h3><i class="fas fa-filter"></i> FILTRAR PROYECTO</h3>
+                    <span class="badge badge-primary" id="project-count">0 proyectos activos</span>
+                </div>
+                <label for="projectSelect" class="sr-only">Seleccionar proyecto para filtrar</label>
+                <select class="project-select" id="projectSelect" onchange="cargarDatosProyecto()" title="Seleccionar proyecto para filtrar" aria-label="Seleccionar proyecto para filtrar">
+                    <option value="">-- Seleccionar Proyecto --</option>
+                    <!-- Las opciones se cargan dinámicamente -->
+                </select>
+                <div id="project-info" style="display: none;">
+                    <div class="row">
+                        <div class="col">
+                            <p><strong>Cliente:</strong> <span id="project-client"></span></p>
+                            <p><strong>Ubicación:</strong> <span id="project-location"></span></p>
+                        </div>
+                        <div class="col">
+                            <p><strong>Presupuesto:</strong> <span id="project-budget"></span></p>
+                            <p><strong>Avance:</strong> <span id="project-progress"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción principales -->
+            <div class="action-buttons">
+                <div class="action-button ingreso" onclick="mostrarFormularioIngreso()">
+                    <div class="button-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="button-title">REGISTRAR INGRESO</div>
+                    <div class="button-description">Registre dinero recibido del cliente, préstamos, etc.</div>
+                </div>
+
+                <div class="action-button gasto" onclick="mostrarFormularioGasto()">
+                    <div class="button-icon">
+                        <i class="fas fa-cart-shopping"></i>
+                    </div>
+                    <div class="button-title">REGISTRAR GASTO</div>
+                    <div class="button-description">Registre compras de materiales, planilla, servicios, etc.</div>
+                </div>
+
+                <div class="action-button proyectos" onclick="window.location.href='proyectos.html'">
+                    <div class="button-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <div class="button-title">GESTIÓN DE PROYECTOS</div>
+                    <div class="button-description">Administre información de clientes y proyectos</div>
+                </div>
+
+                <div class="action-button presupuesto" onclick="window.location.href='presupuestos.html'">
+                    <div class="button-icon">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <div class="button-title">PRESUPUESTOS</div>
+                    <div class="button-description">Cuantificación y costos de proyectos</div>
+                </div>
+
+                <div class="action-button dashboard" onclick="window.location.href='dashboard.html'">
+                    <div class="button-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <div class="button-title">DASHBOARD</div>
+                    <div class="button-description">Panel de control y métricas</div>
+                </div>
+
+                <div class="action-button salir" onclick="App.logout()">
+                    <div class="button-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <div class="button-title">SALIR</div>
+                    <div class="button-description">Regresar a pantalla de bloqueo</div>
+                </div>
+            </div>
+
+            <!-- Formulario de Ingreso (oculto inicialmente) -->
+            <div class="form-container" id="ingresoForm">
+                <div class="form-header">
+                    <h3 class="form-title"><i class="fas fa-money-bill-wave"></i> REGISTRAR INGRESO</h3>
+                    <button class="close-form" onclick="ocultarFormulario('ingresoForm')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="formIngreso" onsubmit="registrarIngreso(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ingreso-proyecto">Proyecto *</label>
+                            <select class="form-control" id="ingreso-proyecto" required>
+                                <option value="">Seleccionar proyecto</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ingreso-descripcion">Descripción *</label>
+                            <input type="text" class="form-control" id="ingreso-descripcion" 
+                                   placeholder="Ej: Aporte cliente, Préstamo, etc." required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ingreso-monto">Monto (GTQ) *</label>
+                            <input type="number" class="form-control" id="ingreso-monto" 
+                                   step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ingreso-unidad">Unidad</label>
+                            <select class="form-control" id="ingreso-unidad">
+                                <option value="Quetzal">Quetzal (GTQ)</option>
+                                <option value="Préstamo">Préstamo</option>
+                                <option value="Aporte">Aporte cliente</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ingreso-categoria">Categoría *</label>
+                            <select class="form-control" id="ingreso-categoria" required>
+                                <option value="">Seleccionar categoría</option>
+                                <option value="aporte">Aporte (pagos del cliente)</option>
+                                <option value="agrimensura">Agrimensura</option>
+                                <option value="avaluo">Avaluó</option>
+                                <option value="planificacion">Planificación</option>
+                                <option value="ante_proyecto">Ante Proyecto</option>
+                                <option value="prestamo">Préstamo</option>
+                                <option value="otros">Otros</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ingreso-fecha">Fecha *</label>
+                            <input type="date" class="form-control" id="ingreso-fecha" 
+                                   value="<?php echo date('Y-m-d'); ?>" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ingreso-observaciones">Observaciones</label>
+                        <textarea class="form-control" id="ingreso-observaciones" 
+                                  rows="3" placeholder="Notas adicionales..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" 
+                                onclick="ocultarFormulario('ingresoForm')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Ingreso
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Formulario de Gasto (oculto inicialmente) -->
+            <div class="form-container" id="gastoForm">
+                <div class="form-header">
+                    <h3 class="form-title"><i class="fas fa-cart-shopping"></i> REGISTRAR GASTO</h3>
+                    <button class="close-form" onclick="ocultarFormulario('gastoForm')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="formGasto" onsubmit="registrarGasto(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="gasto-proyecto">Proyecto *</label>
+                            <select class="form-control" id="gasto-proyecto" required
+                                    onchange="actualizarCategoriasGasto()">
+                                <option value="">Seleccionar proyecto</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gasto-descripcion">Descripción *</label>
+                            <input type="text" class="form-control" id="gasto-descripcion" 
+                                   placeholder="Ej: Compra de cemento, Pago planilla, etc." required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gasto-cantidad">Cantidad</label>
+                            <input type="number" class="form-control" id="gasto-cantidad" 
+                                   step="0.01" min="0" placeholder="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gasto-unidad">Unidad</label>
+                            <select class="form-control" id="gasto-unidad">
+                                <option value="Quetzal">Quetzal (GTQ)</option>
+                                <option value="m3">m3</option>
+                                <option value="m2">m2</option>
+                                <option value="ml">ml</option>
+                                <option value="saco">Saco</option>
+                                <option value="libra">Libra</option>
+                                <option value="varilla">Varilla</option>
+                                <option value="quintal">Quintal</option>
+                                <option value="unidad">Unidad</option>
+                                <option value="global">Global</option>
+                                <option value="pie_tabla">Pie Tabla</option>
+                                <option value="litro">Litro</option>
+                                <option value="viaje">Viaje</option>
+                                <option value="camion_10m3">Camión 10m3</option>
+                                <option value="hora">Hora</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gasto-monto">Monto (GTQ) *</label>
+                            <input type="number" class="form-control" id="gasto-monto" 
+                                   step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gasto-categoria">Categoría *</label>
+                            <select class="form-control" id="gasto-categoria" required
+                                    onchange="mostrarCamposAdicionales()">
+                                <option value="">Seleccionar categoría</option>
+                                <option value="materiales">Materiales</option>
+                                <option value="planilla">Planilla</option>
+                                <option value="equipo">Equipo/Herramienta</option>
+                                <option value="subcontrato">Sub-contrato</option>
+                                <option value="administrativo">Administrativo</option>
+                                <option value="personales">Personales</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gasto-proveedor">Proveedor</label>
+                            <select class="form-control" id="gasto-proveedor">
+                                <option value="">Seleccionar proveedor</option>
+                                <!-- Proveedores se cargan dinámicamente -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gasto-fecha">Fecha *</label>
+                            <input type="date" class="form-control" id="gasto-fecha" 
+                                   value="<?php echo date('Y-m-d'); ?>" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Campos adicionales para alquiler -->
+                    <div id="alquiler-fields" style="display: none;">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="gasto-fecha-inicio">Fecha Inicio Alquiler</label>
+                                <input type="date" class="form-control" id="gasto-fecha-inicio">
+                            </div>
+                            <div class="form-group">
+                                <label for="gasto-fecha-fin">Fecha Fin Alquiler</label>
+                                <input type="date" class="form-control" id="gasto-fecha-fin">
+                            </div>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Se configurará alerta para vencimiento en 30 días hábiles
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gasto-observaciones">Observaciones</label>
+                        <textarea class="form-control" id="gasto-observaciones" 
+                                  rows="3" placeholder="Notas adicionales..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" 
+                                onclick="ocultarFormulario('gastoForm')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Gasto
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Resumen financiero -->
+            <div class="financial-summary" id="financialSummary">
+                <!-- Se carga dinámicamente -->
+            </div>
+
+            <!-- Transacciones recientes -->
+            <div class="recent-transactions">
+                <div class="section-header">
+                    <h3><i class="fas fa-history"></i> TRANSACCIONES RECIENTES</h3>
+                    <button class="btn btn-sm btn-primary" onclick="cargarTransacciones()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+                <div class="transaction-list" id="transactionList">
+                    <!-- Las transacciones se cargan dinámicamente -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Variables globales
+        let proyectos = [];
+        let proveedores = [];
+        let transacciones = [];
+
+        // Inicializar aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            inicializarAplicacion();
+        });
+
+        // Función principal de inicialización
+        async function inicializarAplicacion() {
+            try {
+                // Mostrar loading
+                Utils.showLoading('Cargando datos...');
+                
+                // Cargar datos
+                await cargarProyectos();
+                await cargarProveedores();
+                await cargarTransacciones();
+                actualizarResumenFinanciero();
+                
+                // Ocultar loading
+                Utils.hideLoading();
+                
+            } catch (error) {
+                console.error('Error inicializando aplicación:', error);
+                Utils.hideLoading();
+                Utils.showNotification('Error al cargar datos', 'error');
+            }
+        }
+
+        // Cargar proyectos desde la base de datos
+        async function cargarProyectos() {
+            try {
+                proyectos = AdvancedDB.find('proyectos', { estado: 'activo' });
+                
+                const selectProyecto = document.getElementById('projectSelect');
+                const selectIngresoProyecto = document.getElementById('ingreso-proyecto');
+                const selectGastoProyecto = document.getElementById('gasto-proyecto');
+                
+                // Limpiar opciones
+                [selectProyecto, selectIngresoProyecto, selectGastoProyecto].forEach(select => {
+                    select.innerHTML = '<option value="">-- Seleccionar Proyecto --</option>';
+                });
+                
+                // Agregar proyectos activos
+                proyectos.forEach(proyecto => {
+                    const option = `<option value="${proyecto.id}">${proyecto.codigo} - ${proyecto.nombre}</option>`;
+                    
+                    [selectProyecto, selectIngresoProyecto, selectGastoProyecto].forEach(select => {
+                        select.innerHTML += option;
+                    });
+                });
+                
+                // Actualizar contador
+                document.getElementById('project-count').textContent = `${proyectos.length} proyectos activos`;
+                
+            } catch (error) {
+                console.error('Error cargando proyectos:', error);
+                throw error;
+            }
+        }
+
+        // Cargar datos de un proyecto específico
+        function cargarDatosProyecto() {
+            const proyectoId = document.getElementById('projectSelect').value;
+            const projectInfo = document.getElementById('project-info');
+            
+            if (!proyectoId) {
+                projectInfo.style.display = 'none';
+                return;
+            }
+            
+            const proyecto = proyectos.find(p => p.id === proyectoId);
+            if (proyecto) {
+                document.getElementById('project-client').textContent = proyecto.cliente;
+                document.getElementById('project-location').textContent = proyecto.ubicacion;
+                document.getElementById('project-budget').textContent = Utils.formatCurrency(proyecto.presupuestoAprobado || 0);
+                document.getElementById('project-progress').textContent = `${proyecto.avanceFisico || 0}% físico / ${proyecto.avanceFinanciero || 0}% financiero`;
+                projectInfo.style.display = 'block';
+            }
+        }
+
+        // Cargar proveedores
+        async function cargarProveedores() {
+            try {
+                proveedores = AdvancedDB.find('proveedores', { estado: 'activo' });
+                const selectProveedor = document.getElementById('gasto-proveedor');
+                
+                selectProveedor.innerHTML = '<option value="">Seleccionar proveedor</option>';
+                
+                proveedores.forEach(proveedor => {
+                    selectProveedor.innerHTML += `<option value="${proveedor.id}">${proveedor.nombre}</option>`;
+                });
+                
+            } catch (error) {
+                console.error('Error cargando proveedores:', error);
+            }
+        }
+
+        // Cargar transacciones recientes
+        async function cargarTransacciones() {
+            try {
+                // Obtener transacciones de los últimos 30 días
+                const treintaDiasAtras = new Date();
+                treintaDiasAtras.setDate(treintaDiasAtras.getDate() - 30);
+                
+                transacciones = AdvancedDB.find('transacciones', {
+                    fecha: { $gte: treintaDiasAtras.toISOString().split('T')[0] }
+                });
+                
+                transacciones.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+                
+                mostrarTransacciones();
+                
+            } catch (error) {
+                console.error('Error cargando transacciones:', error);
+                throw error;
+            }
+        }
+
+        // Mostrar transacciones en la lista
+        function mostrarTransacciones() {
+            const transactionList = document.getElementById('transactionList');
+            
+            if (transacciones.length === 0) {
+                transactionList.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
+                        <p>No hay transacciones recientes</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            transacciones.slice(0, 10).forEach(transaccion => {
+                const proyecto = proyectos.find(p => p.id === transaccion.proyectoId);
+                const proyectoNombre = proyecto ? proyecto.nombre : 'Proyecto no encontrado';
+                
+                const tipoClass = transaccion.tipo === 'ingreso' ? 'ingreso' : 'gasto';
+                const tipoIcon = transaccion.tipo === 'ingreso' ? '↗' : '↘';
+                const tipoColor = transaccion.tipo === 'ingreso' ? '#28a745' : '#dc3545';
+                
+                html += `
+                    <div class="transaction-item">
+                        <div class="transaction-type ${tipoClass}">${tipoIcon}</div>
+                        <div class="transaction-info">
+                            <div class="transaction-desc">${transaccion.descripcion}</div>
+                            <div class="transaction-meta">
+                                ${proyectoNombre} • ${transaccion.categoria} • ${transaccion.fecha}
+                            </div>
+                        </div>
+                        <div class="transaction-amount ${tipoClass}">
+                            ${Utils.formatCurrency(transaccion.monto)}
+                        </div>
+                        <div class="transaction-date">
+                            ${new Date(transaccion.fecha).toLocaleDateString('es-GT')}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            transactionList.innerHTML = html;
+        }
+
+        // Actualizar resumen financiero
+        function actualizarResumenFinanciero() {
+            const financialSummary = document.getElementById('financialSummary');
+            
+            // Calcular totales
+            let totalIngresos = 0;
+            let totalGastos = 0;
+            
+            transacciones.forEach(t => {
+                if (t.tipo === 'ingreso') {
+                    totalIngresos += parseFloat(t.monto || 0);
+                } else {
+                    totalGastos += parseFloat(t.monto || 0);
+                }
+            });
+            
+            const saldo = totalIngresos - totalGastos;
+            const promedioGasto = transacciones.filter(t => t.tipo === 'gasto').length > 0 
+                ? totalGastos / transacciones.filter(t => t.tipo === 'gasto').length 
+                : 0;
+            
+            // Calcular transacciones del mes actual
+            const hoy = new Date();
+            const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            const ultimoDiaMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+            
+            const transaccionesMes = transacciones.filter(t => {
+                const fecha = new Date(t.fecha);
+                return fecha >= primerDiaMes && fecha <= ultimoDiaMes;
+            });
+            
+            const ingresosMes = transaccionesMes
+                .filter(t => t.tipo === 'ingreso')
+                .reduce((sum, t) => sum + parseFloat(t.monto || 0), 0);
+                
+            const gastosMes = transaccionesMes
+                .filter(t => t.tipo === 'gasto')
+                .reduce((sum, t) => sum + parseFloat(t.monto || 0), 0);
+            
+            financialSummary.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-label">SALDO ACTUAL</div>
+                    <div class="summary-value" style="color: ${saldo >= 0 ? '#28a745' : '#dc3545'}">
+                        ${Utils.formatCurrency(saldo)}
+                    </div>
+                    <div class="summary-meta">${transacciones.length} transacciones</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-label">INGRESOS TOTALES</div>
+                    <div class="summary-value" style="color: #28a745">
+                        ${Utils.formatCurrency(totalIngresos)}
+                    </div>
+                    <div class="summary-meta">${Utils.formatCurrency(ingresosMes)} este mes</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-label">GASTOS TOTALES</div>
+                    <div class="summary-value" style="color: #dc3545">
+                        ${Utils.formatCurrency(totalGastos)}
+                    </div>
+                    <div class="summary-meta">${Utils.formatCurrency(gastosMes)} este mes</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-label">PROMEDIO POR GASTO</div>
+                    <div class="summary-value" style="color: #ffc107">
+                        ${Utils.formatCurrency(promedioGasto)}
+                    </div>
+                    <div class="summary-meta">${transacciones.filter(t => t.tipo === 'gasto').length} gastos registrados</div>
+                </div>
+            `;
+        }
+
+        // Mostrar formulario de ingreso
+        function mostrarFormularioIngreso() {
+            ocultarFormulario('gastoForm');
+            document.getElementById('ingresoForm').style.display = 'block';
+            document.getElementById('ingreso-fecha').value = new Date().toISOString().split('T')[0];
+            window.scrollTo({ top: document.getElementById('ingresoForm').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        // Mostrar formulario de gasto
+        function mostrarFormularioGasto() {
+            ocultarFormulario('ingresoForm');
+            document.getElementById('gastoForm').style.display = 'block';
+            document.getElementById('gasto-fecha').value = new Date().toISOString().split('T')[0];
+            window.scrollTo({ top: document.getElementById('gastoForm').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        // Ocultar formulario
+        function ocultarFormulario(formId) {
+            document.getElementById(formId).style.display = 'none';
+            // Limpiar formularios
+            if (formId === 'ingresoForm') {
+                document.getElementById('formIngreso').reset();
+            } else {
+                document.getElementById('formGasto').reset();
+                document.getElementById('alquiler-fields').style.display = 'none';
+            }
+        }
+
+        // Mostrar campos adicionales para alquiler
+        function mostrarCamposAdicionales() {
+            const categoria = document.getElementById('gasto-categoria').value;
+            const alquilerFields = document.getElementById('alquiler-fields');
+            
+            if (categoria === 'equipo') {
+                alquilerFields.style.display = 'block';
+                
+                // Establecer fechas por defecto
+                const hoy = new Date();
+                document.getElementById('gasto-fecha-inicio').value = hoy.toISOString().split('T')[0];
+                
+                const fin = new Date(hoy);
+                fin.setDate(fin.getDate() + 30);
+                document.getElementById('gasto-fecha-fin').value = fin.toISOString().split('T')[0];
+            } else {
+                alquilerFields.style.display = 'none';
+            }
+        }
+
+        // Actualizar categorías de gasto según proyecto
+        function actualizarCategoriasGasto() {
+            // En una implementación real, se podrían filtrar categorías según el proyecto
+            console.log('Proyecto seleccionado para gasto');
+        }
+
+        // Registrar ingreso
+        async function registrarIngreso(event) {
+            event.preventDefault();
+            
+            try {
+                const proyectoId = document.getElementById('ingreso-proyecto').value;
+                const descripcion = document.getElementById('ingreso-descripcion').value;
+                const monto = parseFloat(document.getElementById('ingreso-monto').value);
+                const unidad = document.getElementById('ingreso-unidad').value;
+                const categoria = document.getElementById('ingreso-categoria').value;
+                const fecha = document.getElementById('ingreso-fecha').value;
+                const observaciones = document.getElementById('ingreso-observaciones').value;
+                
+                // Validaciones
+                if (!proyectoId) {
+                    Utils.showNotification('Seleccione un proyecto', 'warning');
+                    return;
+                }
+                
+                if (monto <= 0) {
+                    Utils.showNotification('El monto debe ser mayor a 0', 'warning');
+                    return;
+                }
+                
+                // Crear objeto de transacción
+                const transaccion = {
+                    proyectoId,
+                    tipo: 'ingreso',
+                    descripcion,
+                    monto,
+                    moneda: 'GTQ',
+                    unidad,
+                    cantidad: 1,
+                    categoria,
+                    fecha,
+                    mes: Utils.obtenerMes(fecha),
+                    observaciones,
+                    estado: 'completado',
+                    syncStatus: 'pending'
+                };
+                
+                // Guardar en base de datos
+                const resultado = AdvancedDB.insert('transacciones', transaccion);
+                
+                // Actualizar proyecto
+                const proyecto = AdvancedDB.findOne('proyectos', { id: proyectoId });
+                if (proyecto) {
+                    const metricas = App.proyectoManager.calcularMetricas(proyectoId);
+                    AdvancedDB.update('proyectos', proyectoId, {
+                        avanceFinanciero: metricas.avanceFinanciero
+                    });
+                }
+                
+                // Mostrar éxito
+                Utils.showNotification('Ingreso registrado exitosamente', 'success');
+                
+                // Limpiar formulario
+                document.getElementById('formIngreso').reset();
+                ocultarFormulario('ingresoForm');
+                
+                // Actualizar datos
+                await cargarTransacciones();
+                actualizarResumenFinanciero();
+                
+                // Sincronizar
+                SyncService.syncNow();
+                
+            } catch (error) {
+                console.error('Error registrando ingreso:', error);
+                Utils.showNotification('Error al registrar ingreso: ' + error.message, 'error');
+            }
+        }
+
+        // Registrar gasto
+        async function registrarGasto(event) {
+            event.preventDefault();
+            
+            try {
+                const proyectoId = document.getElementById('gasto-proyecto').value;
+                const descripcion = document.getElementById('gasto-descripcion').value;
+                const cantidad = parseFloat(document.getElementById('gasto-cantidad').value) || 1;
+                const unidad = document.getElementById('gasto-unidad').value;
+                const monto = parseFloat(document.getElementById('gasto-monto').value);
+                const categoria = document.getElementById('gasto-categoria').value;
+                const proveedorId = document.getElementById('gasto-proveedor').value;
+                const fecha = document.getElementById('gasto-fecha').value;
+                const observaciones = document.getElementById('gasto-observaciones').value;
+                const fechaInicio = document.getElementById('gasto-fecha-inicio').value;
+                const fechaFin = document.getElementById('gasto-fecha-fin').value;
+                
+                // Validaciones
+                if (!proyectoId) {
+                    Utils.showNotification('Seleccione un proyecto', 'warning');
+                    return;
+                }
+                
+                if (monto <= 0) {
+                    Utils.showNotification('El monto debe ser mayor a 0', 'warning');
+                    return;
+                }
+                
+                // Crear objeto de transacción
+                const transaccion = {
+                    proyectoId,
+                    tipo: 'gasto',
+                    descripcion,
+                    monto,
+                    moneda: 'GTQ',
+                    unidad,
+                    cantidad,
+                    categoria,
+                    proveedorId,
+                    fecha,
+                    mes: Utils.obtenerMes(fecha),
+                    observaciones,
+                    estado: 'completado',
+                    syncStatus: 'pending'
+                };
+                
+                // Agregar fechas de alquiler si corresponde
+                if (categoria === 'equipo' && fechaInicio && fechaFin) {
+                    transaccion.fechaInicio = fechaInicio;
+                    transaccion.fechaFin = fechaFin;
+                    
+                    // Configurar alerta de vencimiento
+                    const alerta = {
+                        tipo: 'alquiler_vencimiento',
+                        proyectoId,
+                        mensaje: `Alquiler de ${descripcion} vence el ${new Date(fechaFin).toLocaleDateString('es-GT')}`,
+                        fechaVencimiento: new Date(fechaFin).toISOString(),
+                        fechaRecordatorio: new Date(new Date(fechaFin).setDate(new Date(fechaFin).getDate() - 3)).toISOString(),
+                        prioridad: 'alta',
+                        estado: 'pendiente'
+                    };
+                    
+                    AdvancedDB.insert('alertas', alerta);
+                }
+                
+                // Guardar en base de datos
+                const resultado = AdvancedDB.insert('transacciones', transaccion);
+                
+                // Actualizar proyecto
+                const proyecto = AdvancedDB.findOne('proyectos', { id: proyectoId });
+                if (proyecto) {
+                    const metricas = App.proyectoManager.calcularMetricas(proyectoId);
+                    AdvancedDB.update('proyectos', proyectoId, {
+                        avanceFinanciero: metricas.avanceFinanciero
+                    });
+                }
+                
+                // Mostrar éxito
+                Utils.showNotification('Gasto registrado exitosamente', 'success');
+                
+                // Limpiar formulario
+                document.getElementById('formGasto').reset();
+                document.getElementById('alquiler-fields').style.display = 'none';
+                ocultarFormulario('gastoForm');
+                
+                // Actualizar datos
+                await cargarTransacciones();
+                actualizarResumenFinanciero();
+                
+                // Sincronizar
+                SyncService.syncNow();
+                
+            } catch (error) {
+                console.error('Error registrando gasto:', error);
+                Utils.showNotification('Error al registrar gasto: ' + error.message, 'error');
+            }
+        }
+
+        // Exportar datos
+        function exportarDatos() {
+            try {
+                const datos = {
+                    proyectos: AdvancedDB.get('proyectos'),
+                    transacciones: AdvancedDB.get('transacciones'),
+                    fechaExportacion: new Date().toISOString()
+                };
+                
+                Utils.exportToCSV(datos.transacciones, 'transacciones_mns');
+                Utils.showNotification('Datos exportados exitosamente', 'success');
+                
+            } catch (error) {
+                console.error('Error exportando datos:', error);
+                Utils.showNotification('Error al exportar datos', 'error');
+            }
+        }
+
+        // Función auxiliar para obtener mes
+        Utils.obtenerMes = function(fecha) {
+            const meses = [
+                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+            ];
+            const date = new Date(fecha);
+            return meses[date.getMonth()];
+        };
+    </script>
+</body>
+</html>

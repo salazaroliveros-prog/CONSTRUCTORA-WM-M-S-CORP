@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#001326">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>PROYECTOS - Sistema M&S</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script defer src="pwa.js"></script>
+    <script src="app.js"></script>
+    <script src="database.js"></script>
+    <script src="sync.js"></script>
+    <style>
+        .app-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            padding-bottom: 80px;
+        }
+
+        .main-content {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Encabezado de la aplicación */
+        .app-hero {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border-radius: var(--border-radius);
+            border: 2px solid var(--accent-gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light), var(--accent-gold));
+            animation: shimmer 3s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            color: var(--accent-gold);
+            text-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .app-slogan {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        /* Controles principales */
+        .main-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(var(--primary-dark-rgb), 0.7);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .search-filter {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .filter-select {
+            min-width: 200px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Tabla de proyectos */
+        .projects-table-container {
+            background: rgba(var(--primary-dark-rgb), 0.7);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(var(--primary-dark-rgb), 0.9);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .table-title {
+            margin: 0;
+            color: var(--accent-gold);
+            font-size: 1.3rem;
+        }
+
+        .projects-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        .projects-table th {
+            background: rgba(212, 175, 55, 0.2);
+            color: var(--accent-gold);
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid var(--accent-gold);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .projects-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            vertical-align: middle;
+        }
+
+        .projects-table tbody tr:hover {
+            background: rgba(212, 175, 55, 0.05);
+            cursor: pointer;
+        }
+
+        .project-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-activo {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+
+        .status-espera {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .status-completado {
+            background: rgba(23, 162, 184, 0.2);
+            color: #17a2b8;
+            border: 1px solid #17a2b8;
+        }
+
+        .status-cancelado {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+            border: 1px solid #6c757d;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+
+        .action-buttons-cell {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--accent-gold);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Estadísticas */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(var(--primary-dark-rgb), 0.8);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-3px);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+            color: var(--accent-gold);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Modal de proyecto */
+        .project-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: var(--primary-dark);
+            border: 2px solid var(--accent-gold);
+            border-radius: var(--border-radius);
+            max-width: 800px;
+            margin: 20px auto;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--secondary-dark));
+            padding: 20px;
+            border-bottom: 1px solid var(--accent-gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-title {
+            margin: 0;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .section-title {
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            background: rgba(var(--primary-dark-rgb), 0.5);
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            position: sticky;
+            bottom: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-filter {
+                width: 100%;
+            }
+            
+            .action-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 2rem;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .modal-content {
+                margin: 10px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-box,
+            .filter-select {
+                min-width: 100%;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .btn {
+                width: 100%;
+            }
+            
+            .modal-footer {
+                flex-direction: column;
+            }
+            
+            .modal-footer .btn {
+                width: 100%;
+            }
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            opacity: 0.7;
+        }
+
+        .tab:hover {
+            opacity: 1;
+        }
+
+        .tab.active {
+            opacity: 1;
+            color: var(--accent-gold);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-gold);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Encabezado de la aplicación -->
+        <header class="app-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo-section">
+                        <div class="logo-text">CONSTRUCTORA WM/M&S</div>
+                        <div class="logo-slogan">EDIFICANDO EL FUTURO</div>
+                    </div>
+                    <div class="header-controls">
+                        <div class="real-time-clock" id="realTimeClock"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navegación principal -->
+        <nav class="main-nav">
+            <div class="container">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="inicio.html" class="nav-link">
+                            <i class="fas fa-home nav-icon"></i> INICIO
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="proyectos.html" class="nav-link active">
+                            <i class="fas fa-project-diagram nav-icon"></i> PROYECTOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="presupuestos.html" class="nav-link">
+                            <i class="fas fa-calculator nav-icon"></i> PRESUPUESTOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="seguimiento.html" class="nav-link">
+                            <i class="fas fa-chart-line nav-icon"></i> SEGUIMIENTO
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="compras.html" class="nav-link">
+                            <i class="fas fa-shopping-cart nav-icon"></i> COMPRAS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="rrhh.html" class="nav-link">
+                            <i class="fas fa-users nav-icon"></i> RR.HH.
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="dashboard.html" class="nav-link">
+                            <i class="fas fa-tachometer-alt nav-icon"></i> DASHBOARD
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="App.logout()">
+                            <i class="fas fa-sign-out-alt nav-icon"></i> SALIR
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            <!-- Encabezado hero -->
+            <div class="app-hero">
+                <h1 class="app-title">GESTIÓN DE PROYECTOS</h1>
+                <p class="app-slogan">Captación de información desde la primera visita con el cliente</p>
+            </div>
+
+            <!-- Controles principales -->
+            <div class="main-controls">
+                <div class="search-filter">
+                    <div class="search-box">
+                        <input type="text" class="form-control" id="searchInput" 
+                               placeholder="Buscar proyectos por nombre, cliente, código...">
+                    </div>
+                    <div class="filter-select">
+                        <select class="form-control" id="filterEstado" aria-label="Filtrar por estado" title="Filtrar por estado">
+                            <option value="">Todos los estados</option>
+                            <option value="activo">Activos</option>
+                            <option value="espera">En espera</option>
+                            <option value="completado">Completados</option>
+                            <option value="cancelado">Cancelados</option>
+                        </select>
+                    </div>
+                    <div class="filter-select">
+                        <select class="form-control" id="filterTipologia" aria-label="Filtrar por tipología" title="Filtrar por tipología">
+                            <option value="">Todas las tipologías</option>
+                            <option value="RESIDENCIAL">Residencial</option>
+                            <option value="COMERCIAL">Comercial</option>
+                            <option value="INDUSTRIAL">Industrial</option>
+                            <option value="CIVIL">Civil</option>
+                            <option value="PUBLICA">Pública</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="nuevoProyecto()">
+                        <i class="fas fa-plus"></i> NUEVO PROYECTO
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportarProyectos()">
+                        <i class="fas fa-file-export"></i> EXPORTAR
+                    </button>
+                    <button class="btn btn-info" onclick="SyncService.syncNow()">
+                        <i class="fas fa-sync-alt"></i> SINCRONIZAR
+                    </button>
+                </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="stats-container" id="statsContainer">
+                <!-- Se carga dinámicamente -->
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="cambiarTab('tab-activos')">
+                    <i class="fas fa-play-circle"></i> PROYECTOS ACTIVOS
+                </button>
+                <button class="tab" onclick="cambiarTab('tab-espera')">
+                    <i class="fas fa-clock"></i> EN ESPERA
+                </button>
+                <button class="tab" onclick="cambiarTab('tab-todos')">
+                    <i class="fas fa-list"></i> TODOS LOS PROYECTOS
+                </button>
+                <button class="tab" onclick="cambiarTab('tab-anteproyectos')">
+                    <i class="fas fa-file-contract"></i> ANTEPROYECTOS
+                </button>
+            </div>
+
+            <!-- Tab: Proyectos Activos -->
+            <div class="tab-content active" id="tab-activos">
+                <div class="projects-table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">PROYECTOS EN EJECUCIÓN</h3>
+                        <span class="badge badge-primary" id="count-activos">0 proyectos</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="projects-table" id="tableActivos">
+                            <thead>
+                                <tr>
+                                    <th>CÓDIGO</th>
+                                    <th>NOMBRE DEL PROYECTO</th>
+                                    <th>CLIENTE</th>
+                                    <th>UBICACIÓN</th>
+                                    <th>PRESUPUESTO</th>
+                                    <th>AVANCE</th>
+                                    <th>FECHA INICIO</th>
+                                    <th>ESTADO</th>
+                                    <th>ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyActivos">
+                                <!-- Se carga dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: En Espera -->
+            <div class="tab-content" id="tab-espera">
+                <div class="projects-table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">PROYECTOS EN ESPERA DE NEGOCIACIÓN</h3>
+                        <span class="badge badge-warning" id="count-espera">0 proyectos</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="projects-table" id="tableEspera">
+                            <thead>
+                                <tr>
+                                    <th>CÓDIGO</th>
+                                    <th>NOMBRE DEL PROYECTO</th>
+                                    <th>CLIENTE</th>
+                                    <th>UBICACIÓN</th>
+                                    <th>ÁREA CONSTRUCCIÓN</th>
+                                    <th>FECHA REGISTRO</th>
+                                    <th>ESTADO</th>
+                                    <th>ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyEspera">
+                                <!-- Se carga dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Todos los Proyectos -->
+            <div class="tab-content" id="tab-todos">
+                <div class="projects-table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">TODOS LOS PROYECTOS</h3>
+                        <span class="badge badge-info" id="count-todos">0 proyectos</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="projects-table" id="tableTodos">
+                            <thead>
+                                <tr>
+                                    <th>CÓDIGO</th>
+                                    <th>NOMBRE</th>
+                                    <th>CLIENTE</th>
+                                    <th>TIPOLOGÍA</th>
+                                    <th>PRESUPUESTO</th>
+                                    <th>AVANCE</th>
+                                    <th>ESTADO</th>
+                                    <th>FECHA INICIO</th>
+                                    <th>FECHA FIN</th>
+                                    <th>ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyTodos">
+                                <!-- Se carga dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Anteproyectos -->
+            <div class="tab-content" id="tab-anteproyectos">
+                <div class="projects-table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">INGRESOS POR ANTEPROYECTOS</h3>
+                        <span class="badge badge-success" id="count-anteproyectos">0 registros</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="projects-table" id="tableAnteproyectos">
+                            <thead>
+                                <tr>
+                                    <th>FECHA</th>
+                                    <th>CLIENTE</th>
+                                    <th>PROYECTO</th>
+                                    <th>DESCRIPCIÓN</th>
+                                    <th>MONTO</th>
+                                    <th>ESTADO PAGO</th>
+                                    <th>COMENTARIOS</th>
+                                    <th>ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyAnteproyectos">
+                                <!-- Se carga dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Proyecto -->
+    <div class="project-modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">NUEVO PROYECTO</h3>
+                <button class="modal-close" onclick="cerrarModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="projectForm" onsubmit="guardarProyecto(event)">
+                    <!-- Pestañas del formulario -->
+                    <div class="tabs">
+                        <button type="button" class="tab active" onclick="cambiarTabForm('tab-info')">
+                            INFORMACIÓN GENERAL
+                        </button>
+                        <button type="button" class="tab" onclick="cambiarTabForm('tab-necesidades')">
+                            NECESIDADES DEL CLIENTE
+                        </button>
+                        <button type="button" class="tab" onclick="cambiarTabForm('tab-documentos')">
+                            DOCUMENTOS
+                        </button>
+                    </div>
+
+                    <!-- Tab: Información General -->
+                    <div class="tab-content active" id="tab-info">
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-info-circle"></i> DATOS BÁSICOS DEL PROYECTO
+                            </h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="proyecto-codigo">Código del Proyecto *</label>
+                                    <input type="text" class="form-control" id="proyecto-codigo" 
+                                           placeholder="Se generará automáticamente" readonly>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-nombre">Nombre del Proyecto *</label>
+                                    <input type="text" class="form-control" id="proyecto-nombre" 
+                                           placeholder="Ej: Casa Residencial Las Lomas" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-estado">Estado *</label>
+                                    <select class="form-control" id="proyecto-estado" required>
+                                        <option value="espera">En Espera</option>
+                                        <option value="activo">Activo</option>
+                                        <option value="completado">Completado</option>
+                                        <option value="cancelado">Cancelado</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-tipologia">Tipología *</label>
+                                    <select class="form-control" id="proyecto-tipologia" required>
+                                        <option value="">Seleccionar tipología</option>
+                                        <option value="RESIDENCIAL">Residencial</option>
+                                        <option value="COMERCIAL">Comercial</option>
+                                        <option value="INDUSTRIAL">Industrial</option>
+                                        <option value="CIVIL">Civil</option>
+                                        <option value="PUBLICA">Pública</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-user"></i> INFORMACIÓN DEL CLIENTE
+                            </h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="proyecto-cliente">Nombre del Cliente *</label>
+                                    <input type="text" class="form-control" id="proyecto-cliente" 
+                                           placeholder="Nombre completo del cliente" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-telefono">Teléfono *</label>
+                                    <input type="tel" class="form-control" id="proyecto-telefono" 
+                                           placeholder="Ej: 5555-5555" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-email">Email</label>
+                                    <input type="email" class="form-control" id="proyecto-email" 
+                                           placeholder="correo@cliente.com">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-dpi">DPI/CUI</label>
+                                    <input type="text" class="form-control" id="proyecto-dpi" 
+                                           placeholder="Número de identificación">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-map-marker-alt"></i> UBICACIÓN Y DIMENSIONES
+                            </h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="proyecto-ubicacion">Ubicación *</label>
+                                    <input type="text" class="form-control" id="proyecto-ubicacion" 
+                                           placeholder="Dirección exacta del proyecto" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-area-terreno">Área del Terreno (m²)</label>
+                                    <input type="number" class="form-control" id="proyecto-area-terreno" 
+                                           step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-area-construccion">Área a Construir (m²) *</label>
+                                    <input type="number" class="form-control" id="proyecto-area-construccion" 
+                                           step="0.01" min="0" placeholder="0.00" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-coordenadas">Coordenadas GPS</label>
+                                    <input type="text" class="form-control" id="proyecto-coordenadas" 
+                                           placeholder="Latitud, Longitud">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-calendar-alt"></i> FECHAS Y PRESUPUESTO
+                            </h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="proyecto-fecha-registro">Fecha de Registro *</label>
+                                    <input type="date" class="form-control" id="proyecto-fecha-registro" 
+                                           value="<?php echo date('Y-m-d'); ?>" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-fecha-inicio">Fecha de Inicio</label>
+                                    <input type="date" class="form-control" id="proyecto-fecha-inicio">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-fecha-fin">Fecha Fin Estimada</label>
+                                    <input type="date" class="form-control" id="proyecto-fecha-fin">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="proyecto-presupuesto">Presupuesto Aprobado (GTQ)</label>
+                                    <input type="number" class="form-control" id="proyecto-presupuesto" 
+                                           step="0.01" min="0" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Necesidades del Cliente -->
+                    <div class="tab-content" id="tab-necesidades">
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-clipboard-list"></i> PROGRAMA DE NECESIDADES
+                            </h4>
+                            <div class="form-group">
+                                <label>Descripción detallada de lo que el cliente necesita:</label>
+                                <textarea class="form-control" id="proyecto-necesidades" 
+                                          rows="10" placeholder="Describa aquí todos los requerimientos del cliente..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-home"></i> ESPACIOS REQUERIDOS
+                            </h4>
+                            <div id="espacios-container">
+                                <!-- Se generan dinámicamente -->
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="agregarEspacio()">
+                                <i class="fas fa-plus"></i> Agregar Espacio
+                            </button>
+                        </div>
+
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-check-circle"></i> REQUERIMIENTOS ESPECIALES
+                            </h4>
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="req-acceso-discapacitados">
+                                    <label class="form-check-label" for="req-acceso-discapacitados">Acceso para discapacitados</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="req-estacionamiento">
+                                    <label class="form-check-label" for="req-estacionamiento">Estacionamiento cubierto</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="req-jardin">
+                                    <label class="form-check-label" for="req-jardin">Área de jardín</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="req-piscina">
+                                    <label class="form-check-label" for="req-piscina">Piscina</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="req-sistema-seguridad">
+                                    <label class="form-check-label" for="req-sistema-seguridad">Sistema de seguridad</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="req-energia-solar">
+                                    <label class="form-check-label" for="req-energia-solar">Energía solar</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Documentos -->
+                    <div class="tab-content" id="tab-documentos">
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-file-upload"></i> DOCUMENTOS ADJUNTOS
+                            </h4>
+                            <div class="form-group">
+                                <label>Subir documentos relacionados</label>
+                                <div class="file-upload-area" id="fileUploadArea">
+                                    <input type="file" id="fileInput" multiple style="display: none;" 
+                                           onchange="manejarArchivosSubidos(this.files)">
+                                    <div class="upload-prompt" onclick="document.getElementById('fileInput').click()">
+                                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                        <p>Arrastre y suelte archivos aquí o haga clic para seleccionar</p>
+                                        <small>Formatos permitidos: PDF, JPG, PNG, DOC, XLS (Máximo 10MB por archivo)</small>
+                                    </div>
+                                    <div class="file-list" id="fileList">
+                                        <!-- Lista de archivos se muestra aquí -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4 class="section-title">
+                                <i class="fas fa-sticky-note"></i> NOTAS ADICIONALES
+                            </h4>
+                            <div class="form-group">
+                                <textarea class="form-control" id="proyecto-notas" 
+                                          rows="5" placeholder="Notas adicionales, observaciones, comentarios..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModal()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-info" onclick="generarPDF()">
+                    <i class="fas fa-file-pdf"></i> Generar PDF
+                </button>
+                <button type="submit" class="btn btn-primary" form="projectForm">
+                    <i class="fas fa-save"></i> Guardar Proyecto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let proyectos = [];
+        let proyectoActual = null;
+        let tabActual = 'tab-activos';
+
+        // Inicializar aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            inicializarAplicacion();
+            
+            // Configurar filtros
+            document.getElementById('searchInput').addEventListener('input', filtrarProyectos);
+            document.getElementById('filterEstado').addEventListener('change', filtrarProyectos);
+            document.getElementById('filterTipologia').addEventListener('change', filtrarProyectos);
+        });
+
+        // Función principal de inicialización
+        async function inicializarAplicacion() {
+            try {
+                // Mostrar loading
+                Utils.showLoading('Cargando proyectos...');
+                
+                // Cargar proyectos
+                await cargarProyectos();
+                
+                // Calcular estadísticas
+                calcularEstadisticas();
+                
+                // Ocultar loading
+                Utils.hideLoading();
+                
+            } catch (error) {
+                console.error('Error inicializando aplicación:', error);
+                Utils.hideLoading();
+                Utils.showNotification('Error al cargar proyectos', 'error');
+            }
+        }
+
+        // Cargar proyectos desde la base de datos
+        async function cargarProyectos() {
+            try {
+                proyectos = AdvancedDB.get('proyectos') || [];
+                actualizarTablas();
+                
+            } catch (error) {
+                console.error('Error cargando proyectos:', error);
+                throw error;
+            }
+        }
+
+        // Actualizar todas las tablas
+        function actualizarTablas() {
+            actualizarTablaActivos();
+            actualizarTablaEspera();
+            actualizarTablaTodos();
+            actualizarTablaAnteproyectos();
+        }
+
+        // Actualizar tabla de proyectos activos
+        function actualizarTablaActivos() {
+            const tbody = document.getElementById('tbodyActivos');
+            const countElement = document.getElementById('count-activos');
+            
+            const proyectosActivos = proyectos.filter(p => p.estado === 'activo');
+            countElement.textContent = `${proyectosActivos.length} proyectos`;
+            
+            if (proyectosActivos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center p-4">
+                            <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p>No hay proyectos activos</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            proyectosActivos.forEach(proyecto => {
+                const avanceFisico = proyecto.avanceFisico || 0;
+                const avanceFinanciero = proyecto.avanceFinanciero || 0;
+                
+                html += `
+                    <tr onclick="verProyecto('${proyecto.id}')" style="cursor: pointer;">
+                        <td><strong>${proyecto.codigo || 'N/A'}</strong></td>
+                        <td>${proyecto.nombre}</td>
+                        <td>${proyecto.cliente}</td>
+                        <td>${proyecto.ubicacion || 'No especificada'}</td>
+                        <td>${Utils.formatCurrency(proyecto.presupuestoAprobado || 0)}</td>
+                        <td>
+                            <div>Físico: ${avanceFisico}%</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${avanceFisico}%"></div>
+                            </div>
+                            <div>Financiero: ${avanceFinanciero}%</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${avanceFinanciero}%"></div>
+                            </div>
+                        </td>
+                        <td>${proyecto.fechaInicio ? new Date(proyecto.fechaInicio).toLocaleDateString('es-GT') : 'No definida'}</td>
+                        <td><span class="project-status status-activo">ACTIVO</span></td>
+                        <td>
+                            <div class="action-buttons-cell">
+                                <button class="action-btn" onclick="event.stopPropagation(); editarProyecto('${proyecto.id}')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn" onclick="event.stopPropagation(); cambiarEstadoProyecto('${proyecto.id}', 'completado')" title="Completar">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="action-btn" onclick="event.stopPropagation(); generarInformeProyecto('${proyecto.id}')" title="Informe">
+                                    <i class="fas fa-file-pdf"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // Actualizar tabla de proyectos en espera
+        function actualizarTablaEspera() {
+            const tbody = document.getElementById('tbodyEspera');
+            const countElement = document.getElementById('count-espera');
+            
+            const proyectosEspera = proyectos.filter(p => p.estado === 'espera');
+            countElement.textContent = `${proyectosEspera.length} proyectos`;
+            
+            if (proyectosEspera.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center p-4">
+                            <i class="fas fa-clock fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p>No hay proyectos en espera</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            proyectosEspera.forEach(proyecto => {
+                html += `
+                    <tr onclick="verProyecto('${proyecto.id}')" style="cursor: pointer;">
+                        <td><strong>${proyecto.codigo || 'N/A'}</strong></td>
+                        <td>${proyecto.nombre}</td>
+                        <td>${proyecto.cliente}</td>
+                        <td>${proyecto.ubicacion || 'No especificada'}</td>
+                        <td>${proyecto.areaConstruccion ? proyecto.areaConstruccion + ' m²' : 'No especificada'}</td>
+                        <td>${proyecto.fechaRegistro ? new Date(proyecto.fechaRegistro).toLocaleDateString('es-GT') : 'N/A'}</td>
+                        <td><span class="project-status status-espera">EN ESPERA</span></td>
+                        <td>
+                            <div class="action-buttons-cell">
+                                <button class="action-btn" onclick="event.stopPropagation(); activarProyecto('${proyecto.id}')" title="Activar">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="action-btn" onclick="event.stopPropagation(); editarProyecto('${proyecto.id}')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn" onclick="event.stopPropagation(); eliminarProyecto('${proyecto.id}')" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // Actualizar tabla de todos los proyectos
+        function actualizarTablaTodos() {
+            const tbody = document.getElementById('tbodyTodos');
+            const countElement = document.getElementById('count-todos');
+            
+            countElement.textContent = `${proyectos.length} proyectos`;
+            
+            if (proyectos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="text-center p-4">
+                            <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p>No hay proyectos registrados</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            proyectos.forEach(proyecto => {
+                let statusClass = '';
+                let statusText = '';
+                
+                switch(proyecto.estado) {
+                    case 'activo':
+                        statusClass = 'status-activo';
+                        statusText = 'ACTIVO';
+                        break;
+                    case 'espera':
+                        statusClass = 'status-espera';
+                        statusText = 'EN ESPERA';
+                        break;
+                    case 'completado':
+                        statusClass = 'status-completado';
+                        statusText = 'COMPLETADO';
+                        break;
+                    case 'cancelado':
+                        statusClass = 'status-cancelado';
+                        statusText = 'CANCELADO';
+                        break;
+                }
+                
+                html += `
+                    <tr onclick="verProyecto('${proyecto.id}')" style="cursor: pointer;">
+                        <td><strong>${proyecto.codigo || 'N/A'}</strong></td>
+                        <td>${proyecto.nombre}</td>
+                        <td>${proyecto.cliente}</td>
+                        <td>${proyecto.tipologia || 'No especificada'}</td>
+                        <td>${Utils.formatCurrency(proyecto.presupuestoAprobado || 0)}</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${proyecto.avanceFisico || 0}%"></div>
+                            </div>
+                            <small>${proyecto.avanceFisico || 0}%</small>
+                        </td>
+                        <td><span class="project-status ${statusClass}">${statusText}</span></td>
+                        <td>${proyecto.fechaInicio ? new Date(proyecto.fechaInicio).toLocaleDateString('es-GT') : ''}</td>
+                        <td>${proyecto.fechaFin ? new Date(proyecto.fechaFin).toLocaleDateString('es-GT') : ''}</td>
+                        <td>
+                            <div class="action-buttons-cell">
+                                <button class="action-btn" onclick="event.stopPropagation(); editarProyecto('${proyecto.id}')" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn" onclick="event.stopPropagation(); generarInformeProyecto('${proyecto.id}')" title="Informe">
+                                    <i class="fas fa-file-pdf"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // Actualizar tabla de anteproyectos
+        function actualizarTablaAnteproyectos() {
+            const tbody = document.getElementById('tbodyAnteproyectos');
+            const countElement = document.getElementById('count-anteproyectos');
+            
+            // Obtener transacciones de anteproyectos
+            const transacciones = AdvancedDB.find('transacciones', {
+                categoria: 'ante_proyecto'
+            }) || [];
+            
+            countElement.textContent = `${transacciones.length} registros`;
+            
+            if (transacciones.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center p-4">
+                            <i class="fas fa-file-contract fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p>No hay ingresos por anteproyectos</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            transacciones.forEach(transaccion => {
+                const proyecto = proyectos.find(p => p.id === transaccion.proyectoId);
+                const proyectoNombre = proyecto ? proyecto.nombre : 'Proyecto no encontrado';
+                
+                html += `
+                    <tr>
+                        <td>${new Date(transaccion.fecha).toLocaleDateString('es-GT')}</td>
+                        <td>${proyecto ? proyecto.cliente : 'N/A'}</td>
+                        <td>${proyectoNombre}</td>
+                        <td>${transaccion.descripcion}</td>
+                        <td><strong>${Utils.formatCurrency(transaccion.monto)}</strong></td>
+                        <td><span class="project-status status-completado">PAGADO</span></td>
+                        <td>${transaccion.observaciones || 'Sin comentarios'}</td>
+                        <td>
+                            <div class="action-buttons-cell">
+                                <button class="action-btn" onclick="generarFacturaAnteproyecto('${transaccion.id}')" title="Factura">
+                                    <i class="fas fa-receipt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // Calcular estadísticas
+        function calcularEstadisticas() {
+            const statsContainer = document.getElementById('statsContainer');
+            
+            const totalProyectos = proyectos.length;
+            const proyectosActivos = proyectos.filter(p => p.estado === 'activo').length;
+            const proyectosEspera = proyectos.filter(p => p.estado === 'espera').length;
+            const proyectosCompletados = proyectos.filter(p => p.estado === 'completado').length;
+            
+            const presupuestoTotal = proyectos.reduce((sum, p) => sum + (p.presupuestoAprobado || 0), 0);
+            const avancePromedio = proyectos.length > 0 
+                ? proyectos.reduce((sum, p) => sum + (p.avanceFisico || 0), 0) / proyectos.length 
+                : 0;
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <div class="stat-value">${totalProyectos}</div>
+                    <div class="stat-label">TOTAL PROYECTOS</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="stat-value">${proyectosActivos}</div>
+                    <div class="stat-label">EN EJECUCIÓN</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-value">${proyectosEspera}</div>
+                    <div class="stat-label">EN ESPERA</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-value">${proyectosCompletados}</div>
+                    <div class="stat-label">COMPLETADOS</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-value">${Utils.formatCurrency(presupuestoTotal)}</div>
+                    <div class="stat-label">PRESUPUESTO TOTAL</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-value">${avancePromedio.toFixed(1)}%</div>
+                    <div class="stat-label">AVANCE PROMEDIO</div>
+                </div>
+            `;
+        }
+
+        // Filtrar proyectos
+        function filtrarProyectos() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterEstado = document.getElementById('filterEstado').value;
+            const filterTipologia = document.getElementById('filterTipologia').value;
+            
+            let proyectosFiltrados = [...proyectos];
+            
+            // Aplicar filtro de búsqueda
+            if (searchTerm) {
+                proyectosFiltrados = proyectosFiltrados.filter(p => 
+                    p.nombre.toLowerCase().includes(searchTerm) ||
+                    p.cliente.toLowerCase().includes(searchTerm) ||
+                    (p.codigo && p.codigo.toLowerCase().includes(searchTerm)) ||
+                    (p.ubicacion && p.ubicacion.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            // Aplicar filtro de estado
+            if (filterEstado) {
+                proyectosFiltrados = proyectosFiltrados.filter(p => p.estado === filterEstado);
+            }
+            
+            // Aplicar filtro de tipología
+            if (filterTipologia) {
+                proyectosFiltrados = proyectosFiltrados.filter(p => p.tipologia === filterTipologia);
+            }
+            
+            // Actualizar tablas con proyectos filtrados
+            const proyectosOriginal = [...proyectos];
+            proyectos = proyectosFiltrados;
+            actualizarTablas();
+            proyectos = proyectosOriginal; // Restaurar lista original
+        }
+
+        // Cambiar tab
+        function cambiarTab(tabId) {
+            // Remover clase active de todas las tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Activar tab seleccionada
+            document.querySelector(`button[onclick*="${tabId}"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            tabActual = tabId;
+        }
+
+        // Cambiar tab en formulario
+        function cambiarTabForm(tabId) {
+            // Remover clase active de todas las tabs
+            document.querySelectorAll('#projectForm .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('#projectForm .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Activar tab seleccionada
+            document.querySelector(`#projectForm button[onclick*="${tabId}"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Nuevo proyecto
+        function nuevoProyecto() {
+            proyectoActual = null;
+            document.getElementById('modalTitle').textContent = 'NUEVO PROYECTO';
+            document.getElementById('projectForm').reset();
+            
+            // Generar código automático
+            const codigo = generarCodigoProyecto();
+            document.getElementById('proyecto-codigo').value = codigo;
+            
+            // Configurar fecha actual
+            document.getElementById('proyecto-fecha-registro').value = new Date().toISOString().split('T')[0];
+            
+            // Limpiar contenedor de espacios
+            document.getElementById('espacios-container').innerHTML = '';
+            
+            // Mostrar modal
+            document.getElementById('projectModal').style.display = 'block';
+        }
+
+        // Generar código de proyecto
+        function generarCodigoProyecto() {
+            const fecha = new Date();
+            const year = fecha.getFullYear().toString().substr(-2);
+            const month = (fecha.getMonth() + 1).toString().padStart(2, '0');
+            const count = proyectos.filter(p => p.codigo && p.codigo.includes(`PROY-${year}${month}`)).length + 1;
+            return `PROY-${year}${month}-${count.toString().padStart(3, '0')}`;
+        }
+
+        // Ver proyecto
+        function verProyecto(id) {
+            proyectoActual = proyectos.find(p => p.id === id);
+            if (!proyectoActual) return;
+            
+            document.getElementById('modalTitle').textContent = `PROYECTO: ${proyectoActual.nombre}`;
+            
+            // Llenar formulario con datos del proyecto
+            document.getElementById('proyecto-codigo').value = proyectoActual.codigo || '';
+            document.getElementById('proyecto-nombre').value = proyectoActual.nombre || '';
+            document.getElementById('proyecto-estado').value = proyectoActual.estado || 'espera';
+            document.getElementById('proyecto-tipologia').value = proyectoActual.tipologia || '';
+            document.getElementById('proyecto-cliente').value = proyectoActual.cliente || '';
+            document.getElementById('proyecto-telefono').value = proyectoActual.telefono || '';
+            document.getElementById('proyecto-email').value = proyectoActual.email || '';
+            document.getElementById('proyecto-dpi').value = proyectoActual.dpi || '';
+            document.getElementById('proyecto-ubicacion').value = proyectoActual.ubicacion || '';
+            document.getElementById('proyecto-area-terreno').value = proyectoActual.areaTerreno || '';
+            document.getElementById('proyecto-area-construccion').value = proyectoActual.areaConstruccion || '';
+            document.getElementById('proyecto-coordenadas').value = proyectoActual.coordenadas || '';
+            document.getElementById('proyecto-fecha-registro').value = proyectoActual.fechaRegistro || new Date().toISOString().split('T')[0];
+            document.getElementById('proyecto-fecha-inicio').value = proyectoActual.fechaInicio || '';
+            document.getElementById('proyecto-fecha-fin').value = proyectoActual.fechaFin || '';
+            document.getElementById('proyecto-presupuesto').value = proyectoActual.presupuestoAprobado || '';
+            document.getElementById('proyecto-necesidades').value = proyectoActual.necesidades || '';
+            document.getElementById('proyecto-notas').value = proyectoActual.notas || '';
+            
+            // Mostrar modal
+            document.getElementById('projectModal').style.display = 'block';
+        }
+
+        // Editar proyecto
+        function editarProyecto(id) {
+            verProyecto(id);
+        }
+
+        // Guardar proyecto
+        async function guardarProyecto(event) {
+            event.preventDefault();
+            
+            try {
+                // Recopilar datos del formulario
+                const datosProyecto = {
+                    codigo: document.getElementById('proyecto-codigo').value,
+                    nombre: document.getElementById('proyecto-nombre').value,
+                    estado: document.getElementById('proyecto-estado').value,
+                    tipologia: document.getElementById('proyecto-tipologia').value,
+                    cliente: document.getElementById('proyecto-cliente').value,
+                    telefono: document.getElementById('proyecto-telefono').value,
+                    email: document.getElementById('proyecto-email').value,
+                    dpi: document.getElementById('proyecto-dpi').value,
+                    ubicacion: document.getElementById('proyecto-ubicacion').value,
+                    areaTerreno: document.getElementById('proyecto-area-terreno').value ? parseFloat(document.getElementById('proyecto-area-terreno').value) : null,
+                    areaConstruccion: document.getElementById('proyecto-area-construccion').value ? parseFloat(document.getElementById('proyecto-area-construccion').value) : null,
+                    coordenadas: document.getElementById('proyecto-coordenadas').value,
+                    fechaRegistro: document.getElementById('proyecto-fecha-registro').value,
+                    fechaInicio: document.getElementById('proyecto-fecha-inicio').value || null,
+                    fechaFin: document.getElementById('proyecto-fecha-fin').value || null,
+                    presupuestoAprobado: document.getElementById('proyecto-presupuesto').value ? parseFloat(document.getElementById('proyecto-presupuesto').value) : null,
+                    necesidades: document.getElementById('proyecto-necesidades').value,
+                    notas: document.getElementById('proyecto-notas').value
+                };
+                
+                // Validaciones
+                if (!datosProyecto.nombre || !datosProyecto.cliente || !datosProyecto.ubicacion) {
+                    Utils.showNotification('Complete los campos obligatorios', 'warning');
+                    return;
+                }
+                
+                if (proyectoActual) {
+                    // Actualizar proyecto existente
+                    AdvancedDB.update('proyectos', proyectoActual.id, datosProyecto);
+                    Utils.showNotification('Proyecto actualizado exitosamente', 'success');
+                } else {
+                    // Crear nuevo proyecto
+                    AdvancedDB.insert('proyectos', datosProyecto);
+                    Utils.showNotification('Proyecto creado exitosamente', 'success');
+                }
+                
+                // Cerrar modal
+                cerrarModal();
+                
+                // Recargar datos
+                await cargarProyectos();
+                calcularEstadisticas();
+                
+                // Sincronizar
+                SyncService.syncNow();
+                
+            } catch (error) {
+                console.error('Error guardando proyecto:', error);
+                Utils.showNotification('Error al guardar proyecto: ' + error.message, 'error');
+            }
+        }
+
+        // Cerrar modal
+        function cerrarModal() {
+            document.getElementById('projectModal').style.display = 'none';
+            proyectoActual = null;
+        }
+
+        // Activar proyecto
+        function activarProyecto(id) {
+            Utils.confirm(
+                '¿Desea activar este proyecto? Esto iniciará el proceso de ejecución.',
+                async () => {
+                    try {
+                        AdvancedDB.update('proyectos', id, {
+                            estado: 'activo',
+                            fechaInicio: new Date().toISOString().split('T')[0]
+                        });
+                        
+                        Utils.showNotification('Proyecto activado exitosamente', 'success');
+                        await cargarProyectos();
+                        calcularEstadisticas();
+                        
+                    } catch (error) {
+                        console.error('Error activando proyecto:', error);
+                        Utils.showNotification('Error al activar proyecto', 'error');
+                    }
+                }
+            );
+        }
+
+        // Cambiar estado de proyecto
+        function cambiarEstadoProyecto(id, nuevoEstado) {
+            const estados = {
+                'activo': 'Activo',
+                'completado': 'Completado',
+                'cancelado': 'Cancelado'
+            };
+            
+            Utils.confirm(
+                `¿Desea cambiar el estado del proyecto a "${estados[nuevoEstado]}"?`,
+                async () => {
+                    try {
+                        AdvancedDB.update('proyectos', id, { estado: nuevoEstado });
+                        
+                        if (nuevoEstado === 'completado') {
+                            AdvancedDB.update('proyectos', id, {
+                                avanceFisico: 100,
+                                avanceFinanciero: 100,
+                                fechaFin: new Date().toISOString().split('T')[0]
+                            });
+                        }
+                        
+                        Utils.showNotification('Estado del proyecto actualizado', 'success');
+                        await cargarProyectos();
+                        calcularEstadisticas();
+                        
+                    } catch (error) {
+                        console.error('Error cambiando estado:', error);
+                        Utils.showNotification('Error al cambiar estado', 'error');
+                    }
+                }
+            );
+        }
+
+        // Eliminar proyecto
+        function eliminarProyecto(id) {
+            Utils.confirm(
+                '¿Está seguro que desea eliminar este proyecto? Esta acción no se puede deshacer.',
+                async () => {
+                    try {
+                        AdvancedDB.delete('proyectos', id);
+                        Utils.showNotification('Proyecto eliminado exitosamente', 'success');
+                        await cargarProyectos();
+                        calcularEstadisticas();
+                        
+                    } catch (error) {
+                        console.error('Error eliminando proyecto:', error);
+                        Utils.showNotification('Error al eliminar proyecto', 'error');
+                    }
+                }
+            );
+        }
+
+        // Agregar espacio al formulario
+        function agregarEspacio() {
+            const container = document.getElementById('espacios-container');
+            const count = container.children.length + 1;
+            
+            const espacioHTML = `
+                <div class="form-grid" style="margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                    <div class="form-group">
+                        <label>Nombre del Espacio</label>
+                        <input type="text" class="form-control" placeholder="Ej: Sala, Cocina, Dormitorio">
+                    </div>
+                    <div class="form-group">
+                        <label>Área (m²)</label>
+                        <input type="number" class="form-control" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" class="form-control" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones</label>
+                        <input type="text" class="form-control" placeholder="Requerimientos específicos">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.form-grid').remove()">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML += espacioHTML;
+        }
+
+        // Manejar archivos subidos
+        function manejarArchivosSubidos(files) {
+            const fileList = document.getElementById('fileList');
+            
+            Array.from(files).forEach(file => {
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    Utils.showNotification(`El archivo ${file.name} es demasiado grande (máximo 10MB)`, 'warning');
+                    return;
+                }
+                
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px;
+                    background: rgba(255,255,255,0.05);
+                    border-radius: 5px;
+                    margin-bottom: 5px;
+                `;
+                
+                fileItem.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-file" style="color: var(--accent-gold);"></i>
+                        <div>
+                            <div style="font-weight: 600;">${file.name}</div>
+                            <div style="font-size: 0.8rem; opacity: 0.7;">${(file.size / 1024).toFixed(2)} KB</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.file-item').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        // Generar PDF del proyecto
+        function generarPDF() {
+            if (!proyectoActual) {
+                Utils.showNotification('No hay proyecto seleccionado', 'warning');
+                return;
+            }
+            
+            try {
+                const datos = {
+                    proyecto: proyectoActual,
+                    fechaGeneracion: new Date().toLocaleDateString('es-GT'),
+                    horaGeneracion: new Date().toLocaleTimeString('es-GT')
+                };
+                
+                Utils.generatePDF(datos, `Proyecto_${proyectoActual.codigo}`);
+                Utils.showNotification('PDF generado exitosamente', 'success');
+                
+            } catch (error) {
+                console.error('Error generando PDF:', error);
+                Utils.showNotification('Error al generar PDF', 'error');
+            }
+        }
+
+        // Generar informe del proyecto
+        function generarInformeProyecto(id) {
+            const proyecto = proyectos.find(p => p.id === id);
+            if (!proyecto) return;
+            
+            proyectoActual = proyecto;
+            generarPDF();
+        }
+
+        // Generar factura de anteproyecto
+        function generarFacturaAnteproyecto(transaccionId) {
+            const transacciones = AdvancedDB.get('transacciones') || [];
+            const transaccion = transacciones.find(t => t.id === transaccionId);
+            
+            if (!transaccion) {
+                Utils.showNotification('Transacción no encontrada', 'error');
+                return;
+            }
+            
+            const proyecto = proyectos.find(p => p.id === transaccion.proyectoId);
+            
+            const datosFactura = {
+                transaccion,
+                proyecto: proyecto || { nombre: 'Proyecto no encontrado', cliente: 'N/A' },
+                fechaGeneracion: new Date().toLocaleDateString('es-GT'),
+                numeroFactura: `FAC-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+            };
+            
+            Utils.generatePDF(datosFactura, `Factura_Anteproyecto_${datosFactura.numeroFactura}`);
+            Utils.showNotification('Factura generada exitosamente', 'success');
+        }
+
+        // Exportar proyectos
+        function exportarProyectos() {
+            try {
+                const datosExportar = proyectos.map(p => ({
+                    Código: p.codigo,
+                    Nombre: p.nombre,
+                    Cliente: p.cliente,
+                    Tipología: p.tipologia,
+                    Ubicación: p.ubicacion,
+                    'Área Construcción (m²)': p.areaConstruccion,
+                    'Presupuesto (GTQ)': p.presupuestoAprobado,
+                    Estado: p.estado,
+                    'Fecha Inicio': p.fechaInicio,
+                    'Fecha Fin': p.fechaFin,
+                    'Avance Físico (%)': p.avanceFisico,
+                    'Avance Financiero (%)': p.avanceFinanciero
+                }));
+                
+                Utils.exportToCSV(datosExportar, 'proyectos_mns');
+                Utils.showNotification('Proyectos exportados exitosamente', 'success');
+                
+            } catch (error) {
+                console.error('Error exportando proyectos:', error);
+                Utils.showNotification('Error al exportar proyectos', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
